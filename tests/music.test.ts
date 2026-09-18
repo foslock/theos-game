@@ -93,6 +93,23 @@ describe('the room loops', () => {
     }
   });
 
+  it('keeps the bass to one root per bar, or two of the same', () => {
+    for (const name of names) {
+      const bass = parseVoice(TUNES[name].bass);
+      for (let bar = 0; bar < bass.length / 8; bar++) {
+        const attacks = bass.slice(bar * 8, bar * 8 + 8).filter((s): s is NonNullable<typeof s> => !!s);
+        expect(attacks.length, `${name} bar ${bar + 1} has ${attacks.length} bass notes`).toBeGreaterThanOrEqual(1);
+        expect(attacks.length, `${name} bar ${bar + 1} has ${attacks.length} bass notes`).toBeLessThanOrEqual(2);
+        // Every attack in a bar is the same note: a root holding the bar down, not a bass melody.
+        expect(new Set(attacks.map((a) => a.note)).size, `${name} bar ${bar + 1} changes root mid-bar`).toBe(1);
+      }
+    }
+  });
+
+  it('never leaves the melody harsh: no square waves', () => {
+    for (const name of names) expect(['sine', 'triangle'], name).toContain(TUNES[name].wave);
+  });
+
   it('runs at a tempo that loops in a few seconds, not half a minute', () => {
     for (const name of names) {
       const tune = TUNES[name];
