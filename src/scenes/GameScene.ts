@@ -24,6 +24,8 @@ const LUCY_RUN_SPEED = WALK_SPEED * 1.7;
 const KITCHEN_DOORWAY_Y = 326;
 /** Gap between one hint sparkle starting and the next (each twinkle lasts 1.2s). */
 const GLINT_STAGGER_MS = 1400;
+/** How long Theo's greeting stays up before he climbs out of bed on his own. */
+const WAKE_GREETING_MS = 2800;
 
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
 export class GameScene extends Phaser.Scene {
@@ -102,8 +104,9 @@ export class GameScene extends Phaser.Scene {
   // ---------- New-game intro: Theo wakes up in bed ----------
 
   /**
-   * The room fades in slowly with Theo asleep in bed. He sits up and yawns, then waits for
-   * a click anywhere before hopping out and walking to his usual spot.
+   * The room fades in slowly with Theo asleep in bed. He sits up and yawns, pauses long enough
+   * for his greeting to be read, then hops out and walks to his usual spot. Runs start to finish
+   * without input.
    */
   private async wakeUp(): Promise<void> {
     this.busy = true;
@@ -125,9 +128,7 @@ export class GameScene extends Phaser.Scene {
     this.roomObjects.push(sitting);
     await this.tween(sitting, { y: 188 }, 320, 'Back.easeOut');
     playSfx('ding');
-    void this.dialogue.say('*yaaawn* Good morning!', 254, 180, { duration: 60000 });
-    await new Promise<void>((resolve) => this.input.once('pointerdown', () => resolve()));
-    this.dialogue.clear();
+    await this.dialogue.say('*yaaawn* Good morning!', 254, 180, { duration: WAKE_GREETING_MS });
     // Swing his legs out and hop down onto the carpet, then hand over to the walking sprite.
     sitting.destroy();
     const stander = this.add.image(262, 300, 'theo_front').setOrigin(0.5, 1).setDepth(255);
