@@ -22,8 +22,12 @@ const LUCY_FOLLOW_DELAY_MS = 150;
 const LUCY_RUN_SPEED = WALK_SPEED * 1.7;
 /** Feet height that puts Lucy inside the kitchen's right doorway (its floor runs to about y 330). */
 const KITCHEN_DOORWAY_Y = 326;
-/** Screen x of the near edge of that doorway's frame, where Lucy comes out from behind it. */
-const DOORWAY_NEAR_EDGE = 579;
+/**
+ * Screen x of the doorway's far jamb. Everything right of here — that jamb and the wall beyond —
+ * is redrawn over Lucy so she is hidden until she reaches the opening. The near jamb at 580-598
+ * is deliberately left alone: she walks out in front of it.
+ */
+const DOORWAY_FAR_JAMB = 619;
 /** Gap between one hint sparkle starting and the next (each twinkle lasts 1.2s). */
 const GLINT_STAGGER_MS = 1400;
 /** How long Theo's greeting stays up before he climbs out of bed on his own. */
@@ -212,12 +216,11 @@ export class GameScene extends Phaser.Scene {
     if (this.room.id === 'kitchen' && !store.get().lucyJoined) {
       store.update((s) => (s.lucyJoined = true));
       const lp = this.room.lucyRestPoint ?? this.room.restPoint;
-      // Lucy comes running in through the family room doorway to meet him. The frame and the wall
-      // right of it are redrawn over her so she emerges from the opening; an 18px strip of it just
-      // sliced her down the middle as she walked past.
+      // Lucy comes running in through the family room doorway to meet him, appearing in the opening
+      // rather than sliding in over the wall beside it.
       const door = { x: this.room.exits.find((e) => e.to === 'family_room')?.walkTo.x ?? GAME_WIDTH - 40, y: KITCHEN_DOORWAY_Y };
       const bg = `${this.room.background}_0`;
-      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(DOORWAY_NEAR_EDGE, 50, GAME_WIDTH - DOORWAY_NEAR_EDGE, 284);
+      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(DOORWAY_FAR_JAMB, 50, GAME_WIDTH - DOORWAY_FAR_JAMB, 284);
       this.lucy = new Character(this, 'lucy', GAME_WIDTH + 24, door.y);
       this.lucy.face(-1);
       await this.wait(400);
