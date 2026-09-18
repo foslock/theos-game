@@ -209,8 +209,9 @@ export function playMusic(name: TuneName): void {
   warmth.Q.value = 0.4;
   master.connect(warmth).connect(ctx.destination);
 
-  const lead = voiceGain(ctx, master, 0.1);
-  const bass = voiceGain(ctx, master, 0.085);
+  // Sits under the sound effects, which peak around 0.3-0.5, without being inaudible beside them.
+  const lead = voiceGain(ctx, master, 0.16);
+  const bass = voiceGain(ctx, master, 0.13);
   const state: Playing = {
     name,
     lead: parseVoice(tune.lead),

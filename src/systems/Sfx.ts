@@ -25,6 +25,39 @@ export function unlockAudio(): void {
   if (a && a.state === 'suspended') void a.resume();
 }
 
+let unlockInstalled = false;
+
+/**
+ * Resumes the context on the first real interaction with the page.
+ *
+ * This has to be a DOM listener. Safari only honours `resume()` inside the task of a genuine user
+ * gesture, and neither of the places that looked like one qualifies: Phaser dispatches its input
+ * from a requestAnimationFrame loop, and awaiting the power-on promise continues in a microtask
+ * after the click handler has returned. Both leave the context suspended for good — silent, though
+ * the browser still shows the tab as having audio.
+ *
+ * Creating the context here also helps: opened inside a gesture, it starts out running.
+ */
+export function installAudioUnlock(): void {
+  if (unlockInstalled || typeof document === 'undefined') return;
+  unlockInstalled = true;
+  const events = ['pointerdown', 'touchend', 'mousedown', 'keydown'] as const;
+  const stop = (): void => {
+    for (const e of events) document.removeEventListener(e, resume, true);
+  };
+  function resume(): void {
+    const a = audio();
+    if (!a) return stop();
+    if (a.state === 'running') return stop();
+    // `resume` settles asynchronously, so keep listening until the state actually flips.
+    void a.resume().then(() => {
+      if (a.state === 'running') stop();
+    });
+  }
+  // Capture phase, so nothing further up can swallow the gesture first.
+  for (const e of events) document.addEventListener(e, resume, true);
+}
+
 interface Tone {
   freq: number;
   to?: number;
