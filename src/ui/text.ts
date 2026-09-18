@@ -45,12 +45,17 @@ export const TEXT_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   color: '#ffffff',
 };
 
+/**
+ * Press Start 2P sets its lines tight, which runs wrapped text together at 8px. Only worth
+ * applying where text actually wraps — on a single line it just offsets the vertical centring.
+ */
+export const TEXT_LINE_SPACING = 5;
+
 export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   fontFamily: TEXT_FAMILY,
   fontSize: '8px',
   color: '#000000',
-  // Press Start 2P sets its lines tight, which runs wrapped speech together at this size.
-  lineSpacing: 5,
+  lineSpacing: TEXT_LINE_SPACING,
   wordWrap: { width: 220 },
 };
 

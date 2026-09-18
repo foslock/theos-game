@@ -5,7 +5,7 @@ import { FLAGS, getFlag, type GameState } from '../state/GameState';
 import { store } from '../state/Store';
 import { exportToFile } from '../state/SaveManager';
 import { makeButton } from '../ui/Button';
-import { TEXT_FONT } from '../ui/text';
+import { TEXT_FONT, TEXT_LINE_SPACING } from '../ui/text';
 
 const SLOT = 36;
 const GAP = 4;
@@ -101,12 +101,19 @@ export class HudScene extends Phaser.Scene {
     if (!this.shownItem) return;
     const def = ITEMS[this.shownItem];
     const left = 16 + 56 + COLS * SLOT + (COLS - 1) * GAP + 18; // just right of the grid
-    const right = GAME_WIDTH - 66 - 50 - 12; // just left of the Save/Menu buttons
+    const right = GAME_WIDTH - 66 - 58 - 12; // just left of the Save/Menu buttons
     const midY = SCENE_HEIGHT + HUD_HEIGHT / 2;
     const big = this.add.image(left + 30, midY, `item_${this.shownItem}`).setScale(2.5);
-    const name = this.add.text(left + 68, midY - 14, def.name, { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0, 0.5);
+    // Sits high in the bar: the longest descriptions wrap to three spaced lines and would
+    // otherwise run off the bottom.
+    const name = this.add.text(left + 68, midY - 22, def.name, { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0, 0.5);
     const blurb = this.add
-      .text(left + 68, midY + 4, def.description, { ...TEXT_FONT, color: '#d9b98a', wordWrap: { width: right - (left + 68) } })
+      .text(left + 68, midY - 10, def.description, {
+        ...TEXT_FONT,
+        color: '#d9b98a',
+        lineSpacing: TEXT_LINE_SPACING,
+        wordWrap: { width: right - (left + 68) },
+      })
       .setOrigin(0, 0);
     this.detailLayer.add([big, name, blurb]);
   }
