@@ -51,11 +51,14 @@ export class Character {
     this.sprite.setDepth(y);
   }
 
+  /** Turns a walking sprite left or right. Idle frames face the player, so this is ignored while idle. */
   face(dx: number): void {
-    if (dx !== 0) this.sprite.setFlipX(dx < 0);
+    if (dx !== 0 && this.sprite.anims.currentAnim?.key === `${this.key}_walk`) this.sprite.setFlipX(dx < 0);
   }
 
+  /** Idle frames face the player, so any left-facing flip from walking is cleared. */
   idle(): void {
+    this.sprite.setFlipX(false);
     this.sprite.play(`${this.key}_idle`, true);
   }
 

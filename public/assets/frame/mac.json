@@ -9,9 +9,10 @@
   },
   "screen": {
     "x": 43,
-    "y": 57,
+    "y": 52,
     "w": 270,
-    "h": 202
+    "h": 212
   },
-  "source": "PixelLab generate-image-v2 seed 91, 440x572, cropped to the case"
+  "source": "PixelLab generate-image-v2 seed 91, 440x572, cropped to the case",
+  "screenRadius": 10
 }

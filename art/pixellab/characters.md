@@ -6,7 +6,7 @@ PixelLab character id `84e20a6a-cbe4-4850-97d0-6c25ab6ffe62` (v3, 8 rotations,
 seed 23, view "low top-down", 64x96 so he stands about half a fridge tall).
 The first approved 32x48 version is id `b9367698-f775-4ebf-9f0b-0053ec2591a5`
 (seed 7), kept at `public/assets/characters/small/`. Sheet at `public/assets/characters/theo.png`
-built from the east-facing `breathing-idle` and `walk` template animations
+built from the south-facing `breathing-idle` (faces the player) and east-facing `walk` template animations
 (walk frames 0,1,3,4 of 6). Cost: 2 generations to create + 1 per animation.
 
 > cheerful toddler boy about 2 years old, chubby cheeks, very short thin light
@@ -55,3 +55,12 @@ spoon 4 (seed 41), bowl 62 (42), cereal 38 (43), milk 4 (44), basketball 49 (45)
 stomp_rocket 4 (46), kitchen_door_key 24 (47), garage_key 22 (48),
 playhouse_key 10 (49), toy_bus 62 (50), backpack: regenerated at 64x64 (seed 77) because the
 48x44 render was cropped at the top; candidate 8 trimmed to its bounds and padded to 52x56.
+
+## Wake-up intro poses (generate-image-v2 with `theo_front` as subject reference)
+
+- `theo_asleep.png` 96x48, seed 31, candidate 0: head on the pillow at the right, blanket to the left.
+  Placed at (176,191) in the bedroom with the footboard redrawn in front of it.
+- `theo_sitting.png` 64x80, seed 32, candidate 8: sitting up yawning, arms raised. The generator's
+  bedposts were erased from the side columns. Placed at (222,188).
+- An `/inpaint-v3` attempt to paint Theo straight into the bed art repainted the bed but never
+  added a figure, so standalone sprites are the way to go for poses like this.

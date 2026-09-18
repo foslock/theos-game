@@ -8,8 +8,9 @@ beyond Pillow, which is only needed for the `sheet` command.
   python3 scripts/pixellab.py character NAME "description" WxH [--view V] [--seed N]
   python3 scripts/pixellab.py animate CHAR_ID TEMPLATE [--directions east,south]
   python3 scripts/pixellab.py export CHAR_ID OUT_DIR
-  python3 scripts/pixellab.py sheet OUT_DIR W H OUT_PNG [--idle NAME] [--walk NAME] [--dir east]
+  python3 scripts/pixellab.py sheet OUT_DIR W H OUT_PNG [--idle NAME] [--walk NAME] [--dir east] [--idle-dir south]
   python3 scripts/pixellab.py job JOB_ID
+  python3 scripts/pixellab.py inpaint "description" IMAGE.png MASK.png OUT.png [--seed N]
   python3 scripts/pixellab.py image "description" WxH OUT_PNG [--reference photo.jpg "usage"] [--style style.png] [--seed N] [--background]
 """
 import base64, io, json, os, sys, time, urllib.request, urllib.error, zipfile
@@ -138,16 +139,17 @@ def cmd_sheet(args):
     idle = opt(args, "--idle", "breathing-idle")
     walk = opt(args, "--walk", "walk")
     direction = opt(args, "--dir", "east")
+    idle_dir = opt(args, "--idle-dir", direction)  # idle usually faces the player (south)
     walk_pick = opt(args, "--walk-frames")  # e.g. 0,2,4,6
     src, w, h, out = args[0], int(args[1]), int(args[2]), args[3]
 
-    def frames(name):
+    def frames(name, direction=direction):
         d = os.path.join(src, "animations", name, direction)
         if not os.path.isdir(d):
             sys.exit(f"missing {d}")
         return [Image.open(os.path.join(d, f)).convert("RGBA") for f in sorted(os.listdir(d)) if f.endswith(".png")]
 
-    idle_frames, walk_frames = frames(idle), frames(walk)
+    idle_frames, walk_frames = frames(idle, idle_dir), frames(walk)
     print(f"idle {len(idle_frames)} frames, walk {len(walk_frames)} frames, size {walk_frames[0].size}")
     if walk_pick:
         picks = [int(i) for i in walk_pick.split(",")]
@@ -218,6 +220,29 @@ def cmd_image(args):
         with open(path, "wb") as f:
             f.write(base64.b64decode(im["base64"].split(",")[-1]))
         print("wrote", path)
+
+
+def cmd_inpaint(args):
+    """Inpaint a masked region with /inpaint-v3 (Pro).
+
+    inpaint "description" IMAGE.png MASK.png OUT.png [--seed N]
+    Mask: white = repaint, black = keep."""
+    seed = opt(args, "--seed")
+    desc, image, mask, out = args[:4]
+    body = {"description": desc,
+            "inpainting_image": {"image": b64_image(image), "size": image_size(image)},
+            "mask_image": {"image": b64_image(mask), "size": image_size(mask)},
+            "no_background": False, "crop_to_mask": False}
+    if seed: body["seed"] = int(seed)
+    r = request("POST", "/inpaint-v3", body)
+    print("job:", r["background_job_id"])
+    j = poll(r["background_job_id"])
+    last = j.get("last_response") or {}
+    im = last.get("image") or (last.get("images") or [None])[0]
+    if not im: sys.exit("no image in response: " + json.dumps(last)[:500])
+    with open(out, "wb") as f:
+        f.write(base64.b64decode(im["base64"].split(",")[-1]))
+    print("wrote", out, "usage:", last.get("usage"))
 
 
 if __name__ == "__main__":

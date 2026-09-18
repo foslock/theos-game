@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from './config';
+import { FRAME_RATE, GAME_HEIGHT, GAME_WIDTH } from './config';
 import { BootScene } from './scenes/BootScene';
 import { IntroScene } from './scenes/IntroScene';
 import { StoryScene } from './scenes/StoryScene';
@@ -27,16 +27,30 @@ async function start(): Promise<void> {
     backgroundColor: '#000000',
     pixelArt: true,
     roundPixels: true,
+    fps: { limit: FRAME_RATE },
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      // The canvas is stretched by CSS to fill the Mac's screen exactly (its hole is a touch
+      // squarer than 4:3, like a real CRT); Phaser only needs to track the bounds for input.
+      mode: Phaser.Scale.NONE,
+      autoCenter: Phaser.Scale.NO_CENTER,
+      // Fullscreen shows the whole Mac shell, not just the bare canvas, so the frame's own
+      // layout keeps sizing the screen to whatever the display is.
+      fullscreenTarget: 'stage',
     },
     scene: [BootScene, IntroScene, StoryScene, LoadScene, SettingsScene, GameScene, HudScene],
   });
-  window.addEventListener('resize', () => {
+  const relayout = () => {
     frame.layout();
     game.scale.refresh();
-  });
+  };
+  window.addEventListener('resize', relayout);
+  // Entering or leaving fullscreen resizes the viewport a moment after the event; catch both.
+  for (const evt of ['fullscreenchange', 'webkitfullscreenchange']) {
+    document.addEventListener(evt, () => {
+      relayout();
+      window.setTimeout(relayout, 120);
+    });
+  }
   await frame.powerOn();
   // Pull in close on the screen so the picture, not the case, fills the window.
   await frame.zoomToScreen(() => game.scale.refresh());

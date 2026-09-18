@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_TITLE, GAME_WIDTH } from '../config';
-import { ditherFrames } from '../placeholders/dither';
+import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { FONT } from '../ui/text';
 import { makeButton } from '../ui/Button';
 import { ditherIn, drawButtonFace } from '../ui/DitherReveal';
@@ -10,7 +9,6 @@ import { store } from '../state/Store';
 import { newGameState } from '../state/GameState';
 import { randomSeed } from '../systems/Rng';
 
-const DITHER_LEVELS = 10;
 const CLOUD_KEYS = ['intro_cloud_0', 'intro_cloud_1', 'intro_cloud_2'];
 /** Window positions in `intro_house` texture pixels that catch the morning light. */
 const WINDOW_GLINTS: [number, number][] = [
@@ -31,11 +29,10 @@ interface IntroData {
 
 /**
  * Title screen and main menu on one backdrop: the house stays still while pixel clouds drift
- * across the sky behind it and a window glints now and then. The title dither-fades in, and a
- * click dither-fades the menu buttons in over the same scene.
+ * across the sky behind it and a window glints now and then. A click dither-fades the menu
+ * buttons in over the same scene; the house itself is the title.
  */
 export class IntroScene extends Phaser.Scene {
-  private titleFrames: HTMLCanvasElement[] = [];
   private menuObjects: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -63,7 +60,6 @@ export class IntroScene extends Phaser.Scene {
     }
 
     this.addWindowGlints(scale, toScreen);
-    this.addTitle(!data.menu);
 
     if (data.menu) {
       this.showMenu();
@@ -86,37 +82,6 @@ export class IntroScene extends Phaser.Scene {
   }
 
   // ---------- Backdrop ----------
-
-  private addTitle(animate: boolean): void {
-    const tw = 480;
-    const th = 90;
-    this.titleFrames = ditherFrames(tw, th, (ctx) => {
-      ctx.font = 'bold 44px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = '#3a1d00';
-      ctx.strokeText(GAME_TITLE, tw / 2, th / 2);
-      ctx.fillStyle = '#fff3b0';
-      ctx.fillText(GAME_TITLE, tw / 2, th / 2);
-    }, DITHER_LEVELS);
-    for (let i = 0; i < this.titleFrames.length; i++) {
-      const key = `title_dither_${i}`;
-      if (this.textures.exists(key)) this.textures.remove(key);
-      this.textures.addCanvas(key, this.titleFrames[i]);
-    }
-    const title = this.add.image(GAME_WIDTH / 2, 70, `title_dither_${animate ? 0 : DITHER_LEVELS}`).setDepth(10);
-    if (!animate) return;
-    let level = 0;
-    this.time.addEvent({
-      delay: 90,
-      repeat: DITHER_LEVELS - 1,
-      callback: () => {
-        level = Math.min(DITHER_LEVELS, level + 1);
-        title.setTexture(`title_dither_${level}`);
-      },
-    });
-  }
 
   /** Pixel clouds drifting left to right across the sky band, each on its own slow loop. */
   private addClouds(scale: number, top: number): void {

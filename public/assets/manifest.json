@@ -7,6 +7,8 @@
     "intro_cloud_1": { "file": "intro/cloud_1.png", "status": "pixellab", "size": [84, 32] },
     "intro_cloud_2": { "file": "intro/cloud_2.png", "status": "pixellab", "size": [84, 32] },
     "theo_front": { "file": "characters/theo_front.png", "status": "pixellab", "size": [96, 96], "_note": "south-facing Theo used for the wake-up-in-bed intro" },
+    "theo_asleep": { "file": "characters/theo_asleep.png", "status": "pixellab", "size": [96, 48], "_note": "wake-up intro: asleep, head on pillow at the right" },
+    "theo_sitting": { "file": "characters/theo_sitting.png", "status": "pixellab", "size": [64, 80], "_note": "wake-up intro: sitting up yawning" },
     "bg_bedroom_0": { "file": "bedroom/bg_0.png", "status": "pixellab", "size": [640, 400] },
     "bg_bedroom_1": { "file": "bedroom/bg_1.png", "status": "pixellab", "size": [640, 400] },
     "bg_bathroom_0": { "file": "bathroom/bg_0.png", "status": "pixellab", "size": [640, 400] },

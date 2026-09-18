@@ -9,6 +9,8 @@ export interface FrameMeta {
   height: number;
   hole: { x: number; y: number; w: number; h: number };
   screen: { x: number; y: number; w: number; h: number };
+  /** Corner radius of the CRT glass, in frame-image pixels. */
+  screenRadius?: number;
 }
 
 export interface Frame {
@@ -99,6 +101,7 @@ export async function mountFrame(): Promise<Frame> {
       top: `${Math.round(sc.y * s)}px`,
       width: `${Math.round(sc.w * s)}px`,
       height: `${Math.round(sc.h * s)}px`,
+      borderRadius: `${Math.round((meta.screenRadius ?? 0) * s)}px`,
     });
   };
   layout();

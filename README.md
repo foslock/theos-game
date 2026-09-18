@@ -44,7 +44,7 @@ key) are git-ignored and are not needed to build or deploy.
 | `src/data/graph.ts` | Scene graph helpers derived from the room exits |
 | `src/data/items.ts` | Inventory item registry |
 | `src/state/` | Game state, store, autosave / export / import, settings |
-| `src/systems/` | Conditions, seeded RNG, cursors, walking, dialogue, hints, ambient frames, sound |
+| `src/systems/` | Conditions, seeded RNG, cursors, walking, pathfinding, dialogue, hints, ambient frames, dither fades, sound |
 | `src/puzzles/` | Pure puzzle logic (`breakfast.ts`) and its scene controller |
 | `src/frame.ts` | The Macintosh shell around the canvas: centring, vignette, power-on animation |
 | `src/scenes/` | Phaser scenes: Boot, Intro (title + menu), Story, Load, Settings, Game, Hud |

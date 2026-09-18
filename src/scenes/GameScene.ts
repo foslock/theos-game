@@ -10,6 +10,7 @@ import { Character } from '../systems/Walker';
 import { Dialogue } from '../systems/Dialogue';
 import { AmbientBackground } from '../systems/Ambient';
 import { HintTimer, hintLine } from '../systems/Hints';
+import { DitherFade } from '../systems/DitherFade';
 import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
 import { playSfx, unlockAudio } from '../systems/Sfx';
@@ -31,11 +32,13 @@ export class GameScene extends Phaser.Scene {
   private ambient?: AmbientBackground;
   private hints!: HintTimer;
   private walkMap!: WalkMap;
+  private fade!: DitherFade;
   private breakfast!: BreakfastController;
   private pickupSprites = new Map<string, Phaser.GameObjects.Image>();
   /** Hidden pickups still to be found, by hotspot id, so hints can glint their hiding place. */
   private hiddenPickups = new Map<string, Rect>();
-  private containerOverlays = new Map<string, Phaser.GameObjects.Rectangle>();
+  /** Containers already opened this visit, so the open flash only plays once each. */
+  private openedContainers = new Set<string>();
   private _busy = false;
   /** Cursor the pointer would show if nothing were happening (what it is hovering). */
   private hoverKind: CursorKind = 'default';
@@ -56,15 +59,18 @@ export class GameScene extends Phaser.Scene {
   create(data: { wakeUp?: boolean } = {}): void {
     this.dialogue = new Dialogue(this);
     this.breakfast = new BreakfastController(this);
+    this.fade = new DitherFade(this, GAME_WIDTH, SCENE_HEIGHT);
+    this.fade.setBlack();
     this.hints = new HintTimer(
       this,
       () => this.showHints(false),
       () => this.showHints(true),
     );
-    this.scene.launch('Hud');
-
     const s = store.get();
     this.room = getRoom(s.currentRoom);
+    const wake = !!data.wakeUp && this.room.id === 'bedroom' && ['theo_front', 'theo_asleep', 'theo_sitting'].every((k) => this.textures.exists(k));
+    // In the wake-up intro the HUD (and its backpack prompt) waits until Theo is out of bed.
+    if (!wake) this.scene.launch('Hud');
     this.buildRoom();
 
     const entryExit = s.previousRoom ? findExit(this.room.id, s.previousRoom) : undefined;
@@ -78,10 +84,10 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', () => unlockAudio());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardown());
 
-    if (data.wakeUp && this.room.id === 'bedroom' && this.textures.exists('theo_front')) {
+    if (wake) {
       void this.wakeUp();
     } else {
-      this.cameras.main.fadeIn(FADE_MS, 0, 0, 0);
+      void this.fade.in(FADE_MS);
       void this.enterRoom(!!entryExit);
     }
   }
@@ -96,31 +102,38 @@ export class GameScene extends Phaser.Scene {
     this.busy = true;
     this.theo.sprite.setVisible(false);
     const bg = `${this.room.background}_0`;
-    // Parts of the bed drawn again above the sleeper so his body reads as under the covers.
+    // The footboard is drawn again above the sleeper so his body reads as tucked in behind it.
     const footboard = this.add.image(0, 0, bg).setOrigin(0).setDepth(260).setCrop(120, 190, 120, 122);
-    const blanket = this.add.image(0, 0, bg).setOrigin(0).setDepth(260).setCrop(236, 226, 52, 80);
-    const sleeper = this.add.image(217, 218, 'theo_front').setAngle(90).setDepth(255);
-    this.roomObjects.push(footboard, blanket, sleeper);
+    const asleep = this.add.image(176, 191, 'theo_asleep').setOrigin(0).setDepth(255);
+    this.roomObjects.push(footboard, asleep);
 
-    this.cameras.main.fadeIn(2600, 0, 0, 0);
+    void this.fade.in(2600);
     await this.wait(3400);
-    // A little stir, then he sits up against the pillow.
-    await this.tween(sleeper, { angle: 84 }, 250);
-    await this.tween(sleeper, { angle: 0, x: 256, y: 236 }, 550, 'Back.easeOut');
+    // A little stir under the covers, then he sits up and yawns.
+    await this.tween(asleep, { y: 193 }, 220);
+    await this.tween(asleep, { y: 191 }, 220);
+    await this.wait(300);
+    asleep.destroy();
+    const sitting = this.add.image(222, 198, 'theo_sitting').setOrigin(0).setDepth(255);
+    this.roomObjects.push(sitting);
+    await this.tween(sitting, { y: 188 }, 320, 'Back.easeOut');
     playSfx('ding');
-    void this.dialogue.say('*yaaawn* Good morning!', 256, 176, { duration: 60000 });
+    void this.dialogue.say('*yaaawn* Good morning!', 254, 180, { duration: 60000 });
     await new Promise<void>((resolve) => this.input.once('pointerdown', () => resolve()));
     this.dialogue.clear();
-    // Hop out of bed onto the carpet.
-    await this.tween(sleeper, { x: 300, y: 296 }, 260, 'Quad.easeOut');
-    await this.tween(sleeper, { y: 342 }, 220, 'Quad.easeIn');
-    sleeper.destroy();
+    // Swing his legs out and hop down onto the carpet, then hand over to the walking sprite.
+    sitting.destroy();
+    const stander = this.add.image(262, 300, 'theo_front').setOrigin(0.5, 1).setDepth(255);
+    this.roomObjects.push(stander);
+    await this.tween(stander, { x: 300, y: 288 }, 200, 'Quad.easeOut');
+    await this.tween(stander, { y: 342 }, 200, 'Quad.easeIn');
+    stander.destroy();
     footboard.destroy();
-    blanket.destroy();
-    this.roomObjects = this.roomObjects.filter((o) => o !== sleeper && o !== footboard && o !== blanket);
+    this.roomObjects = this.roomObjects.filter((o) => o !== stander && o !== footboard && o !== asleep && o !== sitting);
     this.theo.setPosition(300, 342);
     this.theo.sprite.setVisible(true);
     playSfx('step');
+    this.scene.launch('Hud');
     this.busy = false;
     await this.enterRoom(true);
   }
@@ -155,11 +168,12 @@ export class GameScene extends Phaser.Scene {
     this.roomObjects = [];
     this.pickupSprites.clear();
     this.hiddenPickups.clear();
-    this.containerOverlays.clear();
+    this.openedContainers.clear();
   }
 
   private teardown(): void {
     this.hints.stop();
+    this.fade.destroy();
     this.clearRoom();
     this.theo?.destroy();
     this.lucy?.destroy();
@@ -230,6 +244,14 @@ export class GameScene extends Phaser.Scene {
     return z;
   }
 
+  /** Drops a click zone once its object is gone, clearing the hover cursor if the pointer is still on it. */
+  private removeZone(z: Phaser.GameObjects.Zone): void {
+    this.roomObjects = this.roomObjects.filter((o) => o !== z);
+    z.destroy();
+    this.hoverKind = 'default';
+    if (!this.busy) setCursor(this, 'default');
+  }
+
   private hover(z: Phaser.GameObjects.Zone, kind: () => CursorKind): void {
     z.on('pointerover', () => {
       this.hoverKind = kind();
@@ -283,7 +305,7 @@ export class GameScene extends Phaser.Scene {
     }
     const z = this.zone(h.zone);
     this.hover(z, () => 'hand');
-    z.on('pointerdown', () => void this.interact(h.walkTo, () => this.pickUp(h)));
+    z.on('pointerdown', () => void this.interact(h.walkTo, () => this.pickUp(h, z)));
   }
 
   private addBackpack(h: Extract<Hotspot, { kind: 'backpack' }>): void {
@@ -294,9 +316,11 @@ export class GameScene extends Phaser.Scene {
     this.hover(z, () => 'hand');
     z.on('pointerdown', () =>
       void this.interact(h.walkTo, async () => {
+        if (getFlag(store.get(), FLAGS.hasBackpack)) return;
         this.hints.reset();
         img.destroy();
         this.pickupSprites.delete(h.id);
+        this.removeZone(z);
         store.update((s) => setFlag(s, FLAGS.hasBackpack));
         playSfx('success');
         await this.sayTheo('My backpack! Now I can carry things with me.');
@@ -345,7 +369,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private async pickUp(h: PickupHotspot): Promise<void> {
+  private async pickUp(h: PickupHotspot, zone: Phaser.GameObjects.Zone): Promise<void> {
+    if (isPickedUp(store.get(), this.room.id, h.id)) return;
     if (!evaluate(h.condition, store.get())) {
       playSfx('locked');
       await this.sayTheo(h.refusalComment ?? "I can't take that yet.");
@@ -361,6 +386,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.pickupSprites.delete(h.id);
     this.hiddenPickups.delete(h.id);
+    this.removeZone(zone);
     playSfx('pickup');
     await this.sayTheo(h.foundComment ?? `Got the ${ITEMS[h.item].name.toLowerCase()}!`);
   }
@@ -405,7 +431,7 @@ export class GameScene extends Phaser.Scene {
         const dir = Math.sign(this.room.restPoint.x - spawn.x) || 1;
         this.lucy.setPosition(Phaser.Math.Clamp(spawn.x - dir * LUCY_FOLLOW_GAP, 16, 624), spawn.y + LUCY_FOLLOW_DY);
       }
-      this.cameras.main.fadeIn(FADE_MS, 0, 0, 0);
+      void this.fade.in(FADE_MS);
       this.busy = false;
       await this.enterRoom(true);
     } finally {
@@ -414,10 +440,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fadeOut(): Promise<void> {
-    return new Promise((resolve) => {
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => resolve());
-      this.cameras.main.fadeOut(FADE_MS, 0, 0, 0);
-    });
+    return this.fade.out(FADE_MS);
   }
 
   // ---------- Presentation helpers used by controllers ----------
@@ -431,19 +454,16 @@ export class GameScene extends Phaser.Scene {
     return this.dialogue.say(text, who.x, who.y - who.sprite.displayHeight, { fill: 0xffe3f0 });
   }
 
-  /** Darkens a container to show it has been opened. */
+  /** Marks a container as opened. No lasting overlay is drawn; a quick flash gives the feedback. */
   showContainerOpen(id: string, silent = false): void {
-    if (this.containerOverlays.has(id)) return;
+    if (this.openedContainers.has(id)) return;
+    this.openedContainers.add(id);
+    if (silent) return;
     const c = this.room.hotspots.find((h): h is ContainerHotspot => h.kind === 'container' && h.id === id);
     if (!c) return;
-    const r = this.add
-      .rectangle(c.zone.x + 3, c.zone.y + 3, c.zone.w - 6, c.zone.h - 6, 0x1a0d05, 0.85)
-      .setOrigin(0)
-      .setDepth(1)
-      .setStrokeStyle(2, 0xf5e6c8, 0.9);
-    this.roomObjects.push(r);
-    this.containerOverlays.set(id, r);
-    if (!silent) this.tweens.add({ targets: r, fillAlpha: { from: 0, to: 0.85 }, duration: 150 });
+    const flash = this.add.rectangle(c.zone.x, c.zone.y, c.zone.w, c.zone.h, 0xffffff, 0.5).setOrigin(0).setDepth(1);
+    this.roomObjects.push(flash);
+    this.tweens.add({ targets: flash, fillAlpha: 0, duration: 220, onComplete: () => flash.destroy() });
   }
 
   /** Shows an item rising out of a container and flying to the backpack. */

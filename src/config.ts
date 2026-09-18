@@ -10,6 +10,8 @@ export const HINT_GLINT_MS = 30_000;
 /** Idle time before Theo says a hint out loud (glints show again); repeats on this interval. */
 export const HINT_SPEAK_MS = 60_000;
 export const FADE_MS = 350;
+/** Render/update rate cap. Kept low on purpose for a classic 90s feel. */
+export const FRAME_RATE = 30;
 export const WALK_SPEED = 110; // pixels per second
 export const AMBIENT_FRAME_MS = 900;
 

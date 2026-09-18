@@ -30,8 +30,8 @@ export class HudScene extends Phaser.Scene {
 
     this.slotLayer = this.add.container(0, 0);
 
-    makeButton(this, GAME_WIDTH - 60, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 100, height: 26, fontSize: '12px' });
-    makeButton(this, GAME_WIDTH - 60, SCENE_HEIGHT + 56, 'Menu', () => {
+    makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 100, height: 26, fontSize: '12px' });
+    makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 56, 'Menu', () => {
       this.scene.stop('Game');
       this.scene.stop('Hud');
       this.scene.start('Intro', { menu: true });
