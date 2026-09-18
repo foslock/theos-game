@@ -1,18 +1,55 @@
 import type Phaser from 'phaser';
 
+/**
+ * Two bitmap fonts, each only used at its 8px design grid or a multiple of it — at any other size
+ * the glyphs land between pixels and go soft, which is the whole thing these replace.
+ * Silkscreen carries the interface and Press Start 2P everything Theo and Lucy say.
+ */
+const UI_FAMILY = '"Silkscreen", monospace';
+const TEXT_FAMILY = '"Press Start 2P", monospace';
+
+/** Font families to wait for before any text is drawn; see `loadFonts`. */
+export const FONT_FAMILIES = ['Silkscreen', 'Press Start 2P'];
+
+/**
+ * Bitmap fonts silently fall back to monospace if text is drawn before they arrive, so the game
+ * waits on them. Resolves either way rather than blocking the game on a font.
+ */
+export async function loadFonts(): Promise<void> {
+  try {
+    await Promise.all(FONT_FAMILIES.map((f) => document.fonts.load(`16px "${f}"`)));
+  } catch {
+    // A missing font is a cosmetic problem; monospace still reads.
+  }
+}
+
+/** Interface chrome: buttons, settings rows, menu prompts. 16px gives 10px capitals. */
 export const FONT: Phaser.Types.GameObjects.Text.TextStyle = {
-  fontFamily: 'monospace',
-  fontSize: '12px',
+  fontFamily: UI_FAMILY,
+  fontSize: '16px',
   color: '#ffffff',
 };
 
 export const TITLE_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
-  fontFamily: 'monospace',
-  fontSize: '28px',
-  fontStyle: 'bold',
+  fontFamily: UI_FAMILY,
+  fontSize: '24px',
   color: '#fff3b0',
   stroke: '#3a1d00',
   strokeThickness: 4,
+};
+
+/** Anything in the world's own voice: item names and descriptions, HUD prompts. */
+export const TEXT_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
+  fontFamily: TEXT_FAMILY,
+  fontSize: '8px',
+  color: '#ffffff',
+};
+
+export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
+  fontFamily: TEXT_FAMILY,
+  fontSize: '8px',
+  color: '#000000',
+  wordWrap: { width: 220 },
 };
 
 /**
@@ -22,10 +59,3 @@ export const TITLE_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
 export function pointerVerb(): 'Tap' | 'Click' {
   return window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
 }
-
-export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
-  fontFamily: 'monospace',
-  fontSize: '12px',
-  color: '#000000',
-  wordWrap: { width: 220 },
-};

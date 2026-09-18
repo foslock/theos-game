@@ -5,7 +5,7 @@ import { FLAGS, getFlag, type GameState } from '../state/GameState';
 import { store } from '../state/Store';
 import { exportToFile } from '../state/SaveManager';
 import { makeButton } from '../ui/Button';
-import { FONT } from '../ui/text';
+import { TEXT_FONT } from '../ui/text';
 
 const SLOT = 36;
 const GAP = 4;
@@ -34,12 +34,12 @@ export class HudScene extends Phaser.Scene {
     this.slotLayer = this.add.container(0, 0);
     this.detailLayer = this.add.container(0, 0);
 
-    makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 100, height: 26, fontSize: '12px' });
+    makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 116, height: 26 });
     makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 56, 'Menu', () => {
       this.scene.stop('Game');
       this.scene.stop('Hud');
       this.scene.start('Intro', { menu: true });
-    }, { width: 100, height: 26, fontSize: '12px' });
+    }, { width: 116, height: 26 });
 
     this.render(store.get());
     this.unsubscribe = store.subscribe((s) => this.render(s));
@@ -53,7 +53,7 @@ export class HudScene extends Phaser.Scene {
     this.slotLayer.removeAll(true);
     if (!getFlag(state, FLAGS.hasBackpack)) {
       if (this.registry.get('hudQuiet')) return;
-      this.slotLayer.add(this.add.text(16, SCENE_HEIGHT + HUD_HEIGHT / 2, 'Find your backpack to carry things!', { ...FONT, color: '#d9b98a' }).setOrigin(0, 0.5));
+      this.slotLayer.add(this.add.text(16, SCENE_HEIGHT + HUD_HEIGHT / 2, 'Find your backpack to carry things!', { ...TEXT_FONT, color: '#d9b98a' }).setOrigin(0, 0.5));
       return;
     }
     const totalW = COLS * SLOT + (COLS - 1) * GAP;
@@ -70,12 +70,12 @@ export class HudScene extends Phaser.Scene {
       if (entry) {
         this.slotLayer.add(this.add.image(x + SLOT / 2, y + SLOT / 2, `item_${entry.item}`));
         if (entry.count > 1) {
-          this.slotLayer.add(this.add.text(x + SLOT - 3, y + SLOT - 2, `x${entry.count}`, { ...FONT, fontSize: '10px', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 1));
+          this.slotLayer.add(this.add.text(x + SLOT - 3, y + SLOT - 2, `x${entry.count}`, { ...TEXT_FONT, stroke: '#000', strokeThickness: 2 }).setOrigin(1, 1));
         }
         const img = this.slotLayer.list[this.slotLayer.list.length - (entry.count > 1 ? 2 : 1)] as Phaser.GameObjects.Image;
         img.setInteractive({ useHandCursor: true });
         const name = ITEMS[entry.item].name;
-        const tip = this.add.text(x + SLOT / 2, y - 4, name, { ...FONT, fontSize: '10px', backgroundColor: '#000' }).setOrigin(0.5, 1).setVisible(false);
+        const tip = this.add.text(x + SLOT / 2, y - 4, name, { ...TEXT_FONT, backgroundColor: '#000' }).setOrigin(0.5, 1).setVisible(false);
         this.slotLayer.add(tip);
         img.on('pointerover', () => tip.setVisible(true));
         img.on('pointerout', () => tip.setVisible(false));
@@ -104,9 +104,9 @@ export class HudScene extends Phaser.Scene {
     const right = GAME_WIDTH - 66 - 50 - 12; // just left of the Save/Menu buttons
     const midY = SCENE_HEIGHT + HUD_HEIGHT / 2;
     const big = this.add.image(left + 30, midY, `item_${this.shownItem}`).setScale(2.5);
-    const name = this.add.text(left + 68, midY - 14, def.name, { ...FONT, fontSize: '13px', fontStyle: 'bold', color: '#fff3b0' }).setOrigin(0, 0.5);
+    const name = this.add.text(left + 68, midY - 14, def.name, { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0, 0.5);
     const blurb = this.add
-      .text(left + 68, midY + 4, def.description, { ...FONT, fontSize: '11px', color: '#d9b98a', wordWrap: { width: right - (left + 68) } })
+      .text(left + 68, midY + 4, def.description, { ...TEXT_FONT, color: '#d9b98a', wordWrap: { width: right - (left + 68) } })
       .setOrigin(0, 0);
     this.detailLayer.add([big, name, blurb]);
   }

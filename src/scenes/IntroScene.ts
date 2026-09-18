@@ -67,7 +67,7 @@ export class IntroScene extends Phaser.Scene {
     }
 
     const prompt = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 30, `${pointerVerb()} to start`, { ...FONT, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 30, `${pointerVerb()} to start`, { ...FONT, stroke: '#000', strokeThickness: 3 })
       .setOrigin(0.5)
       .setDepth(10)
       .setAlpha(0);
@@ -186,19 +186,19 @@ export class IntroScene extends Phaser.Scene {
 
   private confirmNewGame(): void {
     const overlay = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6).setOrigin(0).setDepth(50).setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 360, 150, 0x2b1d10).setStrokeStyle(3, 0xf2c14e).setDepth(51);
+    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 400, 150, 0x2b1d10).setStrokeStyle(3, 0xf2c14e).setDepth(51);
     const text = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, 'Start over? Your saved game\nwill be replaced.', { ...FONT, fontSize: '14px', align: 'center' })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, 'Start over? Your saved game\nwill be replaced.', { ...FONT, align: 'center' })
       .setOrigin(0.5)
       .setDepth(52);
-    const yes = makeButton(this, GAME_WIDTH / 2 - 80, GAME_HEIGHT / 2 + 30, 'Yes, start over', () => this.newGame(), { width: 140 }).setDepth(52);
+    const yes = makeButton(this, GAME_WIDTH / 2 - 95, GAME_HEIGHT / 2 + 30, 'Yes, start over', () => this.newGame(), { width: 180 }).setDepth(52);
     const no = makeButton(
       this,
-      GAME_WIDTH / 2 + 80,
+      GAME_WIDTH / 2 + 95,
       GAME_HEIGHT / 2 + 30,
       'Keep my game',
       () => [overlay, panel, text, yes, no].forEach((o) => o.destroy()),
-      { width: 140 },
+      { width: 180 },
     ).setDepth(52);
   }
 }

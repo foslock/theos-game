@@ -37,7 +37,7 @@ export function makeButton(
   draw(false);
 
   const text = scene.add
-    .text(0, 0, label, { ...FONT, fontSize: opts.fontSize ?? '14px', color: disabled ? '#999999' : '#1a0d00', fontStyle: 'bold' })
+    .text(0, 0, label, { ...FONT, fontSize: opts.fontSize ?? '16px', color: disabled ? '#999999' : '#1a0d00' })
     .setOrigin(0.5);
 
   const container = scene.add.container(x, y, [bg, text]);

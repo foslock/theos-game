@@ -7,6 +7,17 @@
     <!-- Fetched during parse: the frame is not requested until the bundle has run, and nothing shows until it arrives. -->
     <link rel="preload" as="image" href="assets/frame/mac.png" />
     <style>
+      /* Bitmap fonts, so they only look right at their design size or exact multiples of it. */
+      @font-face {
+        font-family: 'Silkscreen';
+        src: url('assets/fonts/Silkscreen-Regular.ttf') format('truetype');
+        font-display: block;
+      }
+      @font-face {
+        font-family: 'Press Start 2P';
+        src: url('assets/fonts/PressStart2P-Regular.ttf') format('truetype');
+        font-display: block;
+      }
       html, body { margin: 0; padding: 0; background: #2a2622; height: 100%; overflow: hidden; }
       body {
         background: radial-gradient(ellipse at center, #3a342d 0%, #1c1916 100%);

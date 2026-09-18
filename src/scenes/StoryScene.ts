@@ -49,7 +49,7 @@ export class StoryScene extends Phaser.Scene {
       w,
       h,
       (ctx) => {
-        ctx.font = 'bold 30px monospace';
+        ctx.font = '24px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.lineWidth = 6;

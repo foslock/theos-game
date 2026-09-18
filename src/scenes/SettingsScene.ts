@@ -37,8 +37,8 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private volumeRow(y: number, label: string, key: 'sfxVolume' | 'musicVolume', preview?: () => void): void {
-    this.add.text(GAME_WIDTH / 2 - 200, y, label, { ...FONT, fontSize: '14px' }).setOrigin(0, 0.5);
-    const value = this.add.text(GAME_WIDTH / 2 + 60, y, '', { ...FONT, fontSize: '14px' }).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2 - 200, y, label, FONT).setOrigin(0, 0.5);
+    const value = this.add.text(GAME_WIDTH / 2 + 60, y, '', FONT).setOrigin(0.5);
     const render = () => value.setText(`${Math.round(getSettings()[key] * 10)}`);
     render();
     makeButton(this, GAME_WIDTH / 2 + 10, y, '-', () => {

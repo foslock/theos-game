@@ -8,13 +8,14 @@ import { SettingsScene } from './scenes/SettingsScene';
 import { GameScene } from './scenes/GameScene';
 import { HudScene } from './scenes/HudScene';
 import { applyCrtSetting, mountFrame } from './frame';
+import { loadFonts } from './ui/text';
 import { getSettings } from './state/Settings';
 import { playSfx, unlockAudio } from './systems/Sfx';
 
 import { store } from './state/Store';
 
 async function start(): Promise<void> {
-  const frame = await mountFrame();
+  const [frame] = await Promise.all([mountFrame(), loadFonts()]);
   applyCrtSetting(getSettings().crtEffect);
   // Browsers only allow sound after a gesture, so the Mac waits to be switched on.
   await frame.waitForPowerOn();

@@ -45,7 +45,7 @@ export function ditherIn(
 }
 
 /** Draws the same chunky button look as `makeButton`, for dither-revealing before the live button appears. */
-export function drawButtonFace(ctx: CanvasRenderingContext2D, w: number, h: number, label: string, fontSize = 14): void {
+export function drawButtonFace(ctx: CanvasRenderingContext2D, w: number, h: number, label: string, fontSize = 16): void {
   const ox = 2;
   const oy = 2;
   ctx.fillStyle = '#000';
@@ -57,7 +57,7 @@ export function drawButtonFace(ctx: CanvasRenderingContext2D, w: number, h: numb
   ctx.strokeRect(ox + 1, oy + 1, w - 2, h - 2);
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.fillRect(ox + 2, oy + 2, w - 4, 3);
-  ctx.font = `bold ${fontSize}px monospace`;
+  ctx.font = `${fontSize}px "Silkscreen", monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#1a0d00';
