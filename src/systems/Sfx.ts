@@ -4,9 +4,23 @@ export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak
 
 let ctx: AudioContext | null = null;
 
+/**
+ * Declares this as playback audio rather than ambient.
+ *
+ * iOS silences a Web Audio graph whenever the hardware mute switch is on — the context still
+ * reports itself as running and nothing looks wrong, there is simply no sound. Media elements are
+ * exempt but oscillators are not, so a game that synthesises everything is silent on a muted
+ * phone. Safari 16.4 added this to opt out; older versions ignore it.
+ */
+function claimPlaybackSession(): void {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = 'playback';
+}
+
 function audio(): AudioContext | null {
   if (ctx) return ctx;
   try {
+    claimPlaybackSession();
     ctx = new AudioContext();
   } catch {
     ctx = null;

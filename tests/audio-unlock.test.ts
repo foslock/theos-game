@@ -39,6 +39,7 @@ describe('resuming the audio context', () => {
       return Promise.resolve();
     });
     vi.stubGlobal('document', doc);
+    vi.stubGlobal('navigator', { audioSession: { type: 'auto' } });
     vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => {} });
     vi.stubGlobal(
       'AudioContext',
@@ -97,5 +98,20 @@ describe('resuming the audio context', () => {
     installAudioUnlock();
     installAudioUnlock();
     expect(doc.count('pointerdown')).toBe(1);
+  });
+
+  it('claims a playback session so a muted iPhone still plays', async () => {
+    const { installAudioUnlock } = await import('../src/systems/Sfx');
+    installAudioUnlock();
+    doc.dispatch('pointerdown');
+    expect((navigator as Navigator & { audioSession?: { type: string } }).audioSession?.type).toBe('playback');
+  });
+
+  it('copes where the browser has no audioSession at all', async () => {
+    vi.stubGlobal('navigator', {});
+    const { installAudioUnlock } = await import('../src/systems/Sfx');
+    installAudioUnlock();
+    expect(() => doc.dispatch('pointerdown')).not.toThrow();
+    expect(resume).toHaveBeenCalled();
   });
 });
