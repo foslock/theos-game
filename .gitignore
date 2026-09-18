@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# Family reference photos used to prompt PixelLab; keep them out of a public repo.
+reference/
+# Stray downloads from the PixelLab web app
+pixellab-*.png
