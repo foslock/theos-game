@@ -41,11 +41,25 @@ const META_URL = 'assets/frame/mac.json';
 const GAME_W = 640;
 const GAME_H = 480;
 
+/** Smallest tile WebKit will still tile: below ~1px it paints the gradient once instead of repeating. */
+const MIN_SCAN_PX = 2;
+/** The grille cycles through three colour stops, so it needs a pixel each to read as stripes. */
+const MIN_GRILLE_PX = 3;
+
+/**
+ * Tile sizes for the two CRT background layers: scanlines every 2 game rows, aperture grille
+ * every 3 game columns, each clamped so a small screen never asks for a sub-pixel tile.
+ */
+export function crtPitch(w: number, h: number): { scan: number; grille: number } {
+  return {
+    scan: Math.max(MIN_SCAN_PX, (h / GAME_H) * 2),
+    grille: Math.max(MIN_GRILLE_PX, (w / GAME_W) * 3),
+  };
+}
+
 function sizeCrt(crt: HTMLElement, w: number, h: number): void {
-  const px = h / GAME_H;
-  const py = w / GAME_W;
-  // First layer: horizontal scanlines every 2 game rows. Second: a faint aperture grille every 3 columns.
-  crt.style.backgroundSize = `100% ${(px * 2).toFixed(3)}px, ${(py * 3).toFixed(3)}px 100%`;
+  const { scan, grille } = crtPitch(w, h);
+  crt.style.backgroundSize = `100% ${scan.toFixed(3)}px, ${grille.toFixed(3)}px 100%`;
 }
 
 /** Shows or hides the CRT overlay. Safe to call before the frame exists. */
