@@ -4,6 +4,8 @@
  * on the glass, and the power-on animation.
  */
 
+import { pointerVerb } from './ui/text';
+
 export interface FrameMeta {
   width: number;
   height: number;
@@ -96,7 +98,7 @@ export async function mountFrame(): Promise<Frame> {
   const vignette = el('div', 'vignette', screen);
   const crt = el('div', 'crt', screen);
   const power = el('div', 'power', screen);
-  power.textContent = 'Click to turn on';
+  power.textContent = `${pointerVerb()} to turn on`;
   if (meta) {
     const bezel = el('img', 'bezel', mac);
     bezel.src = FRAME_URL;

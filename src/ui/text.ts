@@ -15,6 +15,14 @@ export const TITLE_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   strokeThickness: 4,
 };
 
+/**
+ * The verb for "activate this": "Tap" when the primary pointer is a finger, else "Click".
+ * An unsupported query reports no match, so anything we cannot identify gets "Click".
+ */
+export function pointerVerb(): 'Tap' | 'Click' {
+  return window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
+}
+
 export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   fontFamily: 'monospace',
   fontSize: '12px',

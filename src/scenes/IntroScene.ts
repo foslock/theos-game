@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
-import { FONT } from '../ui/text';
+import { FONT, pointerVerb } from '../ui/text';
 import { makeButton } from '../ui/Button';
 import { ditherIn, drawButtonFace } from '../ui/DitherReveal';
 import { unlockAudio } from '../systems/Sfx';
@@ -67,7 +67,7 @@ export class IntroScene extends Phaser.Scene {
     }
 
     const prompt = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 30, 'Click to start', { ...FONT, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 30, `${pointerVerb()} to start`, { ...FONT, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
       .setOrigin(0.5)
       .setDepth(10)
       .setAlpha(0);
