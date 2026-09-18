@@ -56,11 +56,26 @@ stomp_rocket 4 (46), kitchen_door_key 24 (47), garage_key 22 (48),
 playhouse_key 10 (49), toy_bus 62 (50), backpack: regenerated at 64x64 (seed 77) because the
 48x44 render was cropped at the top; candidate 8 trimmed to its bounds and padded to 52x56.
 
-## Wake-up intro poses (generate-image-v2 with `theo_front` as subject reference)
+## Wake-up intro: whole-bed tiles (2026-09-18)
 
-- `theo_asleep.png` 96x48, seed 31, candidate 0: head on the pillow at the right, blanket to the left.
-  Placed at (176,191) in the bedroom with the footboard redrawn in front of it.
-- `theo_sitting.png` 64x80, seed 32, candidate 8: sitting up yawning, arms raised. The generator's
-  bedposts were erased from the side columns. Placed at (222,188).
-- An `/inpaint-v3` attempt to paint Theo straight into the bed art repainted the bed but never
-  added a figure, so standalone sprites are the way to go for poses like this.
+The first attempt used figure-only sprites (`theo_asleep`, `theo_sitting`) pasted onto the bed in
+the room art, with the footboard redrawn in front. They could never line up: each sprite carried
+its own bedding and bedposts drawn for a different bed, and an 18px strip of redrawn footboard
+sliced the sleeper. Replaced by tiles that contain the whole bed, so nothing has to register
+against the background.
+
+- The bed was **removed from `bedroom/bg_0.png` and `bg_1.png`** with `/inpaint-v3` (mask rect
+  (112,178)-(278,320); the two frames are byte-identical there, so one patch served both). The
+  endpoint caps input at 512x512, so it ran on a 512x400 crop, and it re-renders the whole frame —
+  only the masked rect was pasted back, leaving the rest of the room untouched.
+- `bed_asleep.png` 160x136, seed 31, candidate 2: generated with the old bed's crop as a reference
+  image so the frame, palette and perspective match the room.
+- `bed_sit.png` seed 32, candidate 0: generated with `bed_asleep.png` as the reference so the bed
+  stays put between poses. Its silhouette still drifts 3-6px from the others.
+- `bed_empty.png`: **not generated** — the empty-bed batches all came out smaller than the approved
+  bed, which made it jump. Instead Theo was inpainted out of `bed_asleep.png` (mask (90,16)-(138,72)
+  in tile space, seed 7) and the original alpha reapplied, so its silhouette is byte-identical.
+- All three are drawn at `BED_POS` (124,196) in `GameScene`. That offset seats the front-left leg on
+  the carpet; at the generator's framing the leg floated 21-30px up onto the wall.
+- Lesson: for a pose that has to sit in existing furniture, generate the furniture with it and pass
+  the room art as a reference. Inpainting removes things well but will not add a figure.

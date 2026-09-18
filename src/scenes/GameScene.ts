@@ -22,10 +22,21 @@ const LUCY_FOLLOW_DELAY_MS = 150;
 const LUCY_RUN_SPEED = WALK_SPEED * 1.7;
 /** Feet height that puts Lucy inside the kitchen's right doorway (its floor runs to about y 330). */
 const KITCHEN_DOORWAY_Y = 326;
+/** Screen x of the near edge of that doorway's frame, where Lucy comes out from behind it. */
+const DOORWAY_NEAR_EDGE = 579;
 /** Gap between one hint sparkle starting and the next (each twinkle lasts 1.2s). */
 const GLINT_STAGGER_MS = 1400;
 /** How long Theo's greeting stays up before he climbs out of bed on his own. */
 const WAKE_GREETING_MS = 2800;
+/**
+ * The bedroom art has no bed in it, so the bed is always an overlay drawn here. All three poses
+ * share one silhouette, which is what lets them swap without the frame appearing to move.
+ */
+const BED_POS = { x: 124, y: 196 };
+/** The bed's base, so feet in front of it sort ahead of it and feet up by the wall sort behind. */
+const BED_DEPTH = 328;
+/** Where Theo lands after hopping out, clear of the bed's footprint. */
+const WAKE_STAND = { x: 300, y: 344 };
 
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
 export class GameScene extends Phaser.Scene {
@@ -36,6 +47,8 @@ export class GameScene extends Phaser.Scene {
   private room!: Room;
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private ambient?: AmbientBackground;
+  /** The bedroom's bed overlay, swapped between poses during the wake-up intro. */
+  private bed?: Phaser.GameObjects.Image;
   private hints!: HintTimer;
   private walkMap!: WalkMap;
   private fade!: DitherFade;
@@ -76,7 +89,7 @@ export class GameScene extends Phaser.Scene {
     );
     const s = store.get();
     this.room = getRoom(s.currentRoom);
-    const wake = !!data.wakeUp && this.room.id === 'bedroom' && ['theo_front', 'theo_asleep', 'theo_sitting'].every((k) => this.textures.exists(k));
+    const wake = !!data.wakeUp && this.room.id === 'bedroom' && ['theo_front', 'bed_asleep', 'bed_sit'].every((k) => this.textures.exists(k));
     // During the wake-up intro the HUD is shown but keeps its backpack prompt quiet.
     this.registry.set('hudQuiet', wake);
     this.scene.launch('Hud');
@@ -111,34 +124,22 @@ export class GameScene extends Phaser.Scene {
   private async wakeUp(): Promise<void> {
     this.busy = true;
     this.theo.sprite.setVisible(false);
-    const bg = `${this.room.background}_0`;
-    // The footboard is drawn again above the sleeper so his body reads as tucked in behind it.
-    const footboard = this.add.image(0, 0, bg).setOrigin(0).setDepth(260).setCrop(120, 190, 120, 122);
-    const asleep = this.add.image(176, 191, 'theo_asleep').setOrigin(0).setDepth(255);
-    this.roomObjects.push(footboard, asleep);
+    this.setBed('bed_asleep');
 
     void this.fade.in(2600);
     await this.wait(3400);
-    // A little stir under the covers, then he sits up and yawns.
-    await this.tween(asleep, { y: 193 }, 220);
-    await this.tween(asleep, { y: 191 }, 220);
-    await this.wait(300);
-    asleep.destroy();
-    const sitting = this.add.image(222, 198, 'theo_sitting').setOrigin(0).setDepth(255);
-    this.roomObjects.push(sitting);
-    await this.tween(sitting, { y: 188 }, 320, 'Back.easeOut');
     playSfx('ding');
-    await this.dialogue.say('*yaaawn* Good morning!', 254, 180, { duration: WAKE_GREETING_MS });
-    // Swing his legs out and hop down onto the carpet, then hand over to the walking sprite.
-    sitting.destroy();
-    const stander = this.add.image(262, 300, 'theo_front').setOrigin(0.5, 1).setDepth(255);
+    this.setBed('bed_sit');
+    await this.dialogue.say('*yaaawn* Good morning!', 245, 212, { duration: WAKE_GREETING_MS });
+    // Out from under the covers and down onto the carpet, then hand over to the walking sprite.
+    this.setBed('bed_empty');
+    const stander = this.add.image(276, 322, 'theo_front').setOrigin(0.5, 1).setDepth(BED_DEPTH + 12);
     this.roomObjects.push(stander);
-    await this.tween(stander, { x: 300, y: 288 }, 200, 'Quad.easeOut');
-    await this.tween(stander, { y: 342 }, 200, 'Quad.easeIn');
+    await this.tween(stander, { x: WAKE_STAND.x, y: 332 }, 200, 'Quad.easeOut');
+    await this.tween(stander, { y: WAKE_STAND.y }, 200, 'Quad.easeIn');
     stander.destroy();
-    footboard.destroy();
-    this.roomObjects = this.roomObjects.filter((o) => o !== stander && o !== footboard && o !== asleep && o !== sitting);
-    this.theo.setPosition(300, 342);
+    this.roomObjects = this.roomObjects.filter((o) => o !== stander);
+    this.theo.setPosition(WAKE_STAND.x, WAKE_STAND.y);
     this.theo.sprite.setVisible(true);
     playSfx('step');
     this.registry.set('hudQuiet', false);
@@ -161,6 +162,7 @@ export class GameScene extends Phaser.Scene {
     this.ambient = new AmbientBackground(this, this.room);
     const state = store.get();
 
+    if (this.room.id === 'bedroom') this.setBed('bed_empty');
     for (const exit of this.room.exits) this.addExitZone(exit);
     for (const h of this.room.hotspots) this.addHotspot(h, state);
     if (this.room.id === 'kitchen') {
@@ -168,10 +170,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Shows the bed in one of its poses, creating the overlay on first use. */
+  private setBed(texture: 'bed_empty' | 'bed_asleep' | 'bed_sit'): void {
+    if (!this.textures.exists(texture)) return;
+    if (this.bed) {
+      this.bed.setTexture(texture);
+      return;
+    }
+    this.bed = this.add.image(BED_POS.x, BED_POS.y, texture).setOrigin(0).setDepth(BED_DEPTH);
+    this.roomObjects.push(this.bed);
+  }
+
   private clearRoom(): void {
     this.dialogue.clear();
     this.ambient?.destroy();
     this.ambient = undefined;
+    this.bed = undefined;
     for (const o of this.roomObjects) o.destroy();
     this.roomObjects = [];
     this.clearGlints();
@@ -198,11 +212,12 @@ export class GameScene extends Phaser.Scene {
     if (this.room.id === 'kitchen' && !store.get().lucyJoined) {
       store.update((s) => (s.lucyJoined = true));
       const lp = this.room.lucyRestPoint ?? this.room.restPoint;
-      // Lucy comes running in through the family room doorway to meet him. Only the near door
-      // jamb is redrawn in front of her; the far side of the frame stays behind her.
+      // Lucy comes running in through the family room doorway to meet him. The frame and the wall
+      // right of it are redrawn over her so she emerges from the opening; an 18px strip of it just
+      // sliced her down the middle as she walked past.
       const door = { x: this.room.exits.find((e) => e.to === 'family_room')?.walkTo.x ?? GAME_WIDTH - 40, y: KITCHEN_DOORWAY_Y };
       const bg = `${this.room.background}_0`;
-      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(580, 50, 18, 284);
+      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(DOORWAY_NEAR_EDGE, 50, GAME_WIDTH - DOORWAY_NEAR_EDGE, 284);
       this.lucy = new Character(this, 'lucy', GAME_WIDTH + 24, door.y);
       this.lucy.face(-1);
       await this.wait(400);

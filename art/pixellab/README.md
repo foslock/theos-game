@@ -47,8 +47,9 @@ The title screen layers `intro_house` (static), three drifting pixel clouds
 use the code-drawn `glint` at texture coords listed in `IntroScene.ts`.
 
 New Game runs `StoryScene` ("One Saturday..." / "...at the Lockwoods", dithered)
-and then the bedroom wake-up in `GameScene.wakeUp()`, which layers `theo_asleep`,
-`theo_sitting` and `theo_front` over the bed with the footboard redrawn in front.
+and then the bedroom wake-up in `GameScene.wakeUp()`. The bedroom art has no bed of
+its own: `bed_empty`, `bed_asleep` and `bed_sit` are whole-bed tiles drawn over it at
+`BED_POS`, and the wake-up swaps between them before handing over to `theo_front`.
 
 ## Macintosh frame
 
