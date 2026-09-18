@@ -49,6 +49,8 @@ export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   fontFamily: TEXT_FAMILY,
   fontSize: '8px',
   color: '#000000',
+  // Press Start 2P sets its lines tight, which runs wrapped speech together at this size.
+  lineSpacing: 5,
   wordWrap: { width: 220 },
 };
 
