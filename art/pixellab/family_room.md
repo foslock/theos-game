@@ -26,3 +26,12 @@ ceiling cropped, edges padded). Frame 1 is a programmatic highlight shift, not
 a second render. Cost: 40 generations.
 
 > (global style) A comfortable family room. White built-in bookshelves full of colourful books on the left wall, a fireplace with a gold framed painting above it, a big red and white checked armchair and a yellow couch with cushions, a wide flat television on a white cabinet centre-right, a bay window with a window seat, a round wooden coffee table, a blue rug on a wooden floor, a toy bus on the floor near the right. An open doorway on the far left edge and a door on the far right edge.
+
+## 2026-09-18 — floor patch removed
+
+The prompt asked for "a toy bus on the floor near the right", so the render had one baked in.
+It had been painted out at some point, leaving a rectangle of floorboards at (512,266)-(578,315)
+whose diagonal seams did not line up with the surrounding floor — visible as a lighter panel
+under the `toy_bus` pickup. Repaired with `/inpaint-v3` on a 512x400 crop (x 128-640) and pasted
+back into both frames, which are byte-identical in that rectangle. The pickup sprite itself was
+always clean; only the background was wrong.
