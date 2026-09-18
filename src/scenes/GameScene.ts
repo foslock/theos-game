@@ -20,6 +20,10 @@ const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
 const LUCY_FOLLOW_DELAY_MS = 150;
 const LUCY_RUN_SPEED = WALK_SPEED * 1.7;
+/** Feet height that puts Lucy inside the kitchen's right doorway (its floor runs to about y 330). */
+const KITCHEN_DOORWAY_Y = 326;
+/** Gap between one hint sparkle starting and the next (each twinkle lasts 1.2s). */
+const GLINT_STAGGER_MS = 1400;
 
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
 export class GameScene extends Phaser.Scene {
@@ -37,6 +41,8 @@ export class GameScene extends Phaser.Scene {
   private pickupSprites = new Map<string, Phaser.GameObjects.Image>();
   /** Hidden pickups still to be found, by hotspot id, so hints can glint their hiding place. */
   private hiddenPickups = new Map<string, Rect>();
+  /** Sparkles queued by the last hint, so an interaction can cut the sequence short. */
+  private glints: { tween: Phaser.Tweens.Tween; image: Phaser.GameObjects.Image }[] = [];
   /** Containers already opened this visit, so the open flash only plays once each. */
   private openedContainers = new Set<string>();
   private _busy = false;
@@ -69,8 +75,9 @@ export class GameScene extends Phaser.Scene {
     const s = store.get();
     this.room = getRoom(s.currentRoom);
     const wake = !!data.wakeUp && this.room.id === 'bedroom' && ['theo_front', 'theo_asleep', 'theo_sitting'].every((k) => this.textures.exists(k));
-    // In the wake-up intro the HUD (and its backpack prompt) waits until Theo is out of bed.
-    if (!wake) this.scene.launch('Hud');
+    // During the wake-up intro the HUD is shown but keeps its backpack prompt quiet.
+    this.registry.set('hudQuiet', wake);
+    this.scene.launch('Hud');
     this.buildRoom();
 
     const entryExit = s.previousRoom ? findExit(this.room.id, s.previousRoom) : undefined;
@@ -133,7 +140,7 @@ export class GameScene extends Phaser.Scene {
     this.theo.setPosition(300, 342);
     this.theo.sprite.setVisible(true);
     playSfx('step');
-    this.scene.launch('Hud');
+    this.registry.set('hudQuiet', false);
     this.busy = false;
     await this.enterRoom(true);
   }
@@ -166,6 +173,7 @@ export class GameScene extends Phaser.Scene {
     this.ambient = undefined;
     for (const o of this.roomObjects) o.destroy();
     this.roomObjects = [];
+    this.clearGlints();
     this.pickupSprites.clear();
     this.hiddenPickups.clear();
     this.openedContainers.clear();
@@ -189,12 +197,16 @@ export class GameScene extends Phaser.Scene {
     if (this.room.id === 'kitchen' && !store.get().lucyJoined) {
       store.update((s) => (s.lucyJoined = true));
       const lp = this.room.lucyRestPoint ?? this.room.restPoint;
-      // Lucy comes running in from the family room doorway to meet him.
-      const door = this.room.exits.find((e) => e.to === 'family_room')?.walkTo ?? { x: GAME_WIDTH, y: lp.y };
+      // Lucy comes running in through the family room doorway to meet him. Only the near door
+      // jamb is redrawn in front of her; the far side of the frame stays behind her.
+      const door = { x: this.room.exits.find((e) => e.to === 'family_room')?.walkTo.x ?? GAME_WIDTH - 40, y: KITCHEN_DOORWAY_Y };
+      const bg = `${this.room.background}_0`;
+      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(580, 50, 18, 284);
       this.lucy = new Character(this, 'lucy', GAME_WIDTH + 24, door.y);
       this.lucy.face(-1);
       await this.wait(400);
-      await this.lucy.walkPath([{ x: door.x, y: door.y }, ...findPath(this.walkMap, door, lp)], true, LUCY_RUN_SPEED);
+      await this.lucy.walkPath([door, ...findPath(this.walkMap, door, lp)], true, LUCY_RUN_SPEED);
+      jamb.destroy();
       this.lucy.face(this.theo.x - lp.x);
       this.breakfast.ensureState();
       await this.sayLucy("Theo! I'm sooo hungry. Can you make breakfast?");
@@ -304,7 +316,7 @@ export class GameScene extends Phaser.Scene {
       this.pickupSprites.set(h.id, img);
     }
     const z = this.zone(h.zone);
-    this.hover(z, () => 'hand');
+    this.hover(z, () => 'grab');
     z.on('pointerdown', () => void this.interact(h.walkTo, () => this.pickUp(h, z)));
   }
 
@@ -313,7 +325,7 @@ export class GameScene extends Phaser.Scene {
     this.roomObjects.push(img);
     this.pickupSprites.set(h.id, img);
     const z = this.zone(h.zone);
-    this.hover(z, () => 'hand');
+    this.hover(z, () => 'grab');
     z.on('pointerdown', () =>
       void this.interact(h.walkTo, async () => {
         if (getFlag(store.get(), FLAGS.hasBackpack)) return;
@@ -330,7 +342,8 @@ export class GameScene extends Phaser.Scene {
 
   private addContainer(h: ContainerHotspot): void {
     const z = this.zone(h.zone);
-    this.hover(z, () => 'hand');
+    // Something may be tucked inside, so it gets the same grabbing hand as a loose item.
+    this.hover(z, () => 'grab');
     z.on('pointerdown', () =>
       void this.interact(h.walkTo, async () => {
         this.hints.reset();
@@ -361,6 +374,7 @@ export class GameScene extends Phaser.Scene {
     this.busy = true;
     unlockAudio();
     this.dialogue.clear();
+    this.clearGlints();
     try {
       if (walkTo) await this.theo.walkPath(findPath(this.walkMap, this.theo, walkTo));
       await action();
@@ -493,6 +507,16 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /** Stops any sparkles still waiting their turn and removes them. */
+  private clearGlints(): void {
+    for (const { tween, image } of this.glints) {
+      tween.stop();
+      image.destroy();
+    }
+    this.glints = [];
+    this.roomObjects = this.roomObjects.filter((o) => o.active);
+  }
+
   /**
    * Glints the things the player still needs, each at a random spot on the object so the
    * sparkle never lands in the same place twice. With `speak`, Theo also says a hint.
@@ -512,14 +536,26 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
-    for (const t of targets) {
+    // One sparkle at a time: each target twinkles for a moment, then the next one takes its turn.
+    this.clearGlints();
+    targets.forEach((t, i) => {
       const inset = 4;
       const x = Phaser.Math.Between(t.x + inset, Math.max(t.x + inset, t.x + t.w - inset));
       const y = Phaser.Math.Between(t.y + inset, Math.max(t.y + inset, t.y + t.h - inset));
       const g = this.add.image(x, y, 'glint').setDepth(950).setScale(0);
       this.roomObjects.push(g);
-      this.tweens.add({ targets: g, scale: 1.3, angle: 90, duration: 350, yoyo: true, repeat: 3, onComplete: () => g.destroy() });
-    }
+      const tw = this.tweens.add({
+        targets: g,
+        scale: 1.3,
+        angle: 90,
+        duration: 300,
+        yoyo: true,
+        repeat: 1,
+        delay: i * GLINT_STAGGER_MS,
+        onComplete: () => g.destroy(),
+      });
+      this.glints.push({ tween: tw, image: g });
+    });
     if (!speak) return;
     const line = hintLine(this.room, state);
     if (line && !this.busy) void this.sayTheo(line);

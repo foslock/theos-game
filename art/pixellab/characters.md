@@ -51,7 +51,7 @@ Reference photos: `reference/lucy.jpeg`, `reference/theo-and-lucy.jpeg`.
 
 ## Chosen item candidates (generate-image-v2, 24x24, 64 per call)
 
-spoon 4 (seed 41), bowl 62 (42), cereal 38 (43), milk 4 (44), basketball 49 (45),
+spoon 4 (seed 41), bowl: regenerated empty (seed 142, candidate 40; the first batch all had cereal in them), cereal 38 (43), milk 4 (44), basketball 49 (45),
 stomp_rocket 4 (46), kitchen_door_key 24 (47), garage_key 22 (48),
 playhouse_key 10 (49), toy_bus 62 (50), backpack: regenerated at 64x64 (seed 77) because the
 48x44 render was cropped at the top; candidate 8 trimmed to its bounds and padded to 52x56.

@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Direction } from '../data/rooms';
 
-export type CursorKind = 'default' | 'hand' | 'look' | 'talk' | 'wait' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
+export type CursorKind = 'default' | 'hand' | 'grab' | 'look' | 'talk' | 'wait' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
 
 const cache = new Map<CursorKind, string>();
 
@@ -99,6 +99,35 @@ function drawTalk(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(15, 8, 2, 2);
 }
 
+/** Grabbing hand for things that can be picked up: curled fingers over a palm, thumb to the side. */
+function drawGrab(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  // palm
+  ctx.beginPath();
+  ctx.roundRect(5, 9, 15, 12, 3);
+  ctx.fill();
+  ctx.stroke();
+  // four curled fingers along the top
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.roundRect(5 + i * 4, 4, 4, 7, 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  // thumb tucked across the left side
+  ctx.beginPath();
+  ctx.roundRect(2, 11, 6, 5, 2);
+  ctx.fill();
+  ctx.stroke();
+  // knuckle line
+  ctx.beginPath();
+  ctx.moveTo(8, 14);
+  ctx.lineTo(18, 14);
+  ctx.stroke();
+}
+
 /** Faded analog wristwatch: shown while the characters are walking or talking and clicks are ignored. */
 function drawWait(ctx: CanvasRenderingContext2D): void {
   ctx.globalAlpha = 0.55;
@@ -144,6 +173,7 @@ function cursorCss(kind: CursorKind): string {
     else if (kind === 'look') drawLook(ctx);
     else if (kind === 'talk') drawTalk(ctx);
     else if (kind === 'wait') drawWait(ctx);
+    else if (kind === 'grab') drawGrab(ctx);
     else {
       const m = /^arrow_(up|down|left|right)(_locked)?$/.exec(kind)!;
       drawArrow(ctx, m[1] as Direction, !!m[2]);

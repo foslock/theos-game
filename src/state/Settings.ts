@@ -3,9 +3,11 @@ import { SETTINGS_KEY } from '../config';
 export interface Settings {
   sfxVolume: number; // 0..1
   musicVolume: number; // 0..1
+  /** Scanline / phosphor overlay on the Mac screen. */
+  crtEffect: boolean;
 }
 
-const DEFAULTS: Settings = { sfxVolume: 0.8, musicVolume: 0.6 };
+const DEFAULTS: Settings = { sfxVolume: 0.8, musicVolume: 0.6, crtEffect: true };
 
 let current: Settings | null = null;
 

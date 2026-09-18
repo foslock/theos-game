@@ -37,6 +37,22 @@ const ZOOM_MS = 900;
 const FRAME_URL = 'assets/frame/mac.png';
 const META_URL = 'assets/frame/mac.json';
 
+/** Game canvas is 640x480; the scanline pitch follows the on-screen size of a game pixel. */
+const GAME_W = 640;
+const GAME_H = 480;
+
+function sizeCrt(crt: HTMLElement, w: number, h: number): void {
+  const px = h / GAME_H;
+  const py = w / GAME_W;
+  // First layer: horizontal scanlines every 2 game rows. Second: a faint aperture grille every 3 columns.
+  crt.style.backgroundSize = `100% ${(px * 2).toFixed(3)}px, ${(py * 3).toFixed(3)}px 100%`;
+}
+
+/** Shows or hides the CRT overlay. Safe to call before the frame exists. */
+export function applyCrtSetting(enabled: boolean): void {
+  document.getElementById('screen')?.classList.toggle('crt-off', !enabled);
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, id: string, parent: HTMLElement): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
   e.id = id;
@@ -64,6 +80,7 @@ export async function mountFrame(): Promise<Frame> {
   const game = el('div', 'game', screen);
   const flash = el('div', 'flash', screen);
   const vignette = el('div', 'vignette', screen);
+  const crt = el('div', 'crt', screen);
   const power = el('div', 'power', screen);
   power.textContent = 'Click to turn on';
   if (meta) {
@@ -83,6 +100,7 @@ export async function mountFrame(): Promise<Frame> {
       // No frame art: the screen is the whole window and Phaser centres the canvas in it.
       Object.assign(mac.style, { left: '0px', top: '0px', width: `${vw}px`, height: `${vh}px` });
       Object.assign(screen.style, { left: '0px', top: '0px', width: `${vw}px`, height: `${vh}px` });
+      sizeCrt(crt, vw, vh);
       return;
     }
     // What we fit to the window: the whole case, or just the screen plus a rim of bezel.
@@ -103,6 +121,7 @@ export async function mountFrame(): Promise<Frame> {
       height: `${Math.round(sc.h * s)}px`,
       borderRadius: `${Math.round((meta.screenRadius ?? 0) * s)}px`,
     });
+    sizeCrt(crt, Math.round(sc.w * s), Math.round(sc.h * s));
   };
   layout();
   window.addEventListener('resize', layout);
