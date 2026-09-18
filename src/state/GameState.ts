@@ -53,6 +53,11 @@ export function hasItem(state: GameState, id: ItemId, count = 1): boolean {
   return !!entry && entry.count >= count;
 }
 
+/** How many things Theo is carrying in total, counting stacks. */
+export function carriedCount(state: GameState): number {
+  return state.inventory.reduce((n, e) => n + e.count, 0);
+}
+
 export function itemCount(state: GameState, id: ItemId): number {
   return state.inventory.find((e) => e.item === id)?.count ?? 0;
 }

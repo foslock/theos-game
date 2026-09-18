@@ -42,6 +42,7 @@
   },
   "spritesheets": {
     "theo": { "file": "characters/theo.png", "status": "pixellab", "frameWidth": 64, "frameHeight": 96, "frames": 6 },
-    "lucy": { "file": "characters/lucy.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 6 }
+    "lucy": { "file": "characters/lucy.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 6 },
+    "lucy_clap": { "file": "characters/lucy_clap.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 2, "_note": "hands apart then together; played when Theo pockets something and Lucy is with him" }
   }
 }

@@ -14,7 +14,19 @@ import {
 } from '../data/rooms';
 import { exitOpen, findExit } from '../data/graph';
 import { ITEMS, type ItemId } from '../data/items';
-import { addItem, FLAGS, getFlag, isPickedUp, isUnlocked, markPickedUp, markUnlocked, removeItem, setFlag, type GameState } from '../state/GameState';
+import {
+  addItem,
+  carriedCount,
+  FLAGS,
+  getFlag,
+  isPickedUp,
+  isUnlocked,
+  markPickedUp,
+  markUnlocked,
+  removeItem,
+  setFlag,
+  type GameState,
+} from '../state/GameState';
 import { store } from '../state/Store';
 import { evaluate, requiredItem } from '../systems/Conditions';
 import { Character } from '../systems/Walker';
@@ -86,6 +98,9 @@ export class GameScene extends Phaser.Scene {
   /** Everything clickable in the room, resolved by nearest footprint rather than Phaser zones. */
   private targets: Target[] = [];
   private _busy = false;
+  /** Items carried, watched so that anything new setting Lucy off works wherever it came from. */
+  private carried = 0;
+  private unwatchInventory?: () => void;
   /** Cursor the pointer would show if nothing were happening (what it is hovering). */
   private hoverKind: CursorKind = 'default';
 
@@ -133,6 +148,13 @@ export class GameScene extends Phaser.Scene {
       this.targetAt(p)?.press();
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onPointerMove(p));
+    // Lucy cheers whatever Theo pockets, whether he picked it off the floor or found it in a drawer.
+    this.carried = carriedCount(s);
+    this.unwatchInventory = store.subscribe((next) => {
+      const now = carriedCount(next);
+      if (now > this.carried) this.lucy?.celebrate();
+      this.carried = now;
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardown());
 
     if (wake) {
@@ -225,6 +247,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private teardown(): void {
+    this.unwatchInventory?.();
+    this.unwatchInventory = undefined;
     this.hints.stop();
     this.fade.destroy();
     this.clearRoom();

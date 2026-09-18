@@ -79,3 +79,18 @@ against the background.
   the carpet; at the generator's framing the leg floated 21-30px up onto the wall.
 - Lesson: for a pose that has to sit in existing furniture, generate the furniture with it and pass
   the room art as a reference. Inpainting removes things well but will not add a figure.
+
+## Lucy's clap (2026-09-18)
+
+`lucy_clap.png` 96x72, two 48x72 frames: hands apart, then pressed together. Played once through
+(three claps) whenever the carried-item count rises and Lucy is in the room.
+
+- No template animation fits a clap and `/characters/{id}/animations` is POST-only, so the template
+  ids cannot be listed — guessing one is not worth it. Generated as poses with `/generate-image-v2`
+  instead, the same route as Theo's wake-up frames.
+- `together` came from seed 51, candidate 9, with Lucy's idle frame 0 as the reference. `apart` came
+  from seed 52, candidate 8, referencing the *chosen together frame* so the body would match rather
+  than the idle. Most of the other candidates dropped the pink bow.
+- The two frames were then aligned to idle frame 0 by searching for the offset that best overlaps
+  the bottom 16 rows of her silhouette — her legs, which no arm pose should move. `together` needed
+  dx +2 and `apart` dx +7; without that her feet slide as the animation plays.

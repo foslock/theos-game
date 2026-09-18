@@ -15,6 +15,15 @@ export function createCharacterAnimations(scene: Phaser.Scene): void {
         repeat: -1,
       });
     }
+    // Lucy has an extra two-frame clap on its own sheet; Theo has no equivalent.
+    if (key === 'lucy' && scene.textures.exists('lucy_clap') && !scene.anims.exists('lucy_clap')) {
+      scene.anims.create({
+        key: 'lucy_clap',
+        frames: [0, 1, 0, 1, 0, 1].map((frame) => ({ key: 'lucy_clap', frame })),
+        frameRate: 7,
+        repeat: 0,
+      });
+    }
     if (!scene.anims.exists(`${key}_walk`)) {
       scene.anims.create({
         key: `${key}_walk`,
@@ -60,6 +69,17 @@ export class Character {
   idle(): void {
     this.sprite.setFlipX(false);
     this.sprite.play(`${this.key}_idle`, true);
+  }
+
+  /**
+   * A few excited claps, then back to idle. Ignored while walking, so it never fights the walk
+   * cycle, and it resolves as soon as the animation ends.
+   */
+  celebrate(): void {
+    if (this.tween || !this.scene.anims.exists(`${this.key}_clap`)) return;
+    this.sprite.setFlipX(false);
+    this.sprite.play(`${this.key}_clap`, true);
+    this.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.idle());
   }
 
   /** Walks in a straight line. Prefer `walkPath` with a route from `findPath` so feet stay on the floor. */
