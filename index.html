@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Lockwood Mac</title>
+    <!-- Fetched during parse: the frame is not requested until the bundle has run, and nothing shows until it arrives. -->
+    <link rel="preload" as="image" href="assets/frame/mac.png" />
     <style>
       html, body { margin: 0; padding: 0; background: #2a2622; height: 100%; overflow: hidden; }
       body {
@@ -12,7 +14,9 @@
         -webkit-user-select: none;
         user-select: none;
       }
-      #stage { position: fixed; inset: 0; }
+      /* Hidden until the case art has loaded, so the dark screen and its prompt cannot appear first. */
+      #stage { position: fixed; inset: 0; opacity: 0; transition: opacity 0.25s ease-out; }
+      #stage.ready { opacity: 1; }
       #mac { position: absolute; }
       /* Sliding from the whole-Mac view to the close-up of the screen after power-on. */
       #mac.zooming, #mac.zooming #screen {

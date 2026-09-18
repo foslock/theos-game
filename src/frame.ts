@@ -86,7 +86,11 @@ async function loadMeta(): Promise<FrameMeta | null> {
   }
 }
 
-/** Builds the frame DOM inside `#stage`. Falls back to a plain centred canvas if the art is missing. */
+/**
+ * Builds the frame DOM inside `#stage` and reveals it once the case art is on screen, so the
+ * screen and its prompt never show against an empty page. Falls back to a plain centred canvas
+ * if the art is missing.
+ */
 export async function mountFrame(): Promise<Frame> {
   const stage = document.getElementById('stage')!;
   const meta = await loadMeta();
@@ -101,9 +105,13 @@ export async function mountFrame(): Promise<Frame> {
   power.textContent = `${pointerVerb()} to turn on`;
   if (meta) {
     const bezel = el('img', 'bezel', mac);
-    bezel.src = FRAME_URL;
     bezel.alt = '';
     bezel.draggable = false;
+    await new Promise<void>((resolve) => {
+      bezel.addEventListener('load', () => resolve(), { once: true });
+      bezel.addEventListener('error', () => resolve(), { once: true });
+      bezel.src = FRAME_URL;
+    });
   } else {
     mac.classList.add('bare');
   }
@@ -145,6 +153,7 @@ export async function mountFrame(): Promise<Frame> {
   // Screen starts dark, picture collapsed to a line until power-on.
   game.classList.add('off');
   vignette.style.opacity = '0';
+  stage.classList.add('ready');
 
   const waitForPowerOn = (): Promise<void> =>
     new Promise((resolve) => {
