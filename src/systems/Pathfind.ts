@@ -1,5 +1,6 @@
 import type { Pt, Rect, Room } from '../data/rooms';
 import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
+import { hitRects } from './Hitbox';
 
 /** Default top of the walkable floor band (feet may not go above this). */
 export const DEFAULT_FLOOR_TOP = 280;
@@ -33,8 +34,11 @@ export function buildWalkMap(room: Room): WalkMap {
   for (const h of room.hotspots) {
     if (h.kind !== 'decoration' && h.kind !== 'container') continue;
     if (h.walkable) continue;
-    const r = intersect(h.zone, top, bottom);
-    if (r) obstacles.push(r);
+    // Shaped furniture blocks only where it actually stands, so feet can pass under an overhang.
+    for (const part of hitRects(h)) {
+      const r = intersect(part, top, bottom);
+      if (r) obstacles.push(r);
+    }
   }
   for (const r of room.obstacles ?? []) {
     const c = intersect(r, top, bottom);

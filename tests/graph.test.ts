@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { edges, findExit, canTravel, reachable } from '../src/data/graph';
+import { overlaps, partsWithinZone } from '../src/systems/Hitbox';
 import { ROOMS, ROOM_IDS } from '../src/data/rooms';
 import { newGameState, addItem, setFlag } from '../src/state/GameState';
 
@@ -70,21 +71,32 @@ describe('scene graph', () => {
 });
 
 describe('room layout', () => {
-  const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
-    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+  const footprints = (id: (typeof ROOM_IDS)[number]) => [
+    ...ROOMS[id].exits.map((e) => ({ id: `exit:${e.to}`, box: e })),
+    ...ROOMS[id].hotspots.map((h) => ({ id: h.id, box: h })),
+  ];
 
-  it('no two clickable zones overlap in any room', () => {
+  /**
+   * A click resolves to the single nearest footprint, so two that share a pixel would make the
+   * target ambiguous there. Shapes may sit close: the pick tolerance covers the gap between them.
+   */
+  it('no two clickable footprints overlap in any room', () => {
     const bad: string[] = [];
     for (const id of ROOM_IDS) {
-      const zones = [
-        ...ROOMS[id].exits.map((e) => ({ id: `exit:${e.to}`, zone: e.zone })),
-        ...ROOMS[id].hotspots.map((h) => ({ id: h.id, zone: h.zone })),
-      ];
-      for (let i = 0; i < zones.length; i++) {
-        for (let j = i + 1; j < zones.length; j++) {
-          if (overlaps(zones[i].zone, zones[j].zone)) bad.push(`${id}: ${zones[i].id} overlaps ${zones[j].id}`);
+      const items = footprints(id);
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          if (overlaps(items[i].box, items[j].box)) bad.push(`${id}: ${items[i].id} overlaps ${items[j].id}`);
         }
       }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('keeps every shape inside the bounding box the game measures from', () => {
+    const bad: string[] = [];
+    for (const id of ROOM_IDS) {
+      for (const { id: hid, box } of footprints(id)) if (!partsWithinZone(box)) bad.push(`${id}: ${hid}`);
     }
     expect(bad).toEqual([]);
   });

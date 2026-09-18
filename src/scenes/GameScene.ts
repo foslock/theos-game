@@ -1,6 +1,17 @@
 import Phaser from 'phaser';
 import { FADE_MS, GAME_WIDTH, SCENE_HEIGHT, WALK_SPEED } from '../config';
-import { getRoom, type Exit, type Hotspot, type Room, type PickupHotspot, type ContainerHotspot, type DecorationHotspot, type Rect, type Pt } from '../data/rooms';
+import {
+  getRoom,
+  type Exit,
+  type Hitbox,
+  type Hotspot,
+  type Room,
+  type PickupHotspot,
+  type ContainerHotspot,
+  type DecorationHotspot,
+  type Rect,
+  type Pt,
+} from '../data/rooms';
 import { findExit } from '../data/graph';
 import { ITEMS, type ItemId } from '../data/items';
 import { addItem, FLAGS, getFlag, isPickedUp, markPickedUp, setFlag, type GameState } from '../state/GameState';
@@ -13,6 +24,7 @@ import { HintTimer, hintLine } from '../systems/Hints';
 import { DitherFade } from '../systems/DitherFade';
 import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
+import { hitRects, pick } from '../systems/Hitbox';
 import { playSfx, unlockAudio } from '../systems/Sfx';
 import { BreakfastController } from '../puzzles/BreakfastController';
 
@@ -42,6 +54,13 @@ const BED_DEPTH = 328;
 /** Where Theo lands after hopping out, clear of the bed's footprint. */
 const WAKE_STAND = { x: 300, y: 344 };
 
+/** Something clickable in the room: a footprint plus what it does. */
+interface Target extends Hitbox {
+  id: string;
+  cursor: () => CursorKind;
+  press: () => void;
+}
+
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
 export class GameScene extends Phaser.Scene {
   theo!: Character;
@@ -64,6 +83,8 @@ export class GameScene extends Phaser.Scene {
   private glints: { tween: Phaser.Tweens.Tween; image: Phaser.GameObjects.Image }[] = [];
   /** Containers already opened this visit, so the open flash only plays once each. */
   private openedContainers = new Set<string>();
+  /** Everything clickable in the room, resolved by nearest footprint rather than Phaser zones. */
+  private targets: Target[] = [];
   private _busy = false;
   /** Cursor the pointer would show if nothing were happening (what it is hovering). */
   private hoverKind: CursorKind = 'default';
@@ -107,7 +128,11 @@ export class GameScene extends Phaser.Scene {
       this.lucy = new Character(this, 'lucy', Phaser.Math.Clamp(spawn.x - dir * LUCY_FOLLOW_GAP, 16, 624), spawn.y + LUCY_FOLLOW_DY);
     }
 
-    this.input.on('pointerdown', () => unlockAudio());
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      unlockAudio();
+      this.targetAt(p)?.press();
+    });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onPointerMove(p));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardown());
 
     if (wake) {
@@ -186,6 +211,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private clearRoom(): void {
+    this.targets = [];
     this.dialogue.clear();
     this.ambient?.destroy();
     this.ambient = undefined;
@@ -268,37 +294,38 @@ export class GameScene extends Phaser.Scene {
     this.lucy?.face(this.theo.x - this.lucy.x);
   }
 
-  // ---------- Zones ----------
+  // ---------- Targets ----------
 
-  private zone(r: Rect): Phaser.GameObjects.Zone {
-    const z = this.add.zone(r.x, r.y, r.w, r.h).setOrigin(0).setInteractive();
-    this.roomObjects.push(z);
-    return z;
+  /**
+   * Registers something clickable. Rather than one Phaser zone per hotspot, the scene keeps the
+   * footprints itself and resolves a pointer to the single nearest one, which is what lets the
+   * shapes hug the art and still forgive a near miss.
+   */
+  private addTarget(id: string, box: Hitbox, cursor: () => CursorKind, press: () => void): void {
+    this.targets.push({ id, zone: box.zone, parts: box.parts, cursor, press });
   }
 
-  /** Drops a click zone once its object is gone, clearing the hover cursor if the pointer is still on it. */
-  private removeZone(z: Phaser.GameObjects.Zone): void {
-    this.roomObjects = this.roomObjects.filter((o) => o !== z);
-    z.destroy();
+  private removeTarget(id: string): void {
+    this.targets = this.targets.filter((t) => t.id !== id);
     this.hoverKind = 'default';
     if (!this.busy) setCursor(this, 'default');
   }
 
-  private hover(z: Phaser.GameObjects.Zone, kind: () => CursorKind): void {
-    z.on('pointerover', () => {
-      this.hoverKind = kind();
-      if (!this.busy) setCursor(this, this.hoverKind);
-    });
-    z.on('pointerout', () => {
-      this.hoverKind = 'default';
-      if (!this.busy) setCursor(this, 'default');
-    });
+  /** The target a pointer is over, if any. The HUD runs as its own scene and owns the bar below. */
+  private targetAt(p: Phaser.Input.Pointer): Target | undefined {
+    if (p.y > SCENE_HEIGHT) return undefined;
+    return pick(this.targets, p.x, p.y);
+  }
+
+  private onPointerMove(p: Phaser.Input.Pointer): void {
+    this.hoverKind = this.targetAt(p)?.cursor() ?? 'default';
+    if (!this.busy) setCursor(this, this.hoverKind);
   }
 
   private addExitZone(exit: Exit): void {
-    const z = this.zone(exit.zone);
-    this.hover(z, () => arrowCursor(exit.direction, !evaluate(exit.condition, store.get())));
-    z.on('pointerdown', () => void this.useExit(exit));
+    this.addTarget(`exit:${exit.to}`, exit, () => arrowCursor(exit.direction, !evaluate(exit.condition, store.get())), () =>
+      void this.useExit(exit),
+    );
   }
 
   private addHotspot(h: Hotspot, state: GameState): void {
@@ -318,12 +345,9 @@ export class GameScene extends Phaser.Scene {
       case 'decoration':
         this.addDecoration(h);
         break;
-      case 'talk': {
-        const z = this.zone(h.zone);
-        this.hover(z, () => 'talk');
-        z.on('pointerdown', () => void this.interact(h.walkTo, () => this.talk(h.id)));
+      case 'talk':
+        this.addTarget(h.id, h, () => 'talk', () => void this.interact(h.walkTo, () => this.talk(h.id)));
         break;
-      }
     }
   }
 
@@ -335,24 +359,20 @@ export class GameScene extends Phaser.Scene {
       this.roomObjects.push(img);
       this.pickupSprites.set(h.id, img);
     }
-    const z = this.zone(h.zone);
-    this.hover(z, () => 'grab');
-    z.on('pointerdown', () => void this.interact(h.walkTo, () => this.pickUp(h, z)));
+    this.addTarget(h.id, h, () => 'grab', () => void this.interact(h.walkTo, () => this.pickUp(h)));
   }
 
   private addBackpack(h: Extract<Hotspot, { kind: 'backpack' }>): void {
     const img = this.add.image(h.zone.x + h.zone.w / 2, h.zone.y + h.zone.h / 2, 'backpack').setDepth(h.zone.y + h.zone.h);
     this.roomObjects.push(img);
     this.pickupSprites.set(h.id, img);
-    const z = this.zone(h.zone);
-    this.hover(z, () => 'grab');
-    z.on('pointerdown', () =>
+    this.addTarget(h.id, h, () => 'grab', () =>
       void this.interact(h.walkTo, async () => {
         if (getFlag(store.get(), FLAGS.hasBackpack)) return;
         this.hints.reset();
         img.destroy();
         this.pickupSprites.delete(h.id);
-        this.removeZone(z);
+        this.removeTarget(h.id);
         store.update((s) => setFlag(s, FLAGS.hasBackpack));
         playSfx('success');
         await this.sayTheo('My backpack! Now I can carry things with me.');
@@ -361,10 +381,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addContainer(h: ContainerHotspot): void {
-    const z = this.zone(h.zone);
     // Something may be tucked inside, so it gets the same grabbing hand as a loose item.
-    this.hover(z, () => 'grab');
-    z.on('pointerdown', () =>
+    this.addTarget(h.id, h, () => 'grab', () =>
       void this.interact(h.walkTo, async () => {
         this.hints.reset();
         await this.breakfast.openContainer(h);
@@ -373,15 +391,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addDecoration(h: DecorationHotspot): void {
-    const z = this.zone(h.zone);
-    this.hover(z, () => 'look');
-    const flash = this.add.rectangle(h.zone.x, h.zone.y, h.zone.w, h.zone.h, 0xffffff, 0).setOrigin(0).setDepth(1);
-    this.roomObjects.push(flash);
-    z.on('pointerdown', () => {
+    // The flash outlines the part of the shape you clicked, not the whole bounding box.
+    const flashes = hitRects(h).map((r) => {
+      const f = this.add.rectangle(r.x, r.y, r.w, r.h, 0xffffff, 0).setOrigin(0).setDepth(1);
+      this.roomObjects.push(f);
+      return f;
+    });
+    this.addTarget(h.id, h, () => 'look', () => {
       if (this.busy) return;
       unlockAudio();
       playSfx(h.sfx ?? 'click');
-      this.tweens.add({ targets: flash, fillAlpha: 0.45, duration: 80, yoyo: true, repeat: 1 });
+      this.tweens.add({ targets: flashes, fillAlpha: 0.45, duration: 80, yoyo: true, repeat: 1 });
       if (h.lines?.length) void this.sayTheo(Phaser.Utils.Array.GetRandom(h.lines));
     });
   }
@@ -403,7 +423,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private async pickUp(h: PickupHotspot, zone: Phaser.GameObjects.Zone): Promise<void> {
+  private async pickUp(h: PickupHotspot): Promise<void> {
     if (isPickedUp(store.get(), this.room.id, h.id)) return;
     if (!evaluate(h.condition, store.get())) {
       playSfx('locked');
@@ -420,7 +440,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.pickupSprites.delete(h.id);
     this.hiddenPickups.delete(h.id);
-    this.removeZone(zone);
+    this.removeTarget(h.id);
     playSfx('pickup');
     await this.sayTheo(h.foundComment ?? `Got the ${ITEMS[h.item].name.toLowerCase()}!`);
   }

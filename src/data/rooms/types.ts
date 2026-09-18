@@ -26,9 +26,22 @@ export interface Rect {
 
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
-export interface Exit {
-  to: RoomId;
+/**
+ * A clickable footprint. `zone` is the bounding box and is what the game measures from — where
+ * an item pops, where a hint glints, what blocks feet. `parts` optionally describes the shape
+ * inside it for things that are not rectangles, like an armchair or a staircase.
+ *
+ * Parts must stay within `zone` and must not reach into another hotspot's parts: a click picks
+ * the single nearest footprint within a few pixels, so overlapping shapes would make which one
+ * you get ambiguous. Being slightly tight is fine — that tolerance covers near misses.
+ */
+export interface Hitbox {
   zone: Rect;
+  parts?: Rect[];
+}
+
+export interface Exit extends Hitbox {
+  to: RoomId;
   /** Where the characters walk to before the fade, and where they appear when entering from `to`. */
   walkTo: Pt;
   direction: Direction;
@@ -37,11 +50,10 @@ export interface Exit {
   lockedComment?: string;
 }
 
-export interface PickupHotspot {
+export interface PickupHotspot extends Hitbox {
   kind: 'pickup';
   id: string;
   item: ItemId;
-  zone: Rect;
   walkTo?: Pt;
   /** Requirement to be able to take it (e.g. having the backpack). */
   condition?: Condition;
@@ -54,22 +66,20 @@ export interface PickupHotspot {
   foundComment?: string;
 }
 
-export interface ContainerHotspot {
+export interface ContainerHotspot extends Hitbox {
   kind: 'container';
   id: string;
   label: string;
   /** Category used by puzzles to decide what can be inside. */
   category: 'drawer' | 'cabinet' | 'fridge' | 'other';
-  zone: Rect;
   walkTo?: Pt;
   /** Set when the zone is not solid furniture (feet may cross it). */
   walkable?: boolean;
 }
 
-export interface DecorationHotspot {
+export interface DecorationHotspot extends Hitbox {
   kind: 'decoration';
   id: string;
-  zone: Rect;
   /** Lines Theo may say; one is chosen at random. */
   lines?: string[];
   sfx?: 'boing' | 'click' | 'squeak' | 'ding';
@@ -77,18 +87,16 @@ export interface DecorationHotspot {
   walkable?: boolean;
 }
 
-export interface TalkHotspot {
+export interface TalkHotspot extends Hitbox {
   kind: 'talk';
   id: string;
-  zone: Rect;
   walkTo?: Pt;
   lines: string[];
 }
 
-export interface BackpackHotspot {
+export interface BackpackHotspot extends Hitbox {
   kind: 'backpack';
   id: string;
-  zone: Rect;
   walkTo?: Pt;
 }
 
