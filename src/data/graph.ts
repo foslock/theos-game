@@ -1,5 +1,5 @@
 import { ROOMS, ROOM_IDS, type Exit, type RoomId } from './rooms';
-import type { GameState } from '../state/GameState';
+import { isUnlocked, type GameState } from '../state/GameState';
 import { evaluate } from '../systems/Conditions';
 
 export interface Edge {
@@ -25,9 +25,17 @@ export function findExit(from: RoomId, to: RoomId): Exit | undefined {
   return ROOMS[from].exits.find((e) => e.to === to);
 }
 
+/**
+ * Whether an exit can be walked through: a door that has already been unlocked stays open even
+ * once its key has been spent.
+ */
+export function exitOpen(from: RoomId, exit: Exit, state: GameState): boolean {
+  return isUnlocked(state, from, exit.to) || evaluate(exit.condition, state);
+}
+
 export function canTravel(from: RoomId, to: RoomId, state: GameState): boolean {
   const exit = findExit(from, to);
-  return !!exit && evaluate(exit.condition, state);
+  return !!exit && exitOpen(from, exit, state);
 }
 
 /** Rooms reachable from `from` given the current state (BFS). */
@@ -37,7 +45,7 @@ export function reachable(from: RoomId, state: GameState): Set<RoomId> {
   while (queue.length) {
     const cur = queue.shift()!;
     for (const exit of ROOMS[cur].exits) {
-      if (!seen.has(exit.to) && evaluate(exit.condition, state)) {
+      if (!seen.has(exit.to) && exitOpen(cur, exit, state)) {
         seen.add(exit.to);
         queue.push(exit.to);
       }

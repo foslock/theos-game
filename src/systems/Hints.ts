@@ -1,8 +1,8 @@
 import type Phaser from 'phaser';
 import { HINT_GLINT_MS, HINT_SPEAK_MS } from '../config';
-import type { Room } from '../data/rooms';
-import { FLAGS, getFlag, type GameState } from '../state/GameState';
-import { hasItem } from '../state/GameState';
+import type { Room, RoomId } from '../data/rooms';
+import type { ItemId } from '../data/items';
+import { FLAGS, getFlag, hasItem, isUnlocked, type GameState } from '../state/GameState';
 
 /**
  * Idle-hint schedule. After the player has done nothing for a while the things they still
@@ -40,6 +40,14 @@ export class HintTimer {
   }
 }
 
+/**
+ * Whether a key is still worth nagging about: once its door has been opened the key is spent, so
+ * not holding it is the finished state, not the unsolved one.
+ */
+function stillNeeds(state: GameState, key: ItemId, from: RoomId, to: RoomId): boolean {
+  return !isUnlocked(state, from, to) && !hasItem(state, key);
+}
+
 /** A spoken nudge appropriate to where the player is and what they still need. */
 export function hintLine(room: Room, state: GameState): string | null {
   const backpack = getFlag(state, FLAGS.hasBackpack);
@@ -51,16 +59,18 @@ export function hintLine(room: Room, state: GameState): string | null {
       return backpack ? null : 'My backpack is back in my room.';
     case 'kitchen':
       if (!breakfast) return 'Lucy needs breakfast. Let me look in the drawers, cabinets and the fridge.';
-      if (!hasItem(state, 'kitchen_door_key')) return 'The back door is locked. Maybe the key is somewhere in the family room.';
+      if (stillNeeds(state, 'kitchen_door_key', 'kitchen', 'backyard'))
+        return 'The back door is locked. Maybe the key is somewhere in the family room.';
       return null;
     case 'family_room':
-      if (!hasItem(state, 'kitchen_door_key')) return 'Hmm, I think Mom keeps the back door key around here somewhere.';
+      if (stillNeeds(state, 'kitchen_door_key', 'kitchen', 'backyard'))
+        return 'Hmm, I think Mom keeps the back door key around here somewhere.';
       return null;
     case 'backyard':
-      if (!hasItem(state, 'playhouse_key')) return 'The playhouse key might be in the little mailbox.';
+      if (stillNeeds(state, 'playhouse_key', 'backyard', 'playhouse')) return 'The playhouse key might be in the little mailbox.';
       return null;
     case 'playhouse':
-      if (!hasItem(state, 'garage_key')) return "Is that the garage key on the floor?";
+      if (stillNeeds(state, 'garage_key', 'family_room', 'garage')) return "Is that the garage key on the floor?";
       return null;
     default:
       return null;

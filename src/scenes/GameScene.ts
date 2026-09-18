@@ -12,11 +12,11 @@ import {
   type Rect,
   type Pt,
 } from '../data/rooms';
-import { findExit } from '../data/graph';
+import { exitOpen, findExit } from '../data/graph';
 import { ITEMS, type ItemId } from '../data/items';
-import { addItem, FLAGS, getFlag, isPickedUp, markPickedUp, setFlag, type GameState } from '../state/GameState';
+import { addItem, FLAGS, getFlag, isPickedUp, isUnlocked, markPickedUp, markUnlocked, removeItem, setFlag, type GameState } from '../state/GameState';
 import { store } from '../state/Store';
-import { evaluate } from '../systems/Conditions';
+import { evaluate, requiredItem } from '../systems/Conditions';
 import { Character } from '../systems/Walker';
 import { Dialogue } from '../systems/Dialogue';
 import { AmbientBackground } from '../systems/Ambient';
@@ -323,7 +323,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addExitZone(exit: Exit): void {
-    this.addTarget(`exit:${exit.to}`, exit, () => arrowCursor(exit.direction, !evaluate(exit.condition, store.get())), () =>
+    this.addTarget(`exit:${exit.to}`, exit, () => arrowCursor(exit.direction, !exitOpen(this.room.id, exit, store.get())), () =>
       void this.useExit(exit),
     );
   }
@@ -452,13 +452,30 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Spends the key on a door the first time it is opened and remembers the door, so it stays open
+   * for the rest of the playthrough and the key stops taking up a backpack slot.
+   */
+  private async unlockWithKey(exit: Exit): Promise<void> {
+    const from = this.room.id;
+    if (isUnlocked(store.get(), from, exit.to)) return;
+    const key = requiredItem(exit.condition);
+    if (!key) return;
+    store.update((s) => {
+      removeItem(s, key);
+      markUnlocked(s, from, exit.to);
+    });
+    playSfx('open');
+    await this.sayTheo(`The ${ITEMS[key].name.toLowerCase()} worked!`);
+  }
+
   private async useExit(exit: Exit): Promise<void> {
     if (this.busy) return;
     this.busy = true;
     unlockAudio();
     this.dialogue.clear();
     try {
-      if (!evaluate(exit.condition, store.get())) {
+      if (!exitOpen(this.room.id, exit, store.get())) {
         // Locked: no walking over, just a glance that way and the excuse.
         this.theo.face(exit.walkTo.x - this.theo.x);
         playSfx('locked');
@@ -466,6 +483,7 @@ export class GameScene extends Phaser.Scene {
         return;
       }
       await this.moveParty(exit.walkTo);
+      await this.unlockWithKey(exit);
       this.hints.stop();
       this.hoverKind = 'default';
       await this.fadeOut();

@@ -9,6 +9,15 @@ export type Condition =
   | { any: Condition[] }
   | { never: true };
 
+/**
+ * The item a condition is a plain lock for, if it is one — a door gated on nothing but holding a
+ * key. Compound conditions return nothing: what to spend would be a guess, and spending the wrong
+ * thing is worse than leaving it in the backpack.
+ */
+export function requiredItem(cond: Condition | undefined): ItemId | undefined {
+  return cond && 'hasItem' in cond && (cond.count ?? 1) === 1 ? cond.hasItem : undefined;
+}
+
 /** Evaluates an exit/hotspot condition against the current state. Undefined means "open". */
 export function evaluate(cond: Condition | undefined, state: GameState): boolean {
   if (!cond) return true;

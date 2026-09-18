@@ -18,6 +18,8 @@ export interface GameState {
   flags: Record<string, boolean>;
   /** Hotspot ids (room-qualified) that have already been taken/consumed. */
   pickedUp: string[];
+  /** Doors whose key has been used, so they stay open for the rest of the playthrough. */
+  unlocked: string[];
   puzzles: {
     breakfast?: BreakfastState;
   };
@@ -40,6 +42,7 @@ export function newGameState(seed: number): GameState {
     inventory: [],
     flags: {},
     pickedUp: [],
+    unlocked: [],
     puzzles: {},
     savedAt: new Date().toISOString(),
   };
@@ -95,4 +98,18 @@ export function isPickedUp(state: GameState, room: RoomId, hotspotId: string): b
 export function markPickedUp(state: GameState, room: RoomId, hotspotId: string): void {
   const key = hotspotKey(room, hotspotId);
   if (!state.pickedUp.includes(key)) state.pickedUp.push(key);
+}
+
+/** Identifies a door by the rooms it joins, so both sides of it share one unlocked state. */
+export function doorKey(from: RoomId, to: RoomId): string {
+  return [from, to].sort().join('<->');
+}
+
+export function isUnlocked(state: GameState, from: RoomId, to: RoomId): boolean {
+  return state.unlocked.includes(doorKey(from, to));
+}
+
+export function markUnlocked(state: GameState, from: RoomId, to: RoomId): void {
+  const key = doorKey(from, to);
+  if (!state.unlocked.includes(key)) state.unlocked.push(key);
 }
