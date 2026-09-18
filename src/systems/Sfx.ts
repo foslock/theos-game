@@ -1,6 +1,6 @@
 import { getSettings } from '../state/Settings';
 
-export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success';
+export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot';
 
 let ctx: AudioContext | null = null;
 
@@ -52,6 +52,14 @@ const PATTERNS: Record<SfxName, Tone[]> = {
   squeak: [{ freq: 1200, to: 1700, dur: 0.12, type: 'sine', gain: 0.35 }],
   ding: [{ freq: 1568, dur: 0.35, type: 'sine', gain: 0.35 }],
   step: [{ freq: 140, dur: 0.04, type: 'triangle', gain: 0.15 }],
+  // Power-on "boop": a quick upward blip into a soft, ringing major chord.
+  boot: [
+    { freq: 392, to: 784, dur: 0.16, type: 'sine', gain: 0.5 },
+    { freq: 523, dur: 1.3, type: 'sine', gain: 0.22, delay: 0.1 },
+    { freq: 659, dur: 1.3, type: 'sine', gain: 0.18, delay: 0.1 },
+    { freq: 784, dur: 1.4, type: 'sine', gain: 0.16, delay: 0.1 },
+    { freq: 1047, dur: 1.2, type: 'triangle', gain: 0.08, delay: 0.12 },
+  ],
 };
 
 export function playSfx(name: SfxName): void {

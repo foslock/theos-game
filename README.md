@@ -46,6 +46,7 @@ key) are git-ignored and are not needed to build or deploy.
 | `src/state/` | Game state, store, autosave / export / import, settings |
 | `src/systems/` | Conditions, seeded RNG, cursors, walking, dialogue, hints, ambient frames, sound |
 | `src/puzzles/` | Pure puzzle logic (`breakfast.ts`) and its scene controller |
+| `src/frame.ts` | The Macintosh shell around the canvas: centring, vignette, power-on animation |
 | `src/scenes/` | Phaser scenes: Boot, Intro (title + menu), Story, Load, Settings, Game, Hud |
 | `src/placeholders/` | Programmatic placeholder art and the dither fade |
 | `public/assets/manifest.json` | Every texture key; add a `file` to replace a placeholder |

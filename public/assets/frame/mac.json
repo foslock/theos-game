@@ -1,0 +1,17 @@
+{
+  "width": 356,
+  "height": 492,
+  "hole": {
+    "x": 43,
+    "y": 52,
+    "w": 270,
+    "h": 212
+  },
+  "screen": {
+    "x": 43,
+    "y": 57,
+    "w": 270,
+    "h": 202
+  },
+  "source": "PixelLab generate-image-v2 seed 91, 440x572, cropped to the case"
+}

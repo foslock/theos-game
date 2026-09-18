@@ -50,6 +50,15 @@ New Game runs `StoryScene` ("One Saturday..." / "...at the Lockwoods", dithered)
 and then the bedroom wake-up in `GameScene.wakeUp()`, which uses `theo_front`
 (the large Theo's south rotation) lying behind crops of the bed art.
 
+## Macintosh frame
+
+`public/assets/frame/mac.png` is a classic beige Macintosh (generate-image-v2,
+440x572, seed 91) cropped to the case with the screen hole made transparent.
+`mac.json` records the hole and the largest 4:3 rectangle inside it; `src/frame.ts`
+positions the Phaser canvas there, keeps everything centred on resize, draws
+the glass vignette and runs the power-on stretch. Regenerate the JSON if the
+art changes (the hole is the transparent area inside the bezel).
+
 ## Global style (paste at the top of every prompt)
 
 > 1990s children's point-and-click adventure game background in the style of
