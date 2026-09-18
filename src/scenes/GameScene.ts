@@ -20,8 +20,8 @@ const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
 const LUCY_FOLLOW_DELAY_MS = 150;
 const LUCY_RUN_SPEED = WALK_SPEED * 1.7;
-/** Feet height that puts Lucy inside the kitchen's right doorway (its floor runs to about y 330). */
-const KITCHEN_DOORWAY_Y = 326;
+/** Feet height Lucy enters the kitchen at: below the doorway's threshold so she is not hugging its frame. */
+const KITCHEN_DOORWAY_Y = 336;
 /**
  * Screen x of the doorway's far jamb. Everything right of here — that jamb and the wall beyond —
  * is redrawn over Lucy so she is hidden until she reaches the opening. The near jamb at 580-598
@@ -220,7 +220,8 @@ export class GameScene extends Phaser.Scene {
       // rather than sliding in over the wall beside it.
       const door = { x: this.room.exits.find((e) => e.to === 'family_room')?.walkTo.x ?? GAME_WIDTH - 40, y: KITCHEN_DOORWAY_Y };
       const bg = `${this.room.background}_0`;
-      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(DOORWAY_FAR_JAMB, 50, GAME_WIDTH - DOORWAY_FAR_JAMB, 284);
+      // Runs past the floor line so her feet stay hidden too, not just her body.
+      const jamb = this.add.image(0, 0, bg).setOrigin(0).setDepth(900).setCrop(DOORWAY_FAR_JAMB, 50, GAME_WIDTH - DOORWAY_FAR_JAMB, 310);
       this.lucy = new Character(this, 'lucy', GAME_WIDTH + 24, door.y);
       this.lucy.face(-1);
       await this.wait(400);
