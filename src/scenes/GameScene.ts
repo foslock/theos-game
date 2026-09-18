@@ -38,6 +38,7 @@ import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
 import { hitRects, pick } from '../systems/Hitbox';
 import { playSfx, unlockAudio } from '../systems/Sfx';
+import { playMusic } from '../systems/Music';
 import { BreakfastController } from '../puzzles/BreakfastController';
 
 const LUCY_FOLLOW_GAP = 56;
@@ -209,6 +210,7 @@ export class GameScene extends Phaser.Scene {
   // ---------- Room lifecycle ----------
 
   private buildRoom(): void {
+    playMusic(this.room.id);
     this.walkMap = buildWalkMap(this.room);
     this.ambient = new AmbientBackground(this, this.room);
     const state = store.get();

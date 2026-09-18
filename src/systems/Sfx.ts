@@ -14,6 +14,11 @@ function audio(): AudioContext | null {
   return ctx;
 }
 
+/** The one shared context; browsers cap how many a page may open. */
+export function audioContext(): AudioContext | null {
+  return audio();
+}
+
 /** Call from a user gesture so browsers allow audio. */
 export function unlockAudio(): void {
   const a = audio();

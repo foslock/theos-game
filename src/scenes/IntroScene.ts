@@ -4,6 +4,7 @@ import { FONT, pointerVerb } from '../ui/text';
 import { makeButton } from '../ui/Button';
 import { ditherIn, drawButtonFace } from '../ui/DitherReveal';
 import { unlockAudio } from '../systems/Sfx';
+import { playMusic } from '../systems/Music';
 import { hasAutosave, loadAutosave, clearAutosave } from '../state/SaveManager';
 import { store } from '../state/Store';
 import { newGameState } from '../state/GameState';
@@ -40,6 +41,7 @@ export class IntroScene extends Phaser.Scene {
   }
 
   create(data: IntroData = {}): void {
+    playMusic('title');
     this.menuObjects = [];
     this.cameras.main.setBackgroundColor('#f7c9a0');
 
