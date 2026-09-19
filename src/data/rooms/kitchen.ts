@@ -1,14 +1,15 @@
 import type { Room, ContainerHotspot } from './types';
 
+// He stands well below the counter so his head clears the lowest drawers and cupboard door.
 export const kitchenContainers: ContainerHotspot[] = [
-  { kind: 'container', id: 'drawer_1', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 195, w: 46, h: 22 }, walkTo: { x: 155, y: 330 } },
-  { kind: 'container', id: 'drawer_2', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 222, w: 46, h: 22 }, walkTo: { x: 155, y: 330 } },
-  { kind: 'container', id: 'drawer_3', label: 'Drawer', category: 'drawer', zone: { x: 188, y: 195, w: 46, h: 22 }, walkTo: { x: 211, y: 330 } },
-  { kind: 'container', id: 'cabinet_1', label: 'Cabinet', category: 'cabinet', zone: { x: 58, y: 22, w: 62, h: 62 }, walkTo: { x: 90, y: 330 } },
-  { kind: 'container', id: 'cabinet_2', label: 'Cabinet', category: 'cabinet', zone: { x: 140, y: 22, w: 92, h: 100 }, walkTo: { x: 186, y: 330 } },
-  { kind: 'container', id: 'cabinet_3', label: 'Cabinet', category: 'cabinet', zone: { x: 238, y: 22, w: 100, h: 56 }, walkTo: { x: 288, y: 330 } },
-  { kind: 'container', id: 'cabinet_4', label: 'Cabinet', category: 'cabinet', zone: { x: 188, y: 222, w: 46, h: 48 }, walkTo: { x: 211, y: 330 } },
-  { kind: 'container', id: 'fridge', label: 'Fridge', category: 'fridge', zone: { x: 236, y: 88, w: 104, h: 194 }, walkTo: { x: 288, y: 330 } },
+  { kind: 'container', id: 'drawer_1', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 195, w: 46, h: 22 }, walkTo: { x: 155, y: 372 } },
+  { kind: 'container', id: 'drawer_2', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 222, w: 46, h: 22 }, walkTo: { x: 155, y: 372 } },
+  { kind: 'container', id: 'drawer_3', label: 'Drawer', category: 'drawer', zone: { x: 188, y: 195, w: 46, h: 22 }, walkTo: { x: 211, y: 372 } },
+  { kind: 'container', id: 'cabinet_1', label: 'Cabinet', category: 'cabinet', zone: { x: 58, y: 22, w: 62, h: 62 }, walkTo: { x: 90, y: 372 } },
+  { kind: 'container', id: 'cabinet_2', label: 'Cabinet', category: 'cabinet', zone: { x: 140, y: 22, w: 92, h: 100 }, walkTo: { x: 186, y: 372 } },
+  { kind: 'container', id: 'cabinet_3', label: 'Cabinet', category: 'cabinet', zone: { x: 238, y: 22, w: 100, h: 56 }, walkTo: { x: 288, y: 372 } },
+  { kind: 'container', id: 'cabinet_4', label: 'Cabinet', category: 'cabinet', zone: { x: 188, y: 222, w: 46, h: 48 }, walkTo: { x: 211, y: 372 } },
+  { kind: 'container', id: 'fridge', label: 'Fridge', category: 'fridge', zone: { x: 236, y: 88, w: 104, h: 194 }, walkTo: { x: 288, y: 372 } },
 ];
 
 export const kitchen: Room = {
