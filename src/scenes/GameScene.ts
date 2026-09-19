@@ -128,6 +128,13 @@ export class GameScene extends Phaser.Scene {
   /** Everything clickable in the room, resolved by nearest footprint rather than Phaser zones. */
   private targets: Target[] = [];
   private _busy = false;
+  /**
+   * Bumped whenever the scene is (re)created or torn down. Anything that continues after an
+   * `await` checks it first: the Menu button can stop the scene mid-walk, and Phaser reuses the
+   * same instance when the game is resumed, so a stale sequence would otherwise carry on inside
+   * the new room and leave timers on destroyed objects.
+   */
+  private generation = 0;
   /** Items carried, watched so that anything new setting Lucy off works wherever it came from. */
   private carried = 0;
   private unwatchInventory?: () => void;
@@ -148,6 +155,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data: GameData = {}): void {
+    this.generation++;
     this.dialogue = new Dialogue(this);
     this.breakfast = new BreakfastController(this);
     this.basketball = new BasketballController(this);
@@ -211,9 +219,12 @@ export class GameScene extends Phaser.Scene {
   /** The party is back at the bottom of the slide; a word about the ride, then the room is theirs. */
   private async backFromSlide(): Promise<void> {
     this.busy = true;
+    const gen = this.generation;
     this.placeParty(this.room.restPoint);
     await this.sayLucy('Again! Again!');
+    if (this.stale(gen)) return;
     await this.sayTheo('What a day! Mom and Dad will be home soon.');
+    if (this.stale(gen)) return;
     this.busy = false;
     this.hints.reset();
   }
@@ -227,20 +238,24 @@ export class GameScene extends Phaser.Scene {
    */
   private async wakeUp(): Promise<void> {
     this.busy = true;
+    const gen = this.generation;
     this.theo.sprite.setVisible(false);
     this.setBed('bed_asleep');
 
     void this.fade.in(2600);
     await this.wait(3400);
+    if (this.stale(gen)) return;
     playSfx('ding');
     this.setBed('bed_sit');
     await this.dialogue.say('*yaaawn* Good morning!', 245, 212, { duration: WAKE_GREETING_MS, voice: 'theo' });
+    if (this.stale(gen)) return;
     // Out from under the covers and down onto the carpet, then hand over to the walking sprite.
     this.setBed('bed_empty');
     const stander = this.add.image(276, 322, 'theo_front').setOrigin(0.5, 1).setDepth(BED_DEPTH + 12);
     this.roomObjects.push(stander);
     await this.tween(stander, { x: WAKE_STAND.x, y: 332 }, 200, 'Quad.easeOut');
     await this.tween(stander, { y: WAKE_STAND.y }, 200, 'Quad.easeIn');
+    if (this.stale(gen)) return;
     stander.destroy();
     this.roomObjects = this.roomObjects.filter((o) => o !== stander);
     this.theo.setPosition(WAKE_STAND.x, WAKE_STAND.y);
@@ -254,6 +269,11 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, deltaMs: number): void {
     this.ambience?.update(Math.min(deltaMs / 1000, 0.1));
+  }
+
+  /** True when the scene has been torn down or recreated since `gen` was taken. */
+  private stale(gen: number): boolean {
+    return gen !== this.generation;
   }
 
   wait(ms: number): Promise<void> {
@@ -314,6 +334,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private teardown(): void {
+    this.generation++;
     this.basketball.stop();
     this.rocket.stop();
     this.unwatchInventory?.();
@@ -329,8 +350,10 @@ export class GameScene extends Phaser.Scene {
 
   private async enterRoom(walkIn: boolean): Promise<void> {
     this.busy = true;
+    const gen = this.generation;
     if (walkIn) await this.moveParty(this.room.restPoint);
     else this.placeParty(this.room.restPoint);
+    if (this.stale(gen)) return;
 
     if (this.room.id === 'kitchen' && !store.get().lucyJoined) {
       store.update((s) => (s.lucyJoined = true));
@@ -344,14 +367,19 @@ export class GameScene extends Phaser.Scene {
       this.lucy = new Character(this, 'lucy', GAME_WIDTH + 24, door.y);
       this.lucy.face(-1);
       await this.wait(400);
+      if (this.stale(gen)) return;
       await this.lucy.walkPath([door, ...findPath(this.walkMap, door, lp)], true, LUCY_RUN_SPEED);
+      if (this.stale(gen)) return;
       jamb.destroy();
       this.lucy.face(this.theo.x - lp.x);
       this.breakfast.ensureState();
       await this.sayLucy("Theo! I'm sooo hungry. Can you make breakfast?");
+      if (this.stale(gen)) return;
       await this.sayTheo('Sure, Lucy! I just need to find a bowl, a spoon, cereal and milk.');
     }
+    if (this.stale(gen)) return;
     if (this.room.id === 'sport_court') await this.arriveAtCourt();
+    if (this.stale(gen)) return;
     this.busy = false;
     this.hints.reset();
   }
@@ -517,10 +545,13 @@ export class GameScene extends Phaser.Scene {
       await this.rocket.launcherClicked();
       return;
     }
+    const gen = this.generation;
     await this.sayTheo(getFlag(store.get(), FLAGS.slideDone) ? 'One more time down the slide!' : "Let's go down the slide! Hold on, Lucy!");
+    if (this.stale(gen)) return;
     this.hints.stop();
     this.hoverKind = 'default';
     await this.fadeOut();
+    if (this.stale(gen)) return;
     this.scene.start('Slide');
   }
 
@@ -596,11 +627,13 @@ export class GameScene extends Phaser.Scene {
     unlockAudio();
     this.dialogue.clear();
     this.clearGlints();
+    const gen = this.generation;
     try {
       if (walkTo) await this.theo.walkPath(findPath(this.walkMap, this.theo, walkTo));
+      if (this.stale(gen)) return;
       await action();
     } finally {
-      this.busy = false;
+      if (!this.stale(gen)) this.busy = false;
     }
   }
 
@@ -612,9 +645,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.hints.reset();
+    const gen = this.generation;
     const img = this.pickupSprites.get(h.id);
     if (img) await this.popImage(img);
     else await this.popItem(h.item, h.zone.x + h.zone.w / 2, h.zone.y + h.zone.h / 2);
+    if (this.stale(gen)) return;
     store.update((s) => {
       addItem(s, h.item);
       markPickedUp(s, this.room.id, h.id);
@@ -661,6 +696,7 @@ export class GameScene extends Phaser.Scene {
     this.busy = true;
     unlockAudio();
     this.dialogue.clear();
+    const gen = this.generation;
     try {
       if (!exitOpen(this.room.id, exit, store.get())) {
         // Locked: no walking over, just a glance that way and the excuse.
@@ -670,10 +706,13 @@ export class GameScene extends Phaser.Scene {
         return;
       }
       await this.moveParty(exit.walkTo);
+      if (this.stale(gen)) return;
       await this.unlockWithKey(exit);
+      if (this.stale(gen)) return;
       this.hints.stop();
       this.hoverKind = 'default';
       await this.fadeOut();
+      if (this.stale(gen)) return;
       const from = this.room.id;
       store.update((s) => {
         s.previousRoom = from;
@@ -694,7 +733,7 @@ export class GameScene extends Phaser.Scene {
       this.busy = false;
       await this.enterRoom(true);
     } finally {
-      this.busy = false;
+      if (!this.stale(gen)) this.busy = false;
     }
   }
 

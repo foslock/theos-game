@@ -36,7 +36,7 @@
     "sky_moon": { "file": "ambient/sky_moon.png", "status": "pixellab", "size": [48, 48], "_note": "stomp rocket flight: hangs at 250 m" },
     "backyard_sky": { "file": "backyard/sky_occluder.png", "status": "derived", "size": [640, 150], "_note": "everything in the top band that is not sky, drawn over the drifting clouds and birds" },
     "court_sky": { "file": "sport_court/sky_occluder.png", "status": "derived", "size": [640, 150] },
-    "garage_lamp": { "file": "garage/lamp.png", "status": "derived", "size": [64, 66], "_note": "the hanging cage lamp, cut out so it can sway; the lamp was inpainted out of the garage art" },
+    "garage_lamp": { "file": "garage/lamp.png", "status": "derived", "size": [64, 72], "_note": "the hanging cage lamp, cut out so it can sway; the ceiling was painted across behind it in the garage art" },
     "glow": { "status": "placeholder", "size": [120, 120], "_note": "soft warm light under the garage lamp" },
     "mote": { "status": "placeholder", "size": [2, 2] },
     "bg_playhouse_0": { "file": "playhouse/bg_0.png", "status": "pixellab", "size": [640, 400] },

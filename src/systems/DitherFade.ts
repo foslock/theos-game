@@ -46,13 +46,15 @@ export class DitherFade {
 
   private set(level: number): void {
     this.level = level;
+    // A fade asked for after the scene shut down has nothing to draw on.
+    if (!this.image.active) return;
     this.image.setTexture(`${KEY}_${level}`).setVisible(level > 0);
   }
 
   private run(target: number, ms: number): Promise<void> {
     this.timer?.remove(false);
     const steps = Math.abs(target - this.level);
-    if (!steps) return Promise.resolve();
+    if (!steps || !this.image.active) return Promise.resolve();
     const stepMs = Math.max(16, ms / steps);
     const dir = Math.sign(target - this.level);
     return new Promise((resolve) => {
