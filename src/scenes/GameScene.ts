@@ -232,7 +232,7 @@ export class GameScene extends Phaser.Scene {
     await this.wait(3400);
     playSfx('ding');
     this.setBed('bed_sit');
-    await this.dialogue.say('*yaaawn* Good morning!', 245, 212, { duration: WAKE_GREETING_MS });
+    await this.dialogue.say('*yaaawn* Good morning!', 245, 212, { duration: WAKE_GREETING_MS, voice: 'theo' });
     // Out from under the covers and down onto the carpet, then hand over to the walking sprite.
     this.setBed('bed_empty');
     const stander = this.add.image(276, 322, 'theo_front').setOrigin(0.5, 1).setDepth(BED_DEPTH + 12);
@@ -702,12 +702,12 @@ export class GameScene extends Phaser.Scene {
   // ---------- Presentation helpers used by controllers ----------
 
   sayTheo(text: string): Promise<void> {
-    return this.dialogue.say(text, this.theo.x, this.theo.y - this.theo.sprite.displayHeight);
+    return this.dialogue.say(text, this.theo.x, this.theo.y - this.theo.sprite.displayHeight, { voice: 'theo' });
   }
 
   sayLucy(text: string): Promise<void> {
     const who = this.lucy ?? this.theo;
-    return this.dialogue.say(text, who.x, who.y - who.sprite.displayHeight, { fill: 0xffe3f0 });
+    return this.dialogue.say(text, who.x, who.y - who.sprite.displayHeight, { fill: 0xffe3f0, voice: 'lucy' });
   }
 
   /** Marks a container as opened. Nothing is drawn for it; the sound and what comes out are the feedback. */

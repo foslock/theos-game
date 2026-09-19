@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../config';
 import { SPEECH_FONT } from '../ui/text';
+import { playVoice, type Voice } from './Sfx';
 
 export interface SayOptions {
   duration?: number;
   fill?: number;
+  /** Whose voice chatters while the bubble is up. */
+  voice?: Voice;
 }
 
 /** Comic-style speech bubbles anchored above a point. Only one bubble is shown at a time. */
@@ -43,6 +46,7 @@ export class Dialogue {
 
     t.setPosition(-w / 2 + 8, -h - 14 + 6);
     this.container = this.scene.add.container(cx, cy, [g, t]).setDepth(1000);
+    if (opts.voice) playVoice(opts.voice, text.split(/\s+/).filter(Boolean).length);
 
     const duration = opts.duration ?? Math.max(1400, 55 * text.length);
     return new Promise((resolve) => {

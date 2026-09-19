@@ -143,3 +143,47 @@ export function playSfx(name: SfxName): void {
     osc.stop(start + t.dur + 0.02);
   }
 }
+
+export type Voice = 'theo' | 'lucy';
+
+/** Base pitches for the speech blips: Theo in the middle, Lucy up high. */
+const VOICES: Record<Voice, { freq: number; type: OscillatorType }> = {
+  theo: { freq: 330, type: 'square' },
+  lucy: { freq: 620, type: 'triangle' },
+};
+/** One blip a word, this far apart; long speeches are capped so the chatter never outlasts the bubble. */
+const BLIP_GAP = 0.085;
+const BLIP_MAX = 24;
+
+/**
+ * Chatter for a speech bubble: one short blip per word in the speaker's pitch, wandering a
+ * little so it sounds like talking rather than a beep. Returns the seconds it will take.
+ */
+export function playVoice(voice: Voice, words: number): number {
+  const a = audio();
+  const n = Math.min(BLIP_MAX, Math.max(1, words));
+  if (!a) return n * BLIP_GAP;
+  const master = getSettings().sfxVolume;
+  if (master <= 0) return n * BLIP_GAP;
+  const v = VOICES[voice];
+  const now = a.currentTime;
+  for (let i = 0; i < n; i++) {
+    const start = now + i * BLIP_GAP;
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    osc.type = v.type;
+    // Each blip sits a few semitones either side of the base pitch, dipping at the end of a sentence.
+    const wander = 2 ** ((Math.floor(Math.random() * 7) - 3) / 12);
+    const freq = v.freq * wander * (i === n - 1 ? 0.85 : 1);
+    osc.frequency.setValueAtTime(freq, start);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.06, start + 0.03);
+    const peak = 0.16 * master;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(peak, start + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + 0.055);
+    osc.connect(g).connect(a.destination);
+    osc.start(start);
+    osc.stop(start + 0.07);
+  }
+  return n * BLIP_GAP;
+}
