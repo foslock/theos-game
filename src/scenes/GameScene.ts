@@ -304,6 +304,7 @@ export class GameScene extends Phaser.Scene {
     if (this.room.id === 'backyard') this.rocket.roomBuilt();
     if (this.room.id === 'kitchen') {
       for (const id of this.breakfast.ensureState().opened) this.showContainerOpen(id);
+      this.breakfast.roomBuilt();
     }
   }
 
