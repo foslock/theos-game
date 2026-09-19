@@ -12,6 +12,7 @@ import { applyCrtSetting, mountFrame } from './frame';
 import { loadFonts } from './ui/text';
 import { getSettings } from './state/Settings';
 import { audioContext, installAudioUnlock, playSfx, unlockAudio } from './systems/Sfx';
+import { currentTune } from './systems/Music';
 
 import { store } from './state/Store';
 
@@ -63,7 +64,7 @@ async function start(): Promise<void> {
 
   if (import.meta.env.DEV) {
     // Debug handle for poking at the running game from the browser console.
-    (window as unknown as { __theo: unknown }).__theo = { game, store, audio: () => audioContext()?.state };
+    (window as unknown as { __theo: unknown }).__theo = { game, store, audio: () => audioContext()?.state, music: currentTune };
   }
 }
 

@@ -1,4 +1,3 @@
-import type { RoomId } from '../data/rooms';
 import { getSettings } from '../state/Settings';
 import { audioContext } from './Sfx';
 
@@ -7,13 +6,9 @@ import { audioContext } from './Sfx';
  * are. Nothing to download, and the melodies live here as data so they can be read and changed.
  *
  * A tune is two voices on a grid of eighth notes. Each step is a note name, `.` to hold the note
- * before it, or `-` for silence; `|` marks a bar and is ignored. Melodies stay on the five-note
- * pentatonic scale of their key, which is what keeps them from clashing however they line up.
- *
- * The bass just holds the root of each bar — twice a bar in the quicker rooms — so it grounds the
- * melody without becoming a second tune competing with it.
+ * before it, or `-` for silence; `|` marks a bar and is ignored.
  */
-export type TuneName = RoomId | 'title' | 'slide';
+export type TuneName = 'main' | 'minigame' | 'menu';
 
 interface Tune {
   bpm: number;
@@ -23,83 +18,33 @@ interface Tune {
   bass: string;
 }
 
+/**
+ * Everything is the same four bars of I–V–vi–IV. The bass plays the root once at the start of
+ * each bar and holds it; the melody stays on six notes of the key so it can never clash.
+ */
+const MAIN_BASS = 'C3  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  .';
+
 export const TUNES: Record<TuneName, Tune> = {
-  // Bright and a little ceremonial, for the Mac booting into the title.
-  title: {
-    bpm: 108,
-    wave: 'triangle',
-    lead: 'G4 .  A4 .  C5 .  A4 . | G4 .  E4 .  G4 .  .  . | A4 .  C5 .  D5 .  C5 . | A4 .  G4 .  .  .  .  .',
-    bass: 'C3  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
-  },
-  // Slow and sleepy: this one plays over Theo waking up.
-  bedroom: {
-    bpm: 76,
-    wave: 'sine',
-    lead: 'E4 .  .  .  G4 .  .  . | A4 .  .  .  G4 .  .  . | E4 .  .  .  D4 .  .  . | C4 .  .  .  .  .  .  .',
-    bass: 'C3  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
-  },
-  // Short plinks, like water dripping.
-  bathroom: {
-    bpm: 118,
-    wave: 'triangle',
-    lead: 'C5 -  E5 -  G5 -  E5 - | C5 -  D5 -  E5 -  -  - | G5 -  E5 -  D5 -  C5 - | A4 -  C5 -  -  -  -  -',
-    bass: 'C3  .  .  .  C3  .  .  . | A2  .  .  .  A2  .  .  . | F2  .  .  .  F2  .  .  . | G2  .  .  .  G2  .  .  .',
-  },
-  // Warm and busy, in F, for the room where breakfast gets made.
-  kitchen: {
-    bpm: 104,
-    wave: 'triangle',
-    lead: 'F4 .  A4 .  C5 .  A4 . | G4 .  F4 .  D4 .  F4 . | A4 .  C5 .  D5 .  C5 . | A4 .  F4 .  .  .  .  .',
-    bass: 'F2  .  .  .  .  .  .  . | D3  .  .  .  .  .  .  . | Bb2  .  .  .  .  .  .  . | C3  .  .  .  .  .  .  .',
-  },
-  // Cosy, unhurried, in G.
-  family_room: {
+  // The house and the yard: C major, unhurried, a sparse tune that leaves room to think.
+  main: {
     bpm: 96,
     wave: 'sine',
-    lead: 'D4 .  G4 .  B4 .  G4 . | A4 .  B4 .  D5 .  B4 . | G4 .  E4 .  D4 .  E4 . | G4 .  .  .  .  .  .  .',
-    bass: 'G2  .  .  .  .  .  .  . | E3  .  .  .  .  .  .  . | C3  .  .  .  .  .  .  . | D3  .  .  .  .  .  .  .',
+    lead: 'E4 .  G4 .  C5 .  .  . | D5 .  G4 .  D5 .  E5 . | C5 .  A4 .  E5 .  .  . | C5 .  A4 .  F4 .  G4 .',
+    bass: MAIN_BASS,
   },
-  // Minor key and a bit clunky: the one room that feels like somewhere you are not meant to be.
-  garage: {
-    bpm: 92,
+  // The mini-games: the same changes a whole tone up in D and a good deal quicker, with a busier tune.
+  minigame: {
+    bpm: 136,
     wave: 'triangle',
-    lead: 'A4 .  C5 .  A4 .  G4 . | E4 .  G4 .  A4 .  .  . | D5 .  C5 .  A4 .  G4 . | E4 .  .  .  A4 .  .  .',
-    bass: 'A2  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  .',
+    lead: 'D5 -  F#5 -  A5 -  F#5 - | E5 -  A4 -  E5 -  F#5 - | D5 -  F#5 -  B4 -  D5 - | G4 -  B4 -  D5 -  E5 -',
+    bass: 'D3  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | B2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
   },
-  // Open and airy, in D, for stepping outside.
-  backyard: {
-    bpm: 108,
+  // The title and menu: just the bass line of the main tune, waiting for the day to start.
+  menu: {
+    bpm: 96,
     wave: 'sine',
-    lead: 'A4 .  B4 .  D5 .  B4 . | A4 .  F#4 . A4 .  .  . | B4 .  D5 .  E5 .  D5 . | B4 .  A4 .  .  .  .  .',
-    bass: 'D3  .  .  .  .  .  .  . | B2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  .',
-  },
-  // Quick and bouncy, like a ball being dribbled.
-  sport_court: {
-    bpm: 124,
-    wave: 'triangle',
-    lead: 'G4 -  B4 -  D5 -  B4 - | G4 -  A4 -  B4 -  -  - | D5 -  E5 -  D5 -  B4 - | A4 -  G4 -  -  -  -  -',
-    bass: 'G2  .  .  .  G2  .  .  . | E2  .  .  .  E2  .  .  . | C3  .  .  .  C3  .  .  . | D3  .  .  .  D3  .  .  .',
-  },
-  // High and delicate, like a wind-up music box.
-  playhouse: {
-    bpm: 100,
-    wave: 'sine',
-    lead: 'C5 .  D5 .  E5 .  G5 . | E5 .  D5 .  C5 .  .  . | A4 .  C5 .  D5 .  E5 . | D5 .  C5 .  .  .  .  .',
-    bass: 'C3  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
-  },
-  // Racing along, for the ride down the slide.
-  slide: {
-    bpm: 144,
-    wave: 'triangle',
-    lead: 'C5 -  E5 -  G5 -  E5 - | A5 -  G5 -  E5 -  D5 - | C5 -  D5 -  E5 -  G5 - | A5 -  G5 -  -  -  -  -',
-    bass: 'C3  .  .  .  C3  .  .  . | F2  .  .  .  F2  .  .  . | A2  .  .  .  A2  .  .  . | G2  .  .  .  G2  .  .  .',
-  },
-  // The happiest and fastest of them.
-  playground: {
-    bpm: 128,
-    wave: 'triangle',
-    lead: 'G4 -  A4 -  C5 -  D5 - | E5 -  D5 -  C5 -  A4 - | G4 -  A4 -  C5 -  A4 - | G4 -  E4 -  G4 -  -  -',
-    bass: 'C3  .  .  .  C3  .  .  . | F2  .  .  .  F2  .  .  . | A2  .  .  .  A2  .  .  . | G2  .  .  .  G2  .  .  .',
+    lead: '-  -  -  -  -  -  -  - | -  -  -  -  -  -  -  - | -  -  -  -  -  -  -  - | -  -  -  -  -  -  -  -',
+    bass: MAIN_BASS,
   },
 };
 
@@ -249,6 +194,11 @@ export function playMusic(name: TuneName): void {
   tick();
   state.timer = window.setInterval(tick, TICK_MS);
   playing = state;
+}
+
+/** Which loop is playing, if any. For the debug handle and tests. */
+export function currentTune(): TuneName | null {
+  return playing?.name ?? null;
 }
 
 export function stopMusic(): void {

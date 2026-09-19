@@ -41,7 +41,7 @@ export class IntroScene extends Phaser.Scene {
   }
 
   create(data: IntroData = {}): void {
-    playMusic('title');
+    playMusic('menu');
     this.menuObjects = [];
     this.cameras.main.setBackgroundColor('#f7c9a0');
 

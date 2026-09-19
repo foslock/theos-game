@@ -95,7 +95,7 @@ export class SlideScene extends Phaser.Scene {
     this.running = false;
     this.finishing = false;
     this.shaking = false;
-    playMusic('slide');
+    playMusic('minigame');
     setCursor(this, 'wait');
     this.dialogue = new Dialogue(this);
     this.course = generateCourse(new Rng(store.get().seed).fork(`slide:${this.attempt}`));

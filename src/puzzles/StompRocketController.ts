@@ -4,6 +4,7 @@ import { FLAGS, getFlag, hasItem, removeItem, setFlag } from '../state/GameState
 import { store } from '../state/Store';
 import { Rng, randomSeed } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
+import { playMusic } from '../systems/Music';
 import { FONT, pointerVerb, TEXT_FONT } from '../ui/text';
 import type { GameScene } from '../scenes/GameScene';
 import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, skySpots } from './rocket';
@@ -97,6 +98,7 @@ export class StompRocketController {
     this.clicks = 0;
     this.elapsed = 0;
     this.firstRun = !getFlag(store.get(), FLAGS.stompRocketDone);
+    playMusic('minigame');
     this.scene.capturePointer({ down: () => this.onDown(), up: () => {} }, 'rocket');
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     await Promise.all([this.scene.moveTheo(LAUNCHER.stand), this.scene.moveLucy(LAUNCHER.lucy)]);
@@ -368,6 +370,7 @@ export class StompRocketController {
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.scene.cameras.main.setScroll(0, 0);
     this.scene.capturePointer(null);
+    if (this.scene.scene.isActive()) playMusic('main');
     // A rocket still in the air (the game was cut short) goes back on the tube.
     if (this.rocket && this.rocket.originY !== 1) {
       this.rocket.destroy();

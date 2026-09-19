@@ -4,6 +4,7 @@ import { FLAGS, getFlag, itemCount, removeItem, setFlag } from '../state/GameSta
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
+import { playMusic } from '../systems/Music';
 import { FONT, pointerVerb, TEXT_FONT } from '../ui/text';
 import type { GameScene } from '../scenes/GameScene';
 import {
@@ -96,6 +97,7 @@ export class BasketballController {
     this.rng = new Rng(seed).fork(`basketball:${Date.now()}`);
     this.game = newBasketballGame(new Rng(seed).fork('basketball'));
     this.phase = 'between';
+    playMusic('minigame');
     this.scene.capturePointer({ down: () => this.onDown(), up: () => this.onUp() });
     this.scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.meter = this.scene.add.graphics().setDepth(960);
@@ -314,6 +316,7 @@ export class BasketballController {
     this.ball = null;
     this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this);
     this.scene.capturePointer(null);
+    if (this.scene.scene.isActive()) playMusic('main');
     this.ballImage?.destroy();
     this.ballImage = undefined;
     for (const o of this.objects) o.destroy();

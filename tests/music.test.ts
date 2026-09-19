@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { noteFrequency, parseVoice, TUNES, type TuneName } from '../src/systems/Music';
-import { ROOM_IDS } from '../src/data/rooms';
 
 const names = Object.keys(TUNES) as TuneName[];
 
@@ -46,11 +45,17 @@ describe('reading a voice', () => {
 });
 
 describe('the room loops', () => {
-  it('covers every room, plus the title screen and the slide ride', () => {
-    for (const id of ROOM_IDS) expect(TUNES[id], id).toBeDefined();
-    expect(TUNES.title).toBeDefined();
-    expect(TUNES.slide).toBeDefined();
-    expect(names.length).toBe(ROOM_IDS.length + 2);
+  it('has the house tune, the quicker mini-game tune and the bass-only menu', () => {
+    expect(names.sort()).toEqual(['main', 'menu', 'minigame']);
+    expect(TUNES.minigame.bpm).toBeGreaterThan(TUNES.main.bpm);
+    expect(TUNES.menu.bass).toBe(TUNES.main.bass);
+    expect(parseVoice(TUNES.menu.lead).filter(Boolean)).toHaveLength(0);
+  });
+
+  it('follows I-V-vi-IV: C G A F in the house, D A B G in the mini-games', () => {
+    const roots = (bass: string) => parseVoice(bass).filter(Boolean).map((s) => s!.note.replace(/\d$/, ''));
+    expect(roots(TUNES.main.bass)).toEqual(['C', 'G', 'A', 'F']);
+    expect(roots(TUNES.minigame.bass)).toEqual(['D', 'A', 'B', 'G']);
   });
 
   it('keeps both voices the same length, in whole bars', () => {
@@ -87,22 +92,20 @@ describe('the room loops', () => {
     }
   });
 
-  it('leaves no dead loop: every tune actually has notes in both voices', () => {
+  it('leaves no dead loop: every tune has a bass line, and all but the menu a melody', () => {
     for (const name of names) {
-      expect(parseVoice(TUNES[name].lead).filter(Boolean).length, `${name} lead`).toBeGreaterThan(3);
+      if (name !== 'menu') expect(parseVoice(TUNES[name].lead).filter(Boolean).length, `${name} lead`).toBeGreaterThan(3);
       expect(parseVoice(TUNES[name].bass).filter(Boolean).length, `${name} bass`).toBeGreaterThan(3);
     }
   });
 
-  it('keeps the bass to one root per bar, or two of the same', () => {
+  it('keeps the bass to one root at the start of each bar', () => {
     for (const name of names) {
       const bass = parseVoice(TUNES[name].bass);
       for (let bar = 0; bar < bass.length / 8; bar++) {
         const attacks = bass.slice(bar * 8, bar * 8 + 8).filter((s): s is NonNullable<typeof s> => !!s);
-        expect(attacks.length, `${name} bar ${bar + 1} has ${attacks.length} bass notes`).toBeGreaterThanOrEqual(1);
-        expect(attacks.length, `${name} bar ${bar + 1} has ${attacks.length} bass notes`).toBeLessThanOrEqual(2);
-        // Every attack in a bar is the same note: a root holding the bar down, not a bass melody.
-        expect(new Set(attacks.map((a) => a.note)).size, `${name} bar ${bar + 1} changes root mid-bar`).toBe(1);
+        expect(attacks.length, `${name} bar ${bar + 1} has ${attacks.length} bass notes`).toBe(1);
+        expect(bass[bar * 8], `${name} bar ${bar + 1} bass is late`).toBeTruthy();
       }
     }
   });

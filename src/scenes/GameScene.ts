@@ -41,7 +41,7 @@ import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
 import { pick } from '../systems/Hitbox';
 import { playSfx, unlockAudio } from '../systems/Sfx';
-import { playMusic } from '../systems/Music';
+import { playMusic, stopMusic } from '../systems/Music';
 import { pointerVerb } from '../ui/text';
 import { BreakfastController } from '../puzzles/BreakfastController';
 import { BasketballController } from '../puzzles/BasketballController';
@@ -166,7 +166,9 @@ export class GameScene extends Phaser.Scene {
     // During the wake-up intro the HUD is shown but keeps its backpack prompt quiet.
     this.registry.set('hudQuiet', wake);
     this.scene.launch('Hud');
-    this.buildRoom();
+    // Waking up happens in silence; the music starts once Theo is on his feet.
+    if (wake) stopMusic();
+    this.buildRoom(!wake);
 
     const entryExit = s.previousRoom && !data.afterSlide ? findExit(this.room.id, s.previousRoom) : undefined;
     const spawn = entryExit?.walkTo ?? this.room.restPoint;
@@ -244,6 +246,7 @@ export class GameScene extends Phaser.Scene {
     this.theo.setPosition(WAKE_STAND.x, WAKE_STAND.y);
     this.theo.sprite.setVisible(true);
     playSfx('step');
+    playMusic('main');
     this.registry.set('hudQuiet', false);
     this.busy = false;
     await this.enterRoom(true);
@@ -263,8 +266,8 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- Room lifecycle ----------
 
-  private buildRoom(): void {
-    playMusic(this.room.id);
+  private buildRoom(music = true): void {
+    if (music) playMusic('main');
     this.walkMap = buildWalkMap(this.room);
     this.ambient = new AmbientBackground(this, this.room);
     this.ambience = new Ambience(this, this.room.ambient ?? []);
