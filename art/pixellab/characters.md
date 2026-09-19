@@ -110,6 +110,17 @@ Both old frames were drawn taller than the idle and ran off the 72px bottom. Red
   background out, so her head, romper and feet are byte-identical to the apart frame. Zero drift
   outside the mask.
 
+## Lucy's front idle redone (2026-09-19): both arms
+
+The original south idle from the character template had only one arm (her right side was empty).
+Two inpaint attempts (seeds 321/322, masks beside the torso) drew a sliver or a tucked arm that
+did not match the other side, so the frame was rendered fresh instead: `/generate-image-v2` at
+56x88 with the old idle frame as the reference ("exactly the same size and proportions, but with
+both arms hanging at her sides"), seed 332 candidate 1, which came out at the idle's 67px height
+(seed 331's candidates were 72-74px). Fitted feet-to-row-70 by the leg match (dx -3). The
+breathing frame is derived in code from it: everything above row 39 (head and bow) moved up one
+pixel. Raw in `raw/lucy_idle_front_seed332_1.png`. Walk frames untouched.
+
 ## Slide ride: seated, seen from behind (2026-09-18)
 
 `theo_slide.png` 128x72 (two 64x72 frames) and `lucy_slide.png` 96x56 (two 48x56 frames):
