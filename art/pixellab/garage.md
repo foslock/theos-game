@@ -29,6 +29,6 @@ a second render. Cost: 40 generations.
 
 - The hanging lamp (x 388-452, y 0-66) was inpainted out of `bg_0`/`bg_1` (`/inpaint-v3` on a
   256x128 crop at (300,0), seed 111; only the mask rect pasted back, frame 1's highlight shift
-  reapplied). `lamp.png` is the lamp cut out of the original by keeping low-saturation, very
-  bright or very dark pixels. It rocks about (420,0) with a code-drawn glow, and a moth
+  reapplied). `lamp.png` is the lamp cut out of the original by flood-filling the orange ceiling away
+  from the crop's edges, so the shade's dome stays solid (a colour key had left it see-through). It rocks about (420,0) with a code-drawn glow, and a moth
   (`ambient/moth.png`, open seed 103 candidate 3, closed seed 104 candidate 2) circles it.
