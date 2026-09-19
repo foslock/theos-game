@@ -4,8 +4,9 @@
   python3 scripts/fit_room.py NAME RAW_PNG [--top 24] [--overlay OUT.png]
 
 Crops `--top` rows of ceiling, pads 4px on each side by repeating the edge
-column, writes public/assets/<NAME>/bg_0.png and a subtle ambient frame
-bg_1.png (highlights nudged so light appears to shift). With --overlay it also
+column and writes public/assets/<NAME>/bg_0.png. (It used to write a second
+frame with shifted highlights too; the rooms are single-frame now, the
+flicker read as the windows changing brightness.) With --overlay it also
 draws the room's current hotspot zones (parsed from src/data/rooms) at 2x for
 lining up the art."""
 import os, re, sys
@@ -27,14 +28,6 @@ d = f"public/assets/{name}"
 os.makedirs(d, exist_ok=True)
 out.save(f"{d}/bg_0.png")
 
-f1 = out.copy()
-px = f1.load()
-for y in range(400):
-    for x in range(640):
-        r, g, b = px[x, y]
-        if r + g + b > 660 and (x + y) % 3 == 0:
-            px[x, y] = (min(255, r + 10), min(255, g + 10), min(255, b + 6))
-f1.save(f"{d}/bg_1.png")
 print("wrote", d)
 
 if overlay:

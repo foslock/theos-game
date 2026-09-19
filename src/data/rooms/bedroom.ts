@@ -4,7 +4,7 @@ export const bedroom: Room = {
   id: 'bedroom',
   name: "Theo's Bedroom",
   background: 'bg_bedroom',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 330 },
   palette: { wall: '#6b8fd6', floor: '#a97c50', accent: '#e8d36a' },
   exits: [
@@ -20,7 +20,7 @@ export const bedroom: Room = {
   ],
   ambient: [
     // Dust drifting in the light from the window.
-    { kind: 'motes', area: { x: 282, y: 122, w: 82, h: 118 }, count: 12, drift: { x: -5, y: 5 } },
+    { kind: 'motes', area: { x: 282, y: 122, w: 82, h: 118 }, count: 18, drift: { x: -5, y: 5 } },
   ],
   hotspots: [
     { kind: 'backpack', id: 'backpack', zone: { x: 378, y: 318, w: 52, h: 56 }, walkTo: { x: 360, y: 380 } },
@@ -28,8 +28,9 @@ export const bedroom: Room = {
       kind: 'pickup',
       id: 'stomp_rocket',
       item: 'stomp_rocket',
-      zone: { x: 125, y: 112, w: 40, h: 50 },
-      walkTo: { x: 150, y: 335 },
+      // On the carpet at the foot of the bed, just in front of the footboard.
+      zone: { x: 150, y: 330, w: 24, h: 24 },
+      walkTo: { x: 178, y: 368 },
       condition: { flag: 'hasBackpack' },
       refusalComment: "My stomp rocket! But I need something to carry it in...",
     },

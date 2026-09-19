@@ -4,14 +4,14 @@ import { ditherFrames } from '../placeholders/dither';
 const LEVELS = 10;
 const KEY = 'fade_dither';
 
-/** Makes sure the black dither textures exist (one per level). Cheap to call repeatedly. */
-function ensureTextures(scene: Phaser.Scene, width: number, height: number): void {
-  if (scene.textures.exists(`${KEY}_${LEVELS}`)) return;
+/** Makes sure the black dither textures exist (one per level and size). Cheap to call repeatedly. */
+function ensureTextures(scene: Phaser.Scene, key: string, width: number, height: number): void {
+  if (scene.textures.exists(`${key}_${LEVELS}`)) return;
   const frames = ditherFrames(width, height, (ctx) => {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
   }, LEVELS);
-  frames.forEach((c, i) => scene.textures.addCanvas(`${KEY}_${i}`, c));
+  frames.forEach((c, i) => scene.textures.addCanvas(`${key}_${i}`, c));
 }
 
 /**
@@ -23,10 +23,13 @@ export class DitherFade {
   private image: Phaser.GameObjects.Image;
   private level = 0;
   private timer?: Phaser.Time.TimerEvent;
+  /** Texture key prefix: the room fades cover the scene area, the ending covers the HUD too. */
+  private readonly key: string;
 
   constructor(private scene: Phaser.Scene, width: number, height: number, depth = 5000) {
-    ensureTextures(scene, width, height);
-    this.image = scene.add.image(0, 0, `${KEY}_0`).setOrigin(0).setDepth(depth).setVisible(false).setScrollFactor(0);
+    this.key = `${KEY}_${width}x${height}`;
+    ensureTextures(scene, this.key, width, height);
+    this.image = scene.add.image(0, 0, `${this.key}_0`).setOrigin(0).setDepth(depth).setVisible(false).setScrollFactor(0);
   }
 
   /** Jump straight to fully black (used before a fade-in on scene start). */
@@ -48,7 +51,7 @@ export class DitherFade {
     this.level = level;
     // A fade asked for after the scene shut down has nothing to draw on.
     if (!this.image.active) return;
-    this.image.setTexture(`${KEY}_${level}`).setVisible(level > 0);
+    this.image.setTexture(`${this.key}_${level}`).setVisible(level > 0);
   }
 
   private run(target: number, ms: number): Promise<void> {

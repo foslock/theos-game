@@ -4,7 +4,7 @@ export const garage: Room = {
   id: 'garage',
   name: 'Garage',
   background: 'bg_garage',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 340 },
   lucyRestPoint: { x: 270, y: 345 },
   palette: { wall: '#8c8c8c', floor: '#5c5c5c', accent: '#d94b3a' },

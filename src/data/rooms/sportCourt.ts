@@ -9,7 +9,7 @@ export const sportCourt: Room = {
   id: 'sport_court',
   name: 'Sport Court',
   background: 'bg_sport_court',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 340 },
   lucyRestPoint: { x: 270, y: 345 },
   palette: { wall: '#8fd0f0', floor: '#3e8a5a', accent: '#f0f0f0' },

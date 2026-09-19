@@ -39,6 +39,13 @@ Room hotspot rectangles in `src/data/rooms/*.ts` were re-measured against the
 new art with `scripts/fit_room.py --overlay`. Characters path-find around
 furniture that reaches into the floor band (see `src/systems/Pathfind.ts`).
 
+## The ending (2026-09-19)
+
+Coming back through the kitchen door with the hoops, stomp rocket and slide all done plays
+`FoyerScene` instead of the kitchen: the front hall (`bg_foyer`), Mom and Dad (`parents`), the
+kids running in from behind (`theo_back`, `lucy_back`), then "The End" over a whole-screen dither
+and back to the menu. See `foyer.md`. The save is untouched, so Resume Game returns to the yard.
+
 ## Title screen and opening
 
 The title screen layers `intro_house` (static), three drifting pixel clouds
@@ -72,7 +79,7 @@ art changes (the hole is the transparent area inside the bezel).
 
 | Asset | Size | Notes |
 |---|---|---|
-| Room background | 640 x 400 | Two frames per room: `bg_<room>_0.png` and `bg_<room>_1.png`. Frame 1 is a subtle variation (leaves shifted, light glint moved). Same composition and hotspot positions. |
+| Room background | 640 x 400 | One frame per room: `bg_<room>_0.png`. (A second highlight-shifted frame was tried and dropped on 2026-09-19: cycling it made the windows look like they were changing brightness. Movement comes from the ambient effects instead.) |
 | Theo sheet | 6 frames of 32 x 48 in one row (192 x 48) | Frames 0-1 idle (breath/blink), 2-5 walk cycle. Feet on the bottom edge, facing right. The game flips the sprite for left. |
 | Lucy sheet | 6 frames of 28 x 40 in one row (168 x 40) | Same frame layout as Theo. |
 | Item icons | 24 x 24 | Transparent background. Used both in the scene and in the backpack grid. |

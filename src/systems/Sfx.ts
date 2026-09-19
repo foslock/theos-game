@@ -1,6 +1,6 @@
 import { getSettings } from '../state/Settings';
 
-export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot' | 'stomp' | 'whoosh';
+export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot' | 'stomp' | 'whoosh' | 'theEnd';
 
 let ctx: AudioContext | null = null;
 
@@ -119,6 +119,14 @@ const PATTERNS: Record<SfxName, Tone[]> = {
     { freq: 784, dur: 1.4, type: 'sine', gain: 0.16, delay: 0.1 },
     { freq: 1047, dur: 1.2, type: 'triangle', gain: 0.08, delay: 0.12 },
   ],
+  // "The End": a C major chord arpeggiated up from C4, each note left ringing so they gather into the chord.
+  theEnd: [
+    { freq: 261.63, dur: 3.2, type: 'sine', gain: 0.3 },
+    { freq: 329.63, dur: 3.0, type: 'sine', gain: 0.26, delay: 0.32 },
+    { freq: 392.0, dur: 2.8, type: 'sine', gain: 0.24, delay: 0.64 },
+    { freq: 523.25, dur: 2.6, type: 'sine', gain: 0.2, delay: 0.96 },
+    { freq: 659.25, dur: 2.4, type: 'triangle', gain: 0.08, delay: 1.28 },
+  ],
 };
 
 export function playSfx(name: SfxName): void {
@@ -144,12 +152,13 @@ export function playSfx(name: SfxName): void {
   }
 }
 
-export type Voice = 'theo' | 'lucy';
+export type Voice = 'theo' | 'lucy' | 'parents';
 
-/** Base pitches for the speech blips: Theo in the middle, Lucy up high. */
+/** Base pitches for the speech blips: Theo in the middle, Lucy up high, Mom and Dad down low. */
 const VOICES: Record<Voice, { freq: number; type: OscillatorType }> = {
   theo: { freq: 330, type: 'square' },
   lucy: { freq: 620, type: 'triangle' },
+  parents: { freq: 200, type: 'square' },
 };
 /** One blip a word, this far apart; long speeches are capped so the chatter never outlasts the bubble. */
 const BLIP_GAP = 0.085;

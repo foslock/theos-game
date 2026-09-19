@@ -16,13 +16,22 @@ export const kitchen: Room = {
   id: 'kitchen',
   name: 'Kitchen',
   background: 'bg_kitchen',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 400, y: 330 },
   lucyRestPoint: { x: 505, y: 330 },
   palette: { wall: '#f2e2b8', floor: '#c9b48a', accent: '#8b5a2b' },
   exits: [
     { to: 'bedroom', zone: { x: 0, y: 0, w: 50, h: 300 }, walkTo: { x: 40, y: 320 }, direction: 'up' },
-    { to: 'family_room', zone: { x: 590, y: 50, w: 50, h: 350 }, walkTo: { x: 600, y: 340 }, direction: 'right' },
+    {
+      to: 'family_room',
+      zone: { x: 590, y: 50, w: 50, h: 350 },
+      walkTo: { x: 600, y: 340 },
+      direction: 'right',
+      // Breakfast comes first: the rest of the house (and the back door key in the family room)
+      // waits until Lucy has eaten. Only the way back to the bedroom and bathroom stays open.
+      condition: { flag: 'breakfastDone' },
+      lockedComment: "Not yet! Lucy's hungry. Breakfast first, then we can go exploring.",
+    },
     {
       to: 'backyard',
       zone: { x: 360, y: 45, w: 88, h: 225 },
@@ -37,7 +46,7 @@ export const kitchen: Room = {
     { kind: 'clock', centre: { x: 596, y: 12 }, length: 13 },
     // The oven's clock, right of its two knobs, blinking its colon.
     { kind: 'led', at: { x: 87, y: 102 }, text: '12:00' },
-    { kind: 'motes', area: { x: 366, y: 60, w: 100, h: 210 }, count: 14, drift: { x: -5, y: 5 } },
+    { kind: 'motes', area: { x: 366, y: 60, w: 100, h: 210 }, count: 20, drift: { x: -5, y: 5 } },
   ],
   hotspots: [
     ...kitchenContainers,

@@ -47,6 +47,7 @@ import { BreakfastController } from '../puzzles/BreakfastController';
 import { BasketballController } from '../puzzles/BasketballController';
 import { StompRocketController } from '../puzzles/StompRocketController';
 import { BALLS_NEEDED } from '../puzzles/basketball';
+import { endingTriggers } from '../puzzles/ending';
 
 const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
@@ -714,6 +715,12 @@ export class GameScene extends Phaser.Scene {
       await this.fadeOut();
       if (this.stale(gen)) return;
       const from = this.room.id;
+      if (endingTriggers(from, exit.to, store.get())) {
+        // Home with the morning done: the ending plays instead of the kitchen. Nothing is saved
+        // here on purpose, so Resume Game puts the party back outside where they were.
+        this.scene.start('Foyer');
+        return;
+      }
       store.update((s) => {
         s.previousRoom = from;
         s.currentRoom = exit.to;

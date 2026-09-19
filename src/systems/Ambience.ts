@@ -11,8 +11,8 @@ import type { Pt, Rect } from '../data/rooms/types';
  */
 
 export type AmbientSpec =
-  /** Dust motes drifting slowly through a patch of light. */
-  | { kind: 'motes'; area: Rect; count?: number; drift?: Pt }
+  /** Dust motes drifting slowly through a patch of light. `size` scales the speck (default 1.5), `alpha` its brightest moment (default 0.8). */
+  | { kind: 'motes'; area: Rect; count?: number; drift?: Pt; size?: number; alpha?: number }
   /** A drop forms at `from`, falls to `y`, and splashes. */
   | { kind: 'drip'; from: Pt; y: number; every?: [number, number] }
   /** A second hand ticking round a painted clock face. */
@@ -59,6 +59,9 @@ const LAYER = 1;
 const MID = 1.5;
 const FRONT = 2;
 const FLYER = 2.5;
+/** Motes are drawn a little larger than their 2px texture and never brighter than this, so they read without glaring. */
+const MOTE_SIZE = 1.5;
+const MOTE_PEAK_ALPHA = 0.8;
 
 function rand(a: number, b: number): number {
   return a + Math.random() * (b - a);
@@ -154,7 +157,7 @@ class Motes implements Effect {
   constructor(scene: Phaser.Scene, private spec: Extract<AmbientSpec, { kind: 'motes' }>) {
     const { area } = spec;
     for (let i = 0; i < (spec.count ?? 14); i++) {
-      const img = scene.add.image(rand(area.x, area.x + area.w), rand(area.y, area.y + area.h), 'mote').setDepth(FRONT).setAlpha(0);
+      const img = scene.add.image(rand(area.x, area.x + area.w), rand(area.y, area.y + area.h), 'mote').setDepth(FRONT).setAlpha(0).setScale(spec.size ?? MOTE_SIZE);
       this.motes.push({ img, phase: rand(0, Math.PI * 2), speed: rand(0.6, 1.4) });
     }
   }
@@ -171,7 +174,8 @@ class Motes implements Effect {
       if (m.img.x < area.x) m.img.x = area.x + area.w;
       if (m.img.x > area.x + area.w) m.img.x = area.x;
       // Twinkle in and out so they read as catching the light rather than as a static speckle.
-      m.img.setAlpha(0.25 + 0.45 * (0.5 + 0.5 * Math.sin(this.t * 1.7 * m.speed + m.phase)));
+      const peak = this.spec.alpha ?? MOTE_PEAK_ALPHA;
+      m.img.setAlpha(peak * (0.36 + 0.64 * (0.5 + 0.5 * Math.sin(this.t * 1.7 * m.speed + m.phase))));
     }
   }
 

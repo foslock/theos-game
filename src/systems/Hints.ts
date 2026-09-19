@@ -68,7 +68,7 @@ export function hintLine(room: Room, state: GameState): string | null {
   switch (room.id) {
     case 'bedroom':
       if (!backpack) return 'I should grab my backpack before I head downstairs.';
-      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'bedroom', 'stomp_rocket')) return 'My stomp rocket! It was up on the shelf all along.';
+      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'bedroom', 'stomp_rocket')) return 'My stomp rocket! It was at the foot of my bed all along.';
       return ballHint(room, state);
     case 'bathroom':
       return backpack ? null : 'My backpack is back in my room.';
@@ -87,7 +87,7 @@ export function hintLine(room: Room, state: GameState): string | null {
       if (stillNeeds(state, 'playhouse_key', 'backyard', 'playhouse')) return 'The playhouse key might be in the little mailbox.';
       if (hasItem(state, 'stomp_rocket')) return "We've got the rocket! Let's put it on the launcher.";
       if (getFlag(state, FLAGS.stompRocketHinted) && !hasItem(state, 'stomp_rocket') && !getFlag(state, FLAGS.stompRocketDone))
-        return 'The stomp rocket is up in my room, by the window.';
+        return 'The stomp rocket is up in my room, at the foot of my bed.';
       return null;
     case 'sport_court':
       if (hoops) return null;
@@ -117,7 +117,7 @@ export function lucyHintLine(room: Room, state: GameState): string {
   switch (room.id) {
     case 'bedroom':
       if (!backpack) return "Theo, don't forget your backpack!";
-      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'bedroom', 'stomp_rocket')) return 'Your rocket is up on the shelf, by the window!';
+      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'bedroom', 'stomp_rocket')) return 'Your rocket is at the foot of your bed!';
       if (wantsBalls && ballHere) return 'I think a basketball is hiding in here somewhere!';
       return "Let's go downstairs!";
     case 'bathroom':

@@ -4,7 +4,7 @@ export const backyard: Room = {
   id: 'backyard',
   name: 'Backyard',
   background: 'bg_backyard',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 330 },
   lucyRestPoint: { x: 270, y: 335 },
   palette: { wall: '#8fd0f0', floor: '#5daa4a', accent: '#c96a2b' },

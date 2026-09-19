@@ -95,6 +95,21 @@ against the background.
   the bottom 16 rows of her silhouette — her legs, which no arm pose should move. `together` needed
   dx +2 and `apart` dx +7; without that her feet slide as the animation plays.
 
+### Redone 2026-09-19: the old frames cut her feet off
+
+Both old frames were drawn taller than the idle and ran off the 72px bottom. Redone:
+
+- `apart` (hands up, either side): `/generate-image-v2` at **56x88** (headroom above and below), the
+  idle frame 0 as the reference, seed 301 candidate 2. It came out 68px tall, the idle's height, and
+  was fitted feet-to-row-70 with the same bottom-16-rows leg match (dx -2). Raw in `raw/`.
+- `together`: fresh generations would not hold the size (85px tall at 56x88 with the fitted apart
+  frame as reference, seeds 303/304), so it was **inpainted** from the fitted apart frame instead:
+  mask over the raised arms and the strip across the chest (rows 26-46), description spelling out
+  "BARE chubby arms (no sleeves)... sleeveless cream knitted romper" (seed 312; seed 311 with a
+  vaguer prompt drew long cream sleeves). Only the masked band was pasted back, keying the white
+  background out, so her head, romper and feet are byte-identical to the apart frame. Zero drift
+  outside the mask.
+
 ## Slide ride: seated, seen from behind (2026-09-18)
 
 `theo_slide.png` 128x72 (two 64x72 frames) and `lucy_slide.png` 96x56 (two 48x56 frames):

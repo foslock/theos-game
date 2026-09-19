@@ -4,7 +4,7 @@ export const familyRoom: Room = {
   id: 'family_room',
   name: 'Family Room',
   background: 'bg_family_room',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 330 },
   lucyRestPoint: { x: 270, y: 335 },
   palette: { wall: '#c9a27a', floor: '#7a4f2c', accent: '#3f6e4a' },
@@ -22,10 +22,11 @@ export const familyRoom: Room = {
   ambient: [
     // Golf on the television, and dust in the light from the bay window.
     { kind: 'frames', key: 'tv_golf', at: { x: 336, y: 128 }, rate: 1.1 },
-    { kind: 'motes', area: { x: 470, y: 95, w: 110, h: 130 }, count: 12, drift: { x: -6, y: 4 } },
+    { kind: 'motes', area: { x: 470, y: 95, w: 110, h: 130 }, count: 18, drift: { x: -6, y: 4 } },
   ],
   hotspots: [
-    { kind: 'pickup', id: 'kitchen_door_key', item: 'kitchen_door_key', zone: { x: 372, y: 268, w: 30, h: 22 }, walkTo: { x: 387, y: 338 } },
+    // Left on the coffee table, in the middle of its top.
+    { kind: 'pickup', id: 'kitchen_door_key', item: 'kitchen_door_key', zone: { x: 376, y: 222, w: 24, h: 24 }, walkTo: { x: 388, y: 302 } },
     { kind: 'pickup', id: 'toy_bus', item: 'toy_bus', zone: { x: 520, y: 272, w: 50, h: 34 }, walkTo: { x: 500, y: 340 } },
     // Half hidden behind the armchair, peeking out over the rug on its left.
     {

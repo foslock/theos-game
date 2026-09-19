@@ -4,7 +4,7 @@ export const bathroom: Room = {
   id: 'bathroom',
   name: 'Bathroom',
   background: 'bg_bathroom',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 330 },
   palette: { wall: '#9fd4e0', floor: '#e6e6e6', accent: '#4e9ab0' },
   exits: [{ to: 'bedroom', zone: { x: 585, y: 0, w: 55, h: 400 }, walkTo: { x: 600, y: 370 }, direction: 'right' }],

@@ -45,11 +45,17 @@ describe('reading a voice', () => {
 });
 
 describe('the room loops', () => {
-  it('has the house tune, the quicker mini-game tune and the bass-only menu', () => {
-    expect(names.sort()).toEqual(['main', 'menu', 'minigame']);
+  it('has the house tune, the quicker mini-game tune, the bass-only menu and the hurried homecoming', () => {
+    expect(names.sort()).toEqual(['homecoming', 'main', 'menu', 'minigame']);
     expect(TUNES.minigame.bpm).toBeGreaterThan(TUNES.main.bpm);
     expect(TUNES.menu.bass).toBe(TUNES.main.bass);
     expect(parseVoice(TUNES.menu.lead).filter(Boolean)).toHaveLength(0);
+  });
+
+  it('plays the ending on the house tune itself, only faster', () => {
+    expect(TUNES.homecoming.lead).toBe(TUNES.main.lead);
+    expect(TUNES.homecoming.bass).toBe(TUNES.main.bass);
+    expect(TUNES.homecoming.bpm).toBeGreaterThan(TUNES.main.bpm);
   });
 
   it('follows I-V-vi-IV: C G A F in the house, D A B G in the mini-games', () => {

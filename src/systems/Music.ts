@@ -8,7 +8,7 @@ import { audioContext } from './Sfx';
  * A tune is two voices on a grid of eighth notes. Each step is a note name, `.` to hold the note
  * before it, or `-` for silence; `|` marks a bar and is ignored.
  */
-export type TuneName = 'main' | 'minigame' | 'menu';
+export type TuneName = 'main' | 'minigame' | 'menu' | 'homecoming';
 
 interface Tune {
   bpm: number;
@@ -38,6 +38,13 @@ export const TUNES: Record<TuneName, Tune> = {
     wave: 'triangle',
     lead: 'D5 -  F#5 -  A5 -  F#5 - | E5 -  A4 -  E5 -  F#5 - | D5 -  F#5 -  B4 -  D5 - | G4 -  B4 -  D5 -  E5 -',
     bass: 'D3  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | B2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
+  },
+  // The ending: the main tune again, in C as ever, but hurrying home half as fast again.
+  homecoming: {
+    bpm: 144,
+    wave: 'sine',
+    lead: 'E4 .  G4 .  C5 .  .  . | D5 .  G4 .  D5 .  E5 . | C5 .  A4 .  E5 .  .  . | C5 .  A4 .  F4 .  G4 .',
+    bass: MAIN_BASS,
   },
   // The title and menu: just the bass line of the main tune, waiting for the day to start.
   menu: {

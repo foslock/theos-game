@@ -9,6 +9,7 @@ import { hasAutosave, loadAutosave, clearAutosave } from '../state/SaveManager';
 import { store } from '../state/Store';
 import { newGameState } from '../state/GameState';
 import { randomSeed } from '../systems/Rng';
+import { DitherFade } from '../systems/DitherFade';
 
 const CLOUD_KEYS = ['intro_cloud_0', 'intro_cloud_1', 'intro_cloud_2'];
 /** Window positions in `intro_house` texture pixels that catch the morning light. */
@@ -26,6 +27,8 @@ const BUTTONS_BOTTOM = GAME_HEIGHT - 42;
 interface IntroData {
   /** Skip the title reveal and go straight to the menu (used when coming back from the game or sub-screens). */
   menu?: boolean;
+  /** Dither in from black over this many ms (the ending fades back to the menu this way). */
+  fadeInMs?: number;
 }
 
 /**
@@ -62,6 +65,13 @@ export class IntroScene extends Phaser.Scene {
     }
 
     this.addWindowGlints(scale, toScreen);
+
+    if (data.fadeInMs) {
+      const fade = new DitherFade(this, GAME_WIDTH, GAME_HEIGHT);
+      fade.setBlack();
+      void fade.in(data.fadeInMs);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => fade.destroy());
+    }
 
     if (data.menu) {
       this.showMenu();

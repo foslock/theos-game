@@ -25,6 +25,8 @@ describe('which conditions are a lock a key opens', () => {
   it('leaves doors that are not key locks alone', () => {
     // Gated on having the backpack, which the player keeps.
     expect(requiredItem(findExit('bedroom', 'kitchen')!.condition)).toBeUndefined();
+    // Gated on breakfast being made.
+    expect(requiredItem(findExit('kitchen', 'family_room')!.condition)).toBeUndefined();
     expect(requiredItem(findExit('playhouse', 'playground')!.condition)).toBeUndefined();
     expect(requiredItem(undefined)).toBeUndefined();
   });
@@ -37,6 +39,21 @@ describe('which conditions are a lock a key opens', () => {
     ] as const) {
       expect(requiredItem(findExit(from, to)!.condition)).toBeUndefined();
     }
+  });
+});
+
+describe('the kitchen before breakfast', () => {
+  it('lets Theo back to his room but nowhere else until Lucy has eaten', () => {
+    const s = newGameState(1);
+    setFlag(s, 'hasBackpack');
+    expect(canTravel('kitchen', 'bedroom', s)).toBe(true);
+    expect(canTravel('kitchen', 'family_room', s)).toBe(false);
+    expect(findExit('kitchen', 'family_room')!.lockedComment).toBeTruthy();
+    // The back door key lives in the family room, so the yard is out of reach too.
+    expect(ROOMS.family_room.hotspots.some((h) => h.kind === 'pickup' && h.item === 'kitchen_door_key')).toBe(true);
+    expect(canTravel('kitchen', 'backyard', s)).toBe(false);
+    setFlag(s, 'breakfastDone');
+    expect(canTravel('kitchen', 'family_room', s)).toBe(true);
   });
 });
 
@@ -69,6 +86,7 @@ describe('unlocking a door', () => {
   it('still reaches everywhere once every door has been opened and its key spent', () => {
     const s = newGameState(1);
     setFlag(s, 'hasBackpack');
+    setFlag(s, 'breakfastDone');
     for (const [from, to] of [
       ['kitchen', 'backyard'],
       ['family_room', 'garage'],

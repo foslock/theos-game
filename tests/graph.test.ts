@@ -45,6 +45,9 @@ describe('scene graph', () => {
     expect(canTravel('bedroom', 'kitchen', s)).toBe(false);
     setFlag(s, 'hasBackpack');
     expect(canTravel('bedroom', 'kitchen', s)).toBe(true);
+    expect(canTravel('kitchen', 'family_room', s)).toBe(false);
+    setFlag(s, 'breakfastDone');
+    expect(canTravel('kitchen', 'family_room', s)).toBe(true);
     expect(canTravel('kitchen', 'backyard', s)).toBe(false);
     addItem(s, 'kitchen_door_key');
     expect(canTravel('kitchen', 'backyard', s)).toBe(true);
@@ -63,6 +66,9 @@ describe('scene graph', () => {
     const s = newGameState(1);
     expect([...reachable('bedroom', s)].sort()).toEqual(['bathroom', 'bedroom']);
     setFlag(s, 'hasBackpack');
+    // Until breakfast is made the kitchen is as far as it goes: the back door key is behind that gate.
+    expect([...reachable('bedroom', s)].sort()).toEqual(['bathroom', 'bedroom', 'kitchen']);
+    setFlag(s, 'breakfastDone');
     addItem(s, 'kitchen_door_key');
     addItem(s, 'garage_key');
     addItem(s, 'playhouse_key');

@@ -4,7 +4,7 @@ export const playhouse: Room = {
   id: 'playhouse',
   name: 'Playhouse',
   background: 'bg_playhouse',
-  ambientFrames: 2,
+  ambientFrames: 1,
   restPoint: { x: 320, y: 330 },
   lucyRestPoint: { x: 270, y: 335 },
   palette: { wall: '#f4c2d7', floor: '#b98c5a', accent: '#7b4fb0' },
@@ -21,7 +21,7 @@ export const playhouse: Room = {
   ],
   ambient: [
     // Dust in the light from the side window, the odd bird passing its panes, and steam off the teapot.
-    { kind: 'motes', area: { x: 40, y: 140, w: 120, h: 130 }, count: 12, drift: { x: 6, y: 5 } },
+    { kind: 'motes', area: { x: 40, y: 140, w: 120, h: 130 }, count: 18, drift: { x: 6, y: 5 } },
     { kind: 'passerby', key: 'bird', area: { x: 46, y: 146, w: 89, h: 77 }, every: [9, 18] },
     { kind: 'occluder', key: 'playhouse_window_frame', at: { x: 34, y: 134 } },
     { kind: 'steam', at: { x: 148, y: 242 } },
