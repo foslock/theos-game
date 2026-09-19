@@ -90,6 +90,9 @@ export function parseVoice(voice: string): (Step | null)[] {
 }
 
 const LOOKAHEAD_S = 0.25;
+/** Melody notes are short and plucked: they sound for this much of their slot. The bass holds its bar. */
+const LEAD_SUSTAIN = 0.3;
+const BASS_SUSTAIN = 0.85;
 const TICK_MS = 40;
 
 interface Playing {
@@ -119,14 +122,14 @@ function voiceGain(ctx: AudioContext, target: GainNode, gain: number): GainNode 
  * linear ramps that reach true zero: an exponential ramp can only approach it, so cutting the
  * oscillator afterwards left a click on every note.
  */
-function scheduleNote(ctx: AudioContext, out: GainNode, wave: OscillatorType, note: string, at: number, duration: number): void {
+function scheduleNote(ctx: AudioContext, out: GainNode, wave: OscillatorType, note: string, at: number, duration: number, sustain: number): void {
   const osc = ctx.createOscillator();
   const env = ctx.createGain();
   osc.type = wave;
   osc.frequency.setValueAtTime(noteFrequency(note), at);
 
-  // Each note sounds for most of its slot, then a short rest before the next so they stay distinct.
-  const sounding = Math.max(0.05, duration * 0.78);
+  // `sustain` is how much of the slot the note actually sounds for; the rest is silence before the next.
+  const sounding = Math.max(0.05, duration * sustain);
   const attack = Math.min(0.04, sounding * 0.3);
   const release = Math.min(0.14, sounding * 0.45);
   const body = Math.max(0, sounding - attack - release);
@@ -183,9 +186,9 @@ export function playMusic(name: TuneName): void {
     while (state.nextTime < ctx.currentTime + LOOKAHEAD_S) {
       if (volume > 0) {
         const l = state.lead[state.step];
-        if (l) scheduleNote(ctx, lead, tune.wave, l.note, state.nextTime, l.length * state.stepDuration);
+        if (l) scheduleNote(ctx, lead, tune.wave, l.note, state.nextTime, l.length * state.stepDuration, LEAD_SUSTAIN);
         const b = state.bass[state.step];
-        if (b) scheduleNote(ctx, bass, 'sine', b.note, state.nextTime, b.length * state.stepDuration);
+        if (b) scheduleNote(ctx, bass, 'sine', b.note, state.nextTime, b.length * state.stepDuration, BASS_SUSTAIN);
       }
       state.nextTime += state.stepDuration;
       state.step = (state.step + 1) % state.lead.length;
