@@ -30,6 +30,11 @@ export const FLAGS = {
   hasBackpack: 'hasBackpack',
   breakfastDone: 'breakfastDone',
   stompRocketHinted: 'stompRocketHinted',
+  /** Lucy has asked for the basketballs, so the rooms they hide in may hint at them. */
+  basketballHunt: 'basketballHunt',
+  basketballDone: 'basketballDone',
+  slideDone: 'slideDone',
+  stompRocketDone: 'stompRocketDone',
 } as const;
 
 export function newGameState(seed: number): GameState {

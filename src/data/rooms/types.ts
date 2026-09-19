@@ -1,5 +1,6 @@
 import type { ItemId } from '../items';
 import type { Condition } from '../../systems/Conditions';
+import type { AmbientSpec } from '../../systems/Ambience';
 
 export type RoomId =
   | 'bedroom'
@@ -64,6 +65,12 @@ export interface PickupHotspot extends Hitbox {
   hidden?: boolean;
   /** What Theo says on finding a hidden item. */
   foundComment?: string;
+  /**
+   * Tucked partly behind furniture: the sprite is centred at `at` rather than on the zone, and
+   * the room's background is redrawn over `cover` to hide the rest of it. The zone is then just
+   * the part that shows, which is what the player clicks.
+   */
+  peek?: { at: Pt; cover: Rect };
 }
 
 export interface ContainerHotspot extends Hitbox {
@@ -100,7 +107,14 @@ export interface BackpackHotspot extends Hitbox {
   walkTo?: Pt;
 }
 
-export type Hotspot = PickupHotspot | ContainerHotspot | DecorationHotspot | TalkHotspot | BackpackHotspot;
+export interface MinigameHotspot extends Hitbox {
+  kind: 'minigame';
+  id: string;
+  game: 'basketball' | 'slide' | 'rocket';
+  walkTo?: Pt;
+}
+
+export type Hotspot = PickupHotspot | ContainerHotspot | DecorationHotspot | TalkHotspot | BackpackHotspot | MinigameHotspot;
 
 export interface Room {
   id: RoomId;
@@ -117,6 +131,10 @@ export interface Room {
   floorTop?: number;
   /** Extra solid areas on the floor that feet must route around, beyond furniture hotspots. */
   obstacles?: Rect[];
+  /** Little background animations layered over the art; see `src/systems/Ambience.ts`. */
+  ambient?: AmbientSpec[];
+  /** Things drawn over the art at a spot on the floor (feet at `at`), sorted with the characters. */
+  props?: { key: string; at: Pt }[];
   /** Placeholder colours until PixelLab art exists. */
   palette: { wall: string; floor: string; accent: string };
 }

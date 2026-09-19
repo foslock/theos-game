@@ -35,3 +35,10 @@ whose diagonal seams did not line up with the surrounding floor — visible as a
 under the `toy_bus` pickup. Repaired with `/inpaint-v3` on a 512x400 crop (x 128-640) and pasted
 back into both frames, which are byte-identical in that rectangle. The pickup sprite itself was
 always clean; only the background was wrong.
+
+## Ambient (2026-09-18)
+
+- `tv_golf.png`: three 88x48 frames for the picture inside the television's bezel (x 336-423,
+  y 128-175), each cropped from a 96x68 render at (4,16). Frame 1
+  seed 116 candidate 2 with the old screen picture as the reference ("television" in the prompt
+  drew a whole TV set; describing the scene edge to edge worked). Frame 2 is seed 117 candidate 1 and frame 3 seed 118 candidate 0, both referencing frame 1. Dust motes drift in front of the bay window.

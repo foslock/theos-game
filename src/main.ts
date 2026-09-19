@@ -7,6 +7,7 @@ import { LoadScene } from './scenes/LoadScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { GameScene } from './scenes/GameScene';
 import { HudScene } from './scenes/HudScene';
+import { SlideScene } from './scenes/SlideScene';
 import { applyCrtSetting, mountFrame } from './frame';
 import { loadFonts } from './ui/text';
 import { getSettings } from './state/Settings';
@@ -42,7 +43,7 @@ async function start(): Promise<void> {
       // layout keeps sizing the screen to whatever the display is.
       fullscreenTarget: 'stage',
     },
-    scene: [BootScene, IntroScene, StoryScene, LoadScene, SettingsScene, GameScene, HudScene],
+    scene: [BootScene, IntroScene, StoryScene, LoadScene, SettingsScene, GameScene, SlideScene, HudScene],
   });
   const relayout = () => {
     frame.layout();

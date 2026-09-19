@@ -55,9 +55,11 @@ describe('scene graph', () => {
     addItem(s, 'playhouse_key');
     expect(canTravel('backyard', 'playhouse', s)).toBe(true);
     expect(canTravel('playhouse', 'playground', s)).toBe(false);
+    setFlag(s, 'basketballDone');
+    expect(canTravel('playhouse', 'playground', s)).toBe(true);
   });
 
-  it('fresh game only reaches bedroom and bathroom; full keys reach all but playground', () => {
+  it('fresh game only reaches bedroom and bathroom; full keys reach all but playground, which the hoop game opens', () => {
     const s = newGameState(1);
     expect([...reachable('bedroom', s)].sort()).toEqual(['bathroom', 'bedroom']);
     setFlag(s, 'hasBackpack');
@@ -67,6 +69,8 @@ describe('scene graph', () => {
     const r = reachable('bedroom', s);
     expect(r.size).toBe(8);
     expect(r.has('playground')).toBe(false);
+    setFlag(s, 'basketballDone');
+    expect(reachable('bedroom', s).size).toBe(9);
   });
 });
 

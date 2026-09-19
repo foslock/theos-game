@@ -24,6 +24,21 @@
     "bg_backyard_1": { "file": "backyard/bg_1.png", "status": "pixellab", "size": [640, 400] },
     "bg_sport_court_0": { "file": "sport_court/bg_0.png", "status": "pixellab", "size": [640, 400] },
     "bg_sport_court_1": { "file": "sport_court/bg_1.png", "status": "pixellab", "size": [640, 400] },
+    "net_low": { "file": "sport_court/net_low.png", "status": "pixellab", "size": [30, 28], "_note": "the little hoop's rim and net cut out of bg_0 (scripts: see art/pixellab/sport_court.md); drawn over a ball dropping through at HOOPS[].net" },
+    "net_mid": { "file": "sport_court/net_mid.png", "status": "pixellab", "size": [34, 33], "_note": "the medium hoop's rim and net cut out of bg_0" },
+    "net_high": { "file": "sport_court/net_high.png", "status": "pixellab", "size": [30, 35], "_note": "the tall hoop's rim and net cut out of bg_0" },
+    "playhouse_window_frame": { "file": "playhouse/window_frame.png", "status": "derived", "size": [123, 94], "_note": "the side window's frame and mullions, drawn over the bird that passes the panes" },
+    "stomp_launcher": { "file": "backyard/stomp_launcher.png", "status": "pixellab", "size": [96, 64], "_note": "the launcher without its rocket, standing on the lawn at LAUNCHER.at (feet); tube top and pad are measured into StompRocketController" },
+    "rocket_flying": { "file": "backyard/rocket_flying.png", "status": "pixellab", "size": [24, 48], "_note": "the foam rocket, upright, drawn on the tube and flown; the backpack icon is scaled up if this is missing" },
+    "sky_plane": { "file": "ambient/sky_plane.png", "status": "pixellab", "size": [48, 20], "_note": "stomp rocket flight: crosses the sky at 100 m" },
+    "sky_satellite": { "file": "ambient/sky_satellite.png", "status": "pixellab", "size": [40, 24], "_note": "stomp rocket flight: hangs at 150 m with a blinking red light drawn in code" },
+    "sky_ufo": { "file": "ambient/sky_ufo.png", "status": "pixellab", "size": [44, 20], "_note": "stomp rocket flight: wobbles across at 200 m" },
+    "sky_moon": { "file": "ambient/sky_moon.png", "status": "pixellab", "size": [48, 48], "_note": "stomp rocket flight: hangs at 250 m" },
+    "backyard_sky": { "file": "backyard/sky_occluder.png", "status": "derived", "size": [640, 150], "_note": "everything in the top band that is not sky, drawn over the drifting clouds and birds" },
+    "court_sky": { "file": "sport_court/sky_occluder.png", "status": "derived", "size": [640, 150] },
+    "garage_lamp": { "file": "garage/lamp.png", "status": "derived", "size": [64, 66], "_note": "the hanging cage lamp, cut out so it can sway; the lamp was inpainted out of the garage art" },
+    "glow": { "status": "placeholder", "size": [120, 120], "_note": "soft warm light under the garage lamp" },
+    "mote": { "status": "placeholder", "size": [2, 2] },
     "bg_playhouse_0": { "file": "playhouse/bg_0.png", "status": "pixellab", "size": [640, 400] },
     "bg_playhouse_1": { "file": "playhouse/bg_1.png", "status": "pixellab", "size": [640, 400] },
     "bg_playground_0": { "file": "playground/bg_0.png", "status": "pixellab", "size": [640, 400] },
@@ -38,11 +53,23 @@
     "item_playhouse_key": { "file": "items/playhouse_key.png", "status": "pixellab", "size": [24, 24] },
     "item_toy_bus": { "file": "items/toy_bus.png", "status": "pixellab", "size": [24, 24] },
     "backpack": { "file": "items/backpack.png", "status": "pixellab", "size": [52, 56] },
-    "glint": { "status": "placeholder", "size": [12, 12] }
+    "glint": { "status": "placeholder", "size": [12, 12] },
+    "bg_slide": { "file": "slide/bg_0.png", "status": "pixellab", "size": [640, 400], "_note": "the slide ride: the view down the slide from its top platform; the bed's geometry is measured into SLIDE in src/puzzles/slide.ts" },
+    "obstacle_leaf": { "status": "placeholder", "size": [52, 32], "_note": "a pile of autumn leaves on the slide" },
+    "obstacle_mud": { "status": "placeholder", "size": [60, 26], "_note": "a mud splat on the slide" }
   },
   "spritesheets": {
     "theo": { "file": "characters/theo.png", "status": "pixellab", "frameWidth": 64, "frameHeight": 96, "frames": 6 },
     "lucy": { "file": "characters/lucy.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 6 },
-    "lucy_clap": { "file": "characters/lucy_clap.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 2, "_note": "hands apart then together; played when Theo pockets something and Lucy is with him" }
+    "lucy_clap": { "file": "characters/lucy_clap.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 72, "frames": 2, "_note": "hands apart then together; played when Theo pockets something and Lucy is with him" },
+    "theo_shoot": { "file": "characters/theo_shoot.png", "status": "pixellab", "frameWidth": 64, "frameHeight": 96, "frames": 2, "_note": "hoop game: turned away toward the hoops, holding the ball up (frame 0), then arms up after the release with no ball (frame 1); the thrown ball is its own object" },
+    "theo_slide": { "file": "characters/theo_slide.png", "status": "pixellab", "frameWidth": 64, "frameHeight": 72, "frames": 2, "_note": "seen from behind, sitting: hands down, then arms up; looped on the slide ride" },
+    "bird": { "file": "ambient/bird.png", "status": "pixellab", "frameWidth": 32, "frameHeight": 24, "frames": 2, "_note": "a small bird in flight, wings up then down; flocks over the backyard and court, one passes the playhouse window" },
+    "moth": { "file": "ambient/moth.png", "status": "pixellab", "frameWidth": 16, "frameHeight": 16, "frames": 2 },
+    "butterfly": { "file": "ambient/butterfly.png", "status": "pixellab", "frameWidth": 20, "frameHeight": 20, "frames": 2, "_note": "wings open, then the same frame squashed to half width for the closed beat" },
+    "leaf": { "file": "ambient/leaf.png", "status": "pixellab", "frameWidth": 16, "frameHeight": 16, "frames": 3, "_note": "three autumn leaves for the playground and the slide ride" },
+    "robin": { "file": "backyard/robin.png", "status": "derived", "frameWidth": 40, "frameHeight": 32, "frames": 1, "_note": "the robin cut out of the lawn art (the lawn was patched behind it); it hops and pecks by tilting. A 3-frame sheet (standing, hopping, pecking) would be used instead if one is dropped in" },
+    "tv_golf": { "file": "family_room/tv_golf.png", "status": "pixellab", "frameWidth": 88, "frameHeight": 48, "frames": 3, "_note": "the family room television's golf broadcast, three moments of a putt, cropped to the picture inside the bezel (x 336-423, y 128-175)" },
+    "lucy_slide": { "file": "characters/lucy_slide.png", "status": "pixellab", "frameWidth": 48, "frameHeight": 56, "frames": 2, "_note": "seen from behind, sitting: hands down, then arms up; looped on the slide ride" }
   }
 }

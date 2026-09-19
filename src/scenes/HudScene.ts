@@ -36,7 +36,8 @@ export class HudScene extends Phaser.Scene {
 
     makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 116, height: 26 });
     makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 56, 'Menu', () => {
-      this.scene.stop('Game');
+      // The slide ride runs in place of the room scene, so it has to be stopped too.
+      for (const key of ['Game', 'Slide']) if (this.scene.isActive(key)) this.scene.stop(key);
       this.scene.stop('Hud');
       this.scene.start('Intro', { menu: true });
     }, { width: 116, height: 26 });

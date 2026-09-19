@@ -93,7 +93,7 @@ function drawRoomBackground(scene: Phaser.Scene, room: Room, frame: number): voi
       ctx.fillStyle = '#222';
       ctx.fillRect(z.x + z.w / 2 - 4, z.y + z.h / 2 - 1, 8, 3);
       if (z.h >= 40) label(ctx, h.label, z.x + 4, z.y + 4);
-    } else if (h.kind === 'decoration') {
+    } else if (h.kind === 'decoration' || h.kind === 'minigame') {
       ctx.strokeStyle = shade(wall, -60);
       ctx.lineWidth = 2;
       ctx.strokeRect(z.x + 1, z.y + 1, z.w - 2, z.h - 2);
@@ -219,6 +219,137 @@ function drawGlint(scene: Phaser.Scene): void {
   tex.refresh();
 }
 
+/** A little red heart for the slide ride's bumps-left counter. */
+function drawHeart(scene: Phaser.Scene): void {
+  const t = canvas(scene, 'heart', 16, 14);
+  if (!t) return;
+  const { ctx, tex } = t;
+  const rows = ['.XX..XX.', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..', '...XX...'];
+  rows.forEach((row, y) => {
+    [...row].forEach((c, x) => {
+      if (c !== 'X') return;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x * 2, y * 2, 2, 2);
+    });
+  });
+  rows.forEach((row, y) => {
+    [...row].forEach((c, x) => {
+      if (c !== 'X') return;
+      ctx.fillStyle = y < 2 && x < 3 ? '#ff8a8a' : '#d94b3a';
+      ctx.fillRect(x * 2 + 0.5, y * 2 + 0.5, 1, 1);
+    });
+  });
+  tex.refresh();
+}
+
+/** What the riders dodge on the slide: a drift of leaves and a splat of mud, big enough to read at a distance. */
+function drawObstacles(scene: Phaser.Scene): void {
+  const leaf = canvas(scene, 'obstacle_leaf', 52, 32);
+  if (leaf) {
+    const { ctx, tex } = leaf;
+    const leaves: [number, number, string][] = [
+      [4, 14, '#c8651e'],
+      [14, 6, '#e0902a'],
+      [26, 12, '#a8471a'],
+      [10, 20, '#d9a13a'],
+      [22, 21, '#c8651e'],
+      [36, 8, '#e0902a'],
+      [38, 19, '#d9a13a'],
+      [30, 3, '#a8471a'],
+    ];
+    for (const [x, y, colour] of leaves) {
+      ctx.fillStyle = '#3a1d00';
+      ctx.fillRect(x - 1, y - 1, 13, 10);
+      ctx.fillStyle = colour;
+      ctx.fillRect(x, y, 11, 8);
+      ctx.fillStyle = shade(colour, 40);
+      ctx.fillRect(x + 2, y + 1, 4, 2);
+      ctx.fillStyle = shade(colour, -40);
+      ctx.fillRect(x + 5, y + 2, 1, 5);
+    }
+    tex.refresh();
+  }
+  const mud = canvas(scene, 'obstacle_mud', 60, 26);
+  if (mud) {
+    const { ctx, tex } = mud;
+    ctx.fillStyle = '#2a1608';
+    ctx.fillRect(3, 7, 54, 16);
+    ctx.fillRect(9, 3, 20, 4);
+    ctx.fillRect(34, 20, 16, 4);
+    ctx.fillRect(40, 4, 10, 3);
+    ctx.fillStyle = '#6b4226';
+    ctx.fillRect(6, 8, 48, 13);
+    ctx.fillRect(11, 5, 16, 3);
+    ctx.fillRect(42, 6, 6, 2);
+    ctx.fillRect(36, 21, 12, 2);
+    ctx.fillStyle = '#8a5a34';
+    ctx.fillRect(12, 10, 10, 3);
+    ctx.fillRect(36, 13, 8, 3);
+    ctx.fillStyle = '#4a2a14';
+    ctx.fillRect(24, 15, 14, 4);
+    tex.refresh();
+  }
+}
+
+/** Backdrop for the slide ride: sky, a band of trees and the gravel either side of the slide. */
+function drawSlideBackdrop(scene: Phaser.Scene): void {
+  const t = canvas(scene, 'bg_slide', GAME_WIDTH, SCENE_HEIGHT);
+  if (!t) return;
+  const { ctx, tex } = t;
+  ctx.fillStyle = '#9fd8f0';
+  ctx.fillRect(0, 0, GAME_WIDTH, 130);
+  ditherBand(ctx, 120, 10, '#9fd8f0', '#3f7a3a');
+  ctx.fillStyle = '#3f7a3a';
+  ctx.fillRect(0, 130, GAME_WIDTH, 140);
+  // Round canopy blobs in two greens, a little lighter toward the sky.
+  const blobs: [number, number, number, string][] = [
+    [40, 120, 46, '#5a9a48'],
+    [130, 105, 60, '#4a8a40'],
+    [230, 120, 48, '#5a9a48'],
+    [410, 115, 52, '#4a8a40'],
+    [510, 100, 62, '#5a9a48'],
+    [610, 125, 48, '#4a8a40'],
+  ];
+  for (const [x, y, r, colour] of blobs) {
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Trunks down into the gravel.
+  ctx.fillStyle = '#5a3a1a';
+  for (const x of [60, 150, 250, 400, 500, 600]) ctx.fillRect(x - 6, 190, 12, 90);
+  ditherBand(ctx, 270, 12, '#3f7a3a', '#8a6d55');
+  ctx.fillStyle = '#8a6d55';
+  ctx.fillRect(0, 282, GAME_WIDTH, SCENE_HEIGHT - 282);
+  ctx.fillStyle = '#7a5d47';
+  for (let i = 0; i < 90; i++) ctx.fillRect((i * 97) % GAME_WIDTH, 286 + ((i * 53) % 110), 3, 2);
+  tex.refresh();
+}
+
+/** One bright speck for dust motes. */
+function drawMote(scene: Phaser.Scene): void {
+  const t = canvas(scene, 'mote', 2, 2);
+  if (!t) return;
+  t.ctx.fillStyle = '#fff8d0';
+  t.ctx.fillRect(0, 0, 2, 2);
+  t.tex.refresh();
+}
+
+/** Soft warm light for hanging lamps: a radial falloff drawn once and blended additively. */
+function drawGlow(scene: Phaser.Scene): void {
+  const size = 120;
+  const t = canvas(scene, 'glow', size, size);
+  if (!t) return;
+  const grad = t.ctx.createRadialGradient(size / 2, size / 2, 4, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, 'rgba(255, 210, 120, 0.9)');
+  grad.addColorStop(0.45, 'rgba(255, 170, 80, 0.35)');
+  grad.addColorStop(1, 'rgba(255, 140, 60, 0)');
+  t.ctx.fillStyle = grad;
+  t.ctx.fillRect(0, 0, size, size);
+  t.tex.refresh();
+}
+
 function drawSlot(scene: Phaser.Scene): void {
   const t = canvas(scene, 'slot', 36, 36);
   if (!t) return;
@@ -244,4 +375,9 @@ export function buildPlaceholderTextures(scene: Phaser.Scene): void {
   drawBackpack(scene);
   drawGlint(scene);
   drawSlot(scene);
+  drawHeart(scene);
+  drawMote(scene);
+  drawGlow(scene);
+  drawObstacles(scene);
+  drawSlideBackdrop(scene);
 }

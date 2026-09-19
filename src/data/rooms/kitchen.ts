@@ -31,6 +31,13 @@ export const kitchen: Room = {
       lockedComment: "The back door is locked. Where did Mom put the key?",
     },
   ],
+  ambient: [
+    // The wall clock's second hand, and dust in the light from the back door.
+    { kind: 'clock', centre: { x: 596, y: 12 }, length: 13 },
+    // The oven's clock, right of its two knobs, blinking its colon.
+    { kind: 'led', at: { x: 87, y: 102 }, text: '12:00' },
+    { kind: 'motes', area: { x: 366, y: 60, w: 100, h: 210 }, count: 14, drift: { x: -5, y: 5 } },
+  ],
   hotspots: [
     ...kitchenContainers,
     { kind: 'talk', id: 'lucy', zone: { x: 450, y: 185, w: 120, h: 160 }, walkTo: { x: 440, y: 335 }, lines: [] },

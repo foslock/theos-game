@@ -85,4 +85,8 @@ Next the kids need to make their way outside to play basketball on the sport cou
 ## Backyard
 Next, the kids need to go to the backyard and play with the sprinkler and stomp rocket. The stomp rockets are missing, but Theo should note to the player that he remembers them being in his room. This forces the player to backtrack through the scenes to get the rockets, which then they can use to play a minigame.
 
+The stomp rocket mini-game: the player clicks as many times as they can in five seconds to pump up the launch (nine metres per click), then Theo jumps on the red pad and the rocket shoots up. The camera follows it into the sky, scrolling the backyard away, with a counter showing how many metres it has climbed and clouds and birds drifting past; then it falls back down to the lawn next to Theo and Lucy.
+
 ## Playground
+
+Once the hoop game is won, the playhouse's back door opens onto the playground. Clicking the slide starts the slide mini-game: Theo and Lucy ride down a long slide seen from the bottom, and the player steers them side to side by clicking on either side of the slide, dodging piles of leaves and patches of mud that come down toward them. Reaching the bottom wins; three bumps and they climb back up to try again.

@@ -16,3 +16,7 @@ Texture keys: `bg_bedroom_0`, `bg_bedroom_1` (640 x 400). Hotspots: `src/data/ro
 - Empty floor space near x=400 where the backpack sprite is drawn
 - Rocket-sized shelf spot near x=140, y=150 for the stomp rocket sprite
 - Left doorway (bathroom) and right stair opening (kitchen)
+
+## Ambient (2026-09-18)
+
+- Dust motes drift in the window light (x 282-364, y 122-240); no new art.

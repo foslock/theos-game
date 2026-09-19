@@ -26,3 +26,30 @@ ceiling cropped, edges padded). Frame 1 is a programmatic highlight shift, not
 a second render. Cost: 40 generations.
 
 > (global style) A sunny backyard lawn. A big white two-storey house with black shutters and dormer windows across the top centre, a low stone wall with flower beds and a wooden railing along its deck, wooden back-door steps coming down in the centre, a small white playhouse with a tiny mailbox on the far left, a large leafy tree on the right, a tall green hedge with an opening on the far right edge, a lawn sprinkler on the grass, a small bird on the left. Bright green grass.
+
+## Ambient (2026-09-18)
+
+- `robin.png`: the robin cut out of the lawn (x 116-156, y 288-320; lawn keyed out), and the
+  lawn patched behind it with the grass just to its right. It hops and pecks by tilting; a
+  generated hop batch (seed 113) came out smaller than the painted bird and was not used.
+- `sky_occluder.png`: the top 150 rows with the sky transparent (rule: greens, darks, trunks
+  and the house/chimney shapes are kept), drawn over the intro clouds and the bird flock
+  (`ambient/bird.png`: wings up seed 101 candidate 3, wings down seed 102 candidate 11, both
+  desaturated to one grey so the flap does not flicker).
+
+## Stomp rocket (2026-09-18)
+
+- `stomp_launcher.png` 96x64: the launcher without its rocket (blue tripod, leaning red tube, hose,
+  red pad), `/generate-image-v2` seed 121 candidate 0 with the user's product photo
+  (`raw/stomp_rocket_photo.png`) as the reference and the house as the style image. It stands on
+  the lawn with its feet at (500,350); the tube top is at sprite (22,2) and the pad centre at
+  (41,48), which `LAUNCHER` in `src/puzzles/StompRocketController.ts` carries in scene pixels.
+- `rocket_flying.png` 24x48: the foam rocket, seed 122 candidate 1, same reference. It sits on
+  the tube tilted like the tube, straightens as it climbs, noses over at the top and lands beside
+  the kids. The backpack icon `item_stomp_rocket` is the pickup in the bedroom.
+- The game: click for five seconds (9 m a click), Theo stomps, the camera follows the rocket up
+  a gradient sky with the intro clouds, the flock bird and stars above 180 m, then it falls back.
+- Sights on the way up (`ambient/sky_*.png`, seeds 131-134, candidates plane 1, satellite 47,
+  saucer 9, moon 6): the plane crosses at 100 m, the satellite hangs at 150 m with a red light
+  blinking in code, the saucer wobbles across at 200 m, the moon hangs at 250 m. Only the ones
+  below the flight's peak are placed.

@@ -19,9 +19,26 @@ export const familyRoom: Room = {
       lockedComment: "The garage door is locked tight.",
     },
   ],
+  ambient: [
+    // Golf on the television, and dust in the light from the bay window.
+    { kind: 'frames', key: 'tv_golf', at: { x: 336, y: 128 }, rate: 1.1 },
+    { kind: 'motes', area: { x: 470, y: 95, w: 110, h: 130 }, count: 12, drift: { x: -6, y: 4 } },
+  ],
   hotspots: [
     { kind: 'pickup', id: 'kitchen_door_key', item: 'kitchen_door_key', zone: { x: 372, y: 268, w: 30, h: 22 }, walkTo: { x: 387, y: 338 } },
     { kind: 'pickup', id: 'toy_bus', item: 'toy_bus', zone: { x: 520, y: 272, w: 50, h: 34 }, walkTo: { x: 500, y: 340 } },
+    // Half hidden behind the armchair, peeking out over the rug on its left.
+    {
+      kind: 'pickup',
+      id: 'basketball',
+      item: 'basketball',
+      zone: { x: 248, y: 246, w: 13, h: 24 },
+      peek: { at: { x: 256, y: 258 }, cover: { x: 261, y: 244, w: 16, h: 26 } },
+      walkTo: { x: 245, y: 300 },
+      condition: { flag: 'hasBackpack' },
+      refusalComment: 'A basketball! But I need my backpack to carry it.',
+      foundComment: 'A basketball! It was behind the chair.',
+    },
     // The screen itself; the old box sat 11px left of it and clipped its right edge.
     { kind: 'decoration', id: 'tv', zone: { x: 330, y: 108, w: 94, h: 84 }, lines: ['Static... Static...', "Nothing good is on."], sfx: 'click' },
     {
@@ -39,11 +56,12 @@ export const familyRoom: Room = {
     {
       kind: 'decoration',
       id: 'armchair',
-      zone: { x: 255, y: 195, w: 90, h: 90 },
+      // Starts at the chair's real left edge so the ball peeking out beside it is its own target.
+      zone: { x: 261, y: 195, w: 84, h: 90 },
       // Tall back on the left, wider seat and arms below; the top right of the box is open floor.
       parts: [
-        { x: 255, y: 195, w: 58, h: 62 },
-        { x: 255, y: 235, w: 90, h: 50 },
+        { x: 261, y: 195, w: 52, h: 62 },
+        { x: 261, y: 235, w: 84, h: 50 },
       ],
       lines: ['Bouncy checkered chair!'],
       sfx: 'boing',

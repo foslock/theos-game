@@ -94,3 +94,32 @@ against the background.
 - The two frames were then aligned to idle frame 0 by searching for the offset that best overlaps
   the bottom 16 rows of her silhouette — her legs, which no arm pose should move. `together` needed
   dx +2 and `apart` dx +7; without that her feet slide as the animation plays.
+
+## Slide ride: seated, seen from behind (2026-09-18)
+
+`theo_slide.png` 128x72 (two 64x72 frames) and `lucy_slide.png` 96x56 (two 48x56 frames):
+hands down, then arms up, looped at 2 fps as a cheer while they ride down the slide with their
+backs to the player.
+
+- Generated as poses with `/generate-image-v2` (16 candidates per call at these sizes), the
+  idle frame 0 crop as the reference ("keep hair, glasses, shirt... but draw him from behind").
+- "Sitting on a slide" put a slide under most candidates; "sitting on the floor ... figure only,
+  nothing else in the image, no slide, no floor" gave clean figures.
+- Theo: hands down seed 81 candidate 11; arms up seed 87 candidate 0 (referencing the chosen
+  hands-down frame so the body matches), shifted dx +3, dy +22 so the feet sit on the same row.
+- Lucy: hands down seed 85 candidate 1; arms up seed 86 candidate 1. Same bounds, no shift.
+- Only the chosen candidates are kept in `raw/`; the batches are reproducible from the seeds
+  above (`theo_slide_b` seed 82 and `lucy_slide_a/b` seeds 83/84 were the slide-under-figure runs).
+
+## Hoop game: shooting pose (2026-09-18)
+
+`theo_shoot.png` 128x96, two 64x96 frames: turned three-quarters away toward the upper right
+(where the hoops are), holding the ball up in both hands, then the follow-through with open hands
+and no ball. The thrown ball is a separate object that starts where the held ball sits (frame 0's
+ball centre is (46,18), which is `HAND_OFFSET` (14,-78) from his feet).
+
+- `/generate-image-v2` at 64x96 gives only 4 candidates per call. Hold: seed 91, candidate 0,
+  idle frame 0 as the reference. Release: seed 92, candidate 0, referencing the chosen hold
+  frame ("a moment later with the ball gone"), shifted dy +6 so the feet share a row.
+- `Character.pose()` in `src/systems/Walker.ts` shows a frame from this sheet; walking or
+  `idle()` restores the normal sheet, so nothing else has to know about it.

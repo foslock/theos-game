@@ -72,6 +72,17 @@ export class Character {
   }
 
   /**
+   * Holds a still frame from another sheet (a pose drawn for one moment, like shooting a ball)
+   * instead of the idle loop. Walking or `idle()` puts the usual sheet back.
+   */
+  pose(texture: string, frame = 0): void {
+    if (!this.scene.textures.exists(texture)) return;
+    this.sprite.anims.stop();
+    this.sprite.setFlipX(false);
+    this.sprite.setTexture(texture, frame);
+  }
+
+  /**
    * A few excited claps, then back to idle. Ignored while walking, so it never fights the walk
    * cycle, and it resolves as soon as the animation ends.
    */

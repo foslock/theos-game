@@ -7,3 +7,6 @@ dist
 reference/
 # Stray downloads from the PixelLab web app
 pixellab-*.png
+
+# Product photo the user supplied as a PixelLab reference; not ours to publish.
+art/pixellab/raw/stomp_rocket_photo.png

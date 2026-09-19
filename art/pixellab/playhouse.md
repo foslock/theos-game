@@ -25,3 +25,10 @@ ceiling cropped, edges padded). Frame 1 is a programmatic highlight shift, not
 a second render. Cost: 40 generations.
 
 > (global style) The inside of a small wooden playhouse with warm wood plank walls and a vaulted wood ceiling. A small white-framed window on the left, a tiny wooden table with a toy tea set on the left, a brown teddy bear sitting on a little chair on the right, a small cream rug, a white door on the far right edge, and a second small white door in the back wall centre.
+
+## Ambient (2026-09-18)
+
+- `window_frame.png`: the side window's frame and mullions (x 34-156, y 134-227; mullion bands
+  x 74-80, 111-117 and y 179-184), drawn over a bird from `ambient/bird.png` that passes the
+  panes now and then. Dust motes drift in the window light. Steam rises from the teapot lid
+  (148,242). (A swaying-foliage layer was tried and dropped, as in the kitchen.)

@@ -24,3 +24,7 @@ ceiling cropped, edges padded). Frame 1 is a programmatic highlight shift, not
 a second render. Cost: 40 generations.
 
 > (global style) A small bright bathroom with white walls and pale blue tiles. A white toilet on the left, a white pedestal sink with a round mirror above it in the centre, a white bathtub on the right with a yellow rubber duck sitting on its edge, a fluffy blue bath mat on the floor, a small window. An open doorway on the far right edge.
+
+## Ambient (2026-09-18)
+
+- The tub's tap drips from (427,206) to the water at y 232, drawn in code; no new art.

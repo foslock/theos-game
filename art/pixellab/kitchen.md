@@ -26,3 +26,9 @@ ceiling cropped, edges padded). Frame 1 is a programmatic highlight shift, not
 a second render. Cost: 40 generations.
 
 > (global style) A bright white family kitchen. On the left wall a tall stainless steel double oven, then a row of three white upper cabinets, a white counter with three drawers and one lower cabinet under it, a toaster on the counter. A big stainless steel refrigerator centre-left. A white back door with many glass panes in the centre showing green trees. A wooden breakfast table with two wooden chairs on the right. A round wall clock top right. A staircase going up on the far left edge, an open doorway on the far right edge. Light wood floor.
+
+## Ambient (2026-09-18)
+
+- Second hand on the wall clock: centre (596,12), length 13. Dust motes drift in the light from
+  the back door. (A swaying-foliage layer behind the door's mullions was tried and dropped: with
+  the whole view moving it read as the door moving, not the leaves.)

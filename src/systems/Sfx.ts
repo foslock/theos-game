@@ -1,6 +1,6 @@
 import { getSettings } from '../state/Settings';
 
-export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot';
+export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot' | 'stomp' | 'whoosh';
 
 let ctx: AudioContext | null = null;
 
@@ -104,6 +104,13 @@ const PATTERNS: Record<SfxName, Tone[]> = {
   squeak: [{ freq: 1200, to: 1700, dur: 0.12, type: 'sine', gain: 0.35 }],
   ding: [{ freq: 1568, dur: 0.35, type: 'sine', gain: 0.35 }],
   step: [{ freq: 140, dur: 0.04, type: 'triangle', gain: 0.15 }],
+  // A foot landing on the stomp pad: a low thud.
+  stomp: [{ freq: 110, to: 60, dur: 0.14, type: 'triangle', gain: 0.5 }],
+  // The rocket leaving the tube: a rising whistle that thins out.
+  whoosh: [
+    { freq: 220, to: 1400, dur: 0.7, type: 'sawtooth', gain: 0.18 },
+    { freq: 330, to: 1800, dur: 0.6, type: 'sine', gain: 0.2, delay: 0.05 },
+  ],
   // Power-on "boop": a quick upward blip into a soft, ringing major chord.
   boot: [
     { freq: 392, to: 784, dur: 0.16, type: 'sine', gain: 0.5 },

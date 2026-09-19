@@ -13,7 +13,7 @@ import { audioContext } from './Sfx';
  * The bass just holds the root of each bar — twice a bar in the quicker rooms — so it grounds the
  * melody without becoming a second tune competing with it.
  */
-export type TuneName = RoomId | 'title';
+export type TuneName = RoomId | 'title' | 'slide';
 
 interface Tune {
   bpm: number;
@@ -86,6 +86,13 @@ export const TUNES: Record<TuneName, Tune> = {
     wave: 'sine',
     lead: 'C5 .  D5 .  E5 .  G5 . | E5 .  D5 .  C5 .  .  . | A4 .  C5 .  D5 .  E5 . | D5 .  C5 .  .  .  .  .',
     bass: 'C3  .  .  .  .  .  .  . | F2  .  .  .  .  .  .  . | A2  .  .  .  .  .  .  . | G2  .  .  .  .  .  .  .',
+  },
+  // Racing along, for the ride down the slide.
+  slide: {
+    bpm: 144,
+    wave: 'triangle',
+    lead: 'C5 -  E5 -  G5 -  E5 - | A5 -  G5 -  E5 -  D5 - | C5 -  D5 -  E5 -  G5 - | A5 -  G5 -  -  -  -  -',
+    bass: 'C3  .  .  .  C3  .  .  . | F2  .  .  .  F2  .  .  . | A2  .  .  .  A2  .  .  . | G2  .  .  .  G2  .  .  .',
   },
   // The happiest and fastest of them.
   playground: {

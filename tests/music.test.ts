@@ -46,10 +46,11 @@ describe('reading a voice', () => {
 });
 
 describe('the room loops', () => {
-  it('covers every room, plus the title screen', () => {
+  it('covers every room, plus the title screen and the slide ride', () => {
     for (const id of ROOM_IDS) expect(TUNES[id], id).toBeDefined();
     expect(TUNES.title).toBeDefined();
-    expect(names.length).toBe(ROOM_IDS.length + 1);
+    expect(TUNES.slide).toBeDefined();
+    expect(names.length).toBe(ROOM_IDS.length + 2);
   });
 
   it('keeps both voices the same length, in whole bars', () => {

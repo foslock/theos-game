@@ -10,6 +10,10 @@ export const bathroom: Room = {
   exits: [{ to: 'bedroom', zone: { x: 585, y: 0, w: 55, h: 400 }, walkTo: { x: 600, y: 370 }, direction: 'right' }],
   /** The bathtub has no hotspot (the duck is the clickable part) but feet must not cross it. */
   obstacles: [{ x: 372, y: 200, w: 190, h: 152 }],
+  ambient: [
+    // The tub's tap drips.
+    { kind: 'drip', from: { x: 427, y: 206 }, y: 232, every: [2.5, 6] },
+  ],
   hotspots: [
     { kind: 'decoration', id: 'toilet', zone: { x: 25, y: 190, w: 150, h: 170 }, lines: ['Whooooosh!', 'Flush!'], sfx: 'squeak' },
     { kind: 'decoration', id: 'sink', zone: { x: 222, y: 172, w: 136, h: 140 }, lines: ['Splash splash!'], sfx: 'ding' },

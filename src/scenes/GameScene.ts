@@ -9,6 +9,7 @@ import {
   type PickupHotspot,
   type ContainerHotspot,
   type DecorationHotspot,
+  type MinigameHotspot,
   type Rect,
   type Pt,
 } from '../data/rooms';
@@ -21,6 +22,7 @@ import {
   getFlag,
   isPickedUp,
   isUnlocked,
+  itemCount,
   markPickedUp,
   markUnlocked,
   removeItem,
@@ -32,14 +34,19 @@ import { evaluate, requiredItem } from '../systems/Conditions';
 import { Character } from '../systems/Walker';
 import { Dialogue } from '../systems/Dialogue';
 import { AmbientBackground } from '../systems/Ambient';
+import { Ambience } from '../systems/Ambience';
 import { HintTimer, hintLine } from '../systems/Hints';
 import { DitherFade } from '../systems/DitherFade';
 import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
-import { hitRects, pick } from '../systems/Hitbox';
+import { pick } from '../systems/Hitbox';
 import { playSfx, unlockAudio } from '../systems/Sfx';
 import { playMusic } from '../systems/Music';
+import { pointerVerb } from '../ui/text';
 import { BreakfastController } from '../puzzles/BreakfastController';
+import { BasketballController } from '../puzzles/BasketballController';
+import { StompRocketController } from '../puzzles/StompRocketController';
+import { BALLS_NEEDED } from '../puzzles/basketball';
 
 const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
@@ -74,6 +81,19 @@ interface Target extends Hitbox {
   press: () => void;
 }
 
+/** A mini-game that has taken over the pointer: it gets every press and release in the scene area. */
+export interface PointerCapture {
+  down: (p: Phaser.Input.Pointer) => void;
+  up: (p: Phaser.Input.Pointer) => void;
+}
+
+interface GameData {
+  /** New game: Theo wakes up in bed. */
+  wakeUp?: boolean;
+  /** Back from the slide ride: the party is already in the playground, no walking in. */
+  afterSlide?: boolean;
+}
+
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
 export class GameScene extends Phaser.Scene {
   theo!: Character;
@@ -83,12 +103,18 @@ export class GameScene extends Phaser.Scene {
   private room!: Room;
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private ambient?: AmbientBackground;
+  private ambience?: Ambience;
   /** The bedroom's bed overlay, swapped between poses during the wake-up intro. */
   private bed?: Phaser.GameObjects.Image;
   private hints!: HintTimer;
   private walkMap!: WalkMap;
   private fade!: DitherFade;
   private breakfast!: BreakfastController;
+  private basketball!: BasketballController;
+  private rocket!: StompRocketController;
+  /** Set while a mini-game owns the pointer; room targets are ignored meanwhile. */
+  private capture: PointerCapture | null = null;
+  private captureCursor: CursorKind = 'ball';
   private pickupSprites = new Map<string, Phaser.GameObjects.Image>();
   /** Hidden pickups still to be found, by hotspot id, so hints can glint their hiding place. */
   private hiddenPickups = new Map<string, Rect>();
@@ -118,9 +144,12 @@ export class GameScene extends Phaser.Scene {
     super('Game');
   }
 
-  create(data: { wakeUp?: boolean } = {}): void {
+  create(data: GameData = {}): void {
     this.dialogue = new Dialogue(this);
     this.breakfast = new BreakfastController(this);
+    this.basketball = new BasketballController(this);
+    this.rocket = new StompRocketController(this);
+    this.capture = null;
     this.fade = new DitherFade(this, GAME_WIDTH, SCENE_HEIGHT);
     this.fade.setBlack();
     this.hints = new HintTimer(
@@ -136,7 +165,7 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('Hud');
     this.buildRoom();
 
-    const entryExit = s.previousRoom ? findExit(this.room.id, s.previousRoom) : undefined;
+    const entryExit = s.previousRoom && !data.afterSlide ? findExit(this.room.id, s.previousRoom) : undefined;
     const spawn = entryExit?.walkTo ?? this.room.restPoint;
     this.theo = new Character(this, 'theo', spawn.x, spawn.y);
     if (s.lucyJoined) {
@@ -146,8 +175,13 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       unlockAudio();
+      if (this.capture) {
+        if (p.y <= SCENE_HEIGHT) this.capture.down(p);
+        return;
+      }
       this.targetAt(p)?.press();
     });
+    for (const evt of ['pointerup', 'pointerupoutside']) this.input.on(evt, (p: Phaser.Input.Pointer) => this.capture?.up(p));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onPointerMove(p));
     // Lucy cheers whatever Theo pockets, whether he picked it off the floor or found it in a drawer.
     this.carried = carriedCount(s);
@@ -160,10 +194,23 @@ export class GameScene extends Phaser.Scene {
 
     if (wake) {
       void this.wakeUp();
+    } else if (data.afterSlide) {
+      void this.fade.in(FADE_MS);
+      void this.backFromSlide();
     } else {
       void this.fade.in(FADE_MS);
       void this.enterRoom(!!entryExit);
     }
+  }
+
+  /** The party is back at the bottom of the slide; a word about the ride, then the room is theirs. */
+  private async backFromSlide(): Promise<void> {
+    this.busy = true;
+    this.placeParty(this.room.restPoint);
+    await this.sayLucy('Again! Again!');
+    await this.sayTheo('What a day! Mom and Dad will be home soon.');
+    this.busy = false;
+    this.hints.reset();
   }
 
   // ---------- New-game intro: Theo wakes up in bed ----------
@@ -199,7 +246,11 @@ export class GameScene extends Phaser.Scene {
     await this.enterRoom(true);
   }
 
-  private wait(ms: number): Promise<void> {
+  update(_time: number, deltaMs: number): void {
+    this.ambience?.update(Math.min(deltaMs / 1000, 0.1));
+  }
+
+  wait(ms: number): Promise<void> {
     return new Promise((resolve) => this.time.delayedCall(ms, resolve));
   }
 
@@ -213,13 +264,19 @@ export class GameScene extends Phaser.Scene {
     playMusic(this.room.id);
     this.walkMap = buildWalkMap(this.room);
     this.ambient = new AmbientBackground(this, this.room);
+    this.ambience = new Ambience(this, this.room.ambient ?? []);
     const state = store.get();
 
     if (this.room.id === 'bedroom') this.setBed('bed_empty');
+    for (const prop of this.room.props ?? []) {
+      if (!this.textures.exists(prop.key)) continue;
+      this.roomObjects.push(this.add.image(prop.at.x, prop.at.y, prop.key).setOrigin(0.5, 1).setDepth(prop.at.y));
+    }
     for (const exit of this.room.exits) this.addExitZone(exit);
     for (const h of this.room.hotspots) this.addHotspot(h, state);
+    if (this.room.id === 'backyard') this.rocket.roomBuilt();
     if (this.room.id === 'kitchen') {
-      for (const id of this.breakfast.ensureState().opened) this.showContainerOpen(id, true);
+      for (const id of this.breakfast.ensureState().opened) this.showContainerOpen(id);
     }
   }
 
@@ -239,6 +296,8 @@ export class GameScene extends Phaser.Scene {
     this.dialogue.clear();
     this.ambient?.destroy();
     this.ambient = undefined;
+    this.ambience?.destroy();
+    this.ambience = undefined;
     this.bed = undefined;
     for (const o of this.roomObjects) o.destroy();
     this.roomObjects = [];
@@ -249,6 +308,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private teardown(): void {
+    this.basketball.stop();
+    this.rocket.stop();
     this.unwatchInventory?.();
     this.unwatchInventory = undefined;
     this.hints.stop();
@@ -284,8 +345,53 @@ export class GameScene extends Phaser.Scene {
       await this.sayLucy("Theo! I'm sooo hungry. Can you make breakfast?");
       await this.sayTheo('Sure, Lucy! I just need to find a bowl, a spoon, cereal and milk.');
     }
+    if (this.room.id === 'sport_court') await this.arriveAtCourt();
     this.busy = false;
     this.hints.reset();
+  }
+
+  /** Lucy sets the hoop game up the first time, and cheers the balls on whenever they are all here. */
+  private async arriveAtCourt(): Promise<void> {
+    const state = store.get();
+    if (getFlag(state, FLAGS.basketballDone)) return;
+    const balls = itemCount(state, 'basketball');
+    if (!getFlag(state, FLAGS.basketballHunt)) {
+      store.update((s) => setFlag(s, FLAGS.basketballHunt));
+      if (balls < BALLS_NEEDED) {
+        await this.sayLucy('Basketball time! Um... where are the balls?');
+        await this.sayTheo('I think they rolled off somewhere in the house. My room, the family room, the garage...');
+        return;
+      }
+    }
+    if (balls >= BALLS_NEEDED) await this.sayLucy(`All three balls! ${pointerVerb()} a hoop and let's play!`);
+  }
+
+  /** Theo walks to a point on his own, routed around the furniture. */
+  moveTheo(p: Pt): Promise<void> {
+    return this.theo.walkPath(findPath(this.walkMap, this.theo, p));
+  }
+
+  moveLucy(p: Pt): Promise<void> {
+    if (!this.lucy) return Promise.resolve();
+    return this.lucy.walkPath(findPath(this.walkMap, this.lucy, p), false);
+  }
+
+  /** Registers something a controller drew as part of the room, so it is cleared when the room changes. */
+  keepInRoom(obj: Phaser.GameObjects.GameObject): void {
+    this.roomObjects.push(obj);
+  }
+
+  /**
+   * Hands the pointer to a mini-game, or takes it back with null. While captured, nothing in the
+   * room is clickable, the idle hints stay quiet, and the cursor is the ball being thrown.
+   */
+  capturePointer(capture: PointerCapture | null, cursor: CursorKind = 'ball'): void {
+    this.capture = capture;
+    this.captureCursor = cursor;
+    if (capture) this.hints.stop();
+    else this.hints.reset();
+    this.hoverKind = capture ? cursor : 'default';
+    if (!this.busy) setCursor(this, this.hoverKind);
   }
 
   private placeParty(p: Pt): void {
@@ -344,7 +450,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onPointerMove(p: Phaser.Input.Pointer): void {
-    this.hoverKind = this.targetAt(p)?.cursor() ?? 'default';
+    this.hoverKind = this.capture ? this.captureCursor : this.targetAt(p)?.cursor() ?? 'default';
     if (!this.busy) setCursor(this, this.hoverKind);
   }
 
@@ -374,12 +480,39 @@ export class GameScene extends Phaser.Scene {
       case 'talk':
         this.addTarget(h.id, h, () => 'talk', () => void this.interact(h.walkTo, () => this.talk(h.id)));
         break;
+      case 'minigame':
+        this.addTarget(h.id, h, () => 'play', () => void this.interact(h.walkTo, () => this.startMinigame(h)));
+        break;
     }
+  }
+
+  private async startMinigame(h: MinigameHotspot): Promise<void> {
+    this.hints.reset();
+    if (h.game === 'basketball') {
+      await this.basketball.hoopClicked();
+      return;
+    }
+    if (h.game === 'rocket') {
+      await this.rocket.launcherClicked();
+      return;
+    }
+    await this.sayTheo(getFlag(store.get(), FLAGS.slideDone) ? 'One more time down the slide!' : "Let's go down the slide! Hold on, Lucy!");
+    this.hints.stop();
+    this.hoverKind = 'default';
+    await this.fadeOut();
+    this.scene.start('Slide');
   }
 
   private addPickup(h: PickupHotspot): void {
     if (h.hidden) {
       this.hiddenPickups.set(h.id, h.zone);
+    } else if (h.peek) {
+      // Drawn where it really is, then the furniture in front is painted back over it.
+      const depth = h.zone.y + h.zone.h;
+      const img = this.add.image(h.peek.at.x, h.peek.at.y, `item_${h.item}`).setDepth(depth);
+      this.ambient?.cover(h.peek.cover, depth + 1);
+      this.roomObjects.push(img);
+      this.pickupSprites.set(h.id, img);
     } else {
       const img = this.add.image(h.zone.x + h.zone.w / 2, h.zone.y + h.zone.h / 2, `item_${h.item}`).setDepth(h.zone.y + h.zone.h);
       this.roomObjects.push(img);
@@ -417,17 +550,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addDecoration(h: DecorationHotspot): void {
-    // The flash outlines the part of the shape you clicked, not the whole bounding box.
-    const flashes = hitRects(h).map((r) => {
-      const f = this.add.rectangle(r.x, r.y, r.w, r.h, 0xffffff, 0).setOrigin(0).setDepth(1);
-      this.roomObjects.push(f);
-      return f;
-    });
     this.addTarget(h.id, h, () => 'look', () => {
       if (this.busy) return;
       unlockAudio();
       playSfx(h.sfx ?? 'click');
-      this.tweens.add({ targets: flashes, fillAlpha: 0.45, duration: 80, yoyo: true, repeat: 1 });
       if (h.lines?.length) void this.sayTheo(Phaser.Utils.Array.GetRandom(h.lines));
     });
   }
@@ -552,16 +678,9 @@ export class GameScene extends Phaser.Scene {
     return this.dialogue.say(text, who.x, who.y - who.sprite.displayHeight, { fill: 0xffe3f0 });
   }
 
-  /** Marks a container as opened. No lasting overlay is drawn; a quick flash gives the feedback. */
-  showContainerOpen(id: string, silent = false): void {
-    if (this.openedContainers.has(id)) return;
+  /** Marks a container as opened. Nothing is drawn for it; the sound and what comes out are the feedback. */
+  showContainerOpen(id: string): void {
     this.openedContainers.add(id);
-    if (silent) return;
-    const c = this.room.hotspots.find((h): h is ContainerHotspot => h.kind === 'container' && h.id === id);
-    if (!c) return;
-    const flash = this.add.rectangle(c.zone.x, c.zone.y, c.zone.w, c.zone.h, 0xffffff, 0.5).setOrigin(0).setDepth(1);
-    this.roomObjects.push(flash);
-    this.tweens.add({ targets: flash, fillAlpha: 0, duration: 220, onComplete: () => flash.destroy() });
   }
 
   /** Shows an item rising out of a container and flying to the backpack. */

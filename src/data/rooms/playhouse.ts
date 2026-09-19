@@ -15,9 +15,16 @@ export const playhouse: Room = {
       zone: { x: 367, y: 200, w: 68, h: 100 },
       walkTo: { x: 400, y: 305 },
       direction: 'up',
-      condition: { never: true },
-      lockedComment: "The playground is for another day!",
+      condition: { flag: 'basketballDone' },
+      lockedComment: 'Lucy wants to play basketball first. The sport court is past the backyard.',
     },
+  ],
+  ambient: [
+    // Dust in the light from the side window, the odd bird passing its panes, and steam off the teapot.
+    { kind: 'motes', area: { x: 40, y: 140, w: 120, h: 130 }, count: 12, drift: { x: 6, y: 5 } },
+    { kind: 'passerby', key: 'bird', area: { x: 46, y: 146, w: 89, h: 77 }, every: [9, 18] },
+    { kind: 'occluder', key: 'playhouse_window_frame', at: { x: 34, y: 134 } },
+    { kind: 'steam', at: { x: 148, y: 242 } },
   ],
   hotspots: [
     { kind: 'pickup', id: 'garage_key', item: 'garage_key', zone: { x: 470, y: 300, w: 30, h: 24 }, walkTo: { x: 470, y: 345 } },

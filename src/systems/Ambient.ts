@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import type { Room } from '../data/rooms';
+import type { Rect, Room } from '../data/rooms';
 import { AMBIENT_FRAME_MS } from '../config';
 
 /** Draws the room background and slowly cycles its ambient frames. */
@@ -7,6 +7,8 @@ export class AmbientBackground {
   readonly image: Phaser.GameObjects.Image;
   private frame = 0;
   private timer?: Phaser.Time.TimerEvent;
+  /** Patches of the background drawn again on top of things, so they can hide behind furniture. */
+  private covers: { image: Phaser.GameObjects.Image; rect: Rect }[] = [];
 
   constructor(private scene: Phaser.Scene, private room: Room) {
     this.image = scene.add.image(0, 0, this.key(0)).setOrigin(0).setDepth(0);
@@ -16,10 +18,22 @@ export class AmbientBackground {
         loop: true,
         callback: () => {
           this.frame = (this.frame + 1) % this.room.ambientFrames;
-          this.image.setTexture(this.key(this.frame));
+          const key = this.key(this.frame);
+          this.image.setTexture(key);
+          for (const c of this.covers) c.image.setTexture(key).setCrop(c.rect.x, c.rect.y, c.rect.w, c.rect.h);
         },
       });
     }
+  }
+
+  /**
+   * Redraws one rectangle of the background at `depth`, so anything drawn below that depth is
+   * hidden where the rectangle is. The patch follows the ambient frames like the rest of the room.
+   */
+  cover(rect: Rect, depth: number): Phaser.GameObjects.Image {
+    const image = this.scene.add.image(0, 0, this.key(this.frame)).setOrigin(0).setDepth(depth).setCrop(rect.x, rect.y, rect.w, rect.h);
+    this.covers.push({ image, rect });
+    return image;
   }
 
   private key(frame: number): string {
@@ -30,5 +44,7 @@ export class AmbientBackground {
   destroy(): void {
     this.timer?.remove();
     this.image.destroy();
+    for (const c of this.covers) c.image.destroy();
+    this.covers = [];
   }
 }
