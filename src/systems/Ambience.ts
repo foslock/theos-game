@@ -24,7 +24,7 @@ export type AmbientSpec =
    * under `frame` (the window frame and mullions), so only the leaves appear to move.
    */
   | { kind: 'sway'; layer: string; at: Pt; frame: string; frameAt: Pt; amplitude?: number; period?: number }
-  /** A screen showing a few frames on a loop with a little flicker, like a television. */
+  /** A screen showing a few frames on a loop, like a television. */
   | { kind: 'frames'; key: string; at: Pt; rate?: number }
   /** A cut-out that rocks around a pivot, like a hanging lamp. With `glow`, a warm light at that point (relative to the pivot) rocks with it and flickers. */
   | { kind: 'rock'; key: string; at: Pt; pivot: Pt; amplitude?: number; period?: number; glow?: Pt }
@@ -381,8 +381,6 @@ class Frames implements Effect {
       this.sprite.setFrame((Number(this.sprite.frame.name) + 1) % this.frames);
       this.schedule();
     }
-    // Old sets flicker: a brief dim now and then.
-    this.sprite.setAlpha(Math.random() < 0.04 ? 0.82 : 1);
   }
 
   destroy(): void {
