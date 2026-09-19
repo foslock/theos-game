@@ -15,9 +15,9 @@ export const bathroom: Room = {
     { kind: 'drip', from: { x: 427, y: 206 }, y: 232, every: [2.5, 6] },
   ],
   hotspots: [
-    { kind: 'decoration', id: 'toilet', zone: { x: 25, y: 190, w: 150, h: 170 }, lines: ['Whooooosh!', 'Flush!'], sfx: 'squeak' },
-    { kind: 'decoration', id: 'sink', zone: { x: 222, y: 172, w: 136, h: 140 }, lines: ['Splash splash!'], sfx: 'ding' },
-    { kind: 'decoration', id: 'mirror', zone: { x: 212, y: 12, w: 148, h: 140 }, lines: ["Hi, me!", 'Looking good, Theo.'], sfx: 'click' },
-    { kind: 'decoration', id: 'duck', zone: { x: 415, y: 230, w: 48, h: 42 }, lines: ['Squeak! Squeak!'], sfx: 'squeak' },
+    { kind: 'decoration', id: 'toilet', zone: { x: 25, y: 190, w: 150, h: 170 }, lines: ['Whooooosh!', 'Flush! There it goes.', 'Round and round and... gone!'], sfx: 'squeak' },
+    { kind: 'decoration', id: 'sink', zone: { x: 222, y: 172, w: 136, h: 140 }, lines: ['Splash splash!', 'Brrr, the water is cold.', 'Wash your hands, Theo!'], sfx: 'ding' },
+    { kind: 'decoration', id: 'mirror', zone: { x: 212, y: 12, w: 148, h: 140 }, lines: ['Hi, me!', 'Looking good, Theo.', 'My glasses are a little crooked.'], sfx: 'click' },
+    { kind: 'decoration', id: 'duck', zone: { x: 415, y: 230, w: 48, h: 42 }, lines: ['Squeak! Squeak!', "That's Lucy's bath duck.", 'He wants to go swimming.'], sfx: 'squeak' },
   ],
 };

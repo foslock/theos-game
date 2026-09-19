@@ -33,9 +33,9 @@ export const bedroom: Room = {
       condition: { flag: 'hasBackpack' },
       refusalComment: "My stomp rocket! But I need something to carry it in...",
     },
-    { kind: 'decoration', id: 'bed', zone: { x: 128, y: 206, w: 154, h: 122 }, lines: ['Boing! Boing!', 'My bed is super bouncy.'], sfx: 'boing' },
-    { kind: 'decoration', id: 'lamp', zone: { x: 288, y: 192, w: 46, h: 80 }, lines: ['Click! Lights on. Click! Lights off.'], sfx: 'click' },
-    { kind: 'decoration', id: 'window', zone: { x: 280, y: 115, w: 80, h: 76 }, lines: ["It's a beautiful morning outside!"], sfx: 'ding' },
+    { kind: 'decoration', id: 'bed', zone: { x: 128, y: 206, w: 154, h: 122 }, lines: ['Boing! Boing!', 'My bed is super bouncy.', 'Not sleepy. It is morning!'], sfx: 'boing' },
+    { kind: 'decoration', id: 'lamp', zone: { x: 288, y: 192, w: 46, h: 80 }, lines: ['Click! Lights on. Click! Lights off.', 'Click! Off. Click! On.', 'The lampshade is warm.'], sfx: 'click' },
+    { kind: 'decoration', id: 'window', zone: { x: 280, y: 115, w: 80, h: 76 }, lines: ["It's a beautiful morning outside!", 'I can see the backyard from up here.', 'The birds are singing.'], sfx: 'ding' },
     // Rolled in behind the desk: only its left half shows on the carpet.
     {
       kind: 'pickup',
@@ -49,6 +49,6 @@ export const bedroom: Room = {
       foundComment: 'A basketball! It was behind my desk.',
     },
     // Starts at the desk's real left edge so the ball peeking out beside it is its own target.
-    { kind: 'decoration', id: 'desk', zone: { x: 459, y: 120, w: 101, h: 200 }, lines: ['My big desk. So many crayons!', 'Scribble scribble.'], sfx: 'click' },
+    { kind: 'decoration', id: 'desk', zone: { x: 459, y: 120, w: 101, h: 200 }, lines: ['My big desk. So many crayons!', 'Scribble scribble.', 'I drew a rocket on this paper.'], sfx: 'click' },
   ],
 };

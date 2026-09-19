@@ -105,6 +105,14 @@ describe('room layout', () => {
     expect(bad).toEqual([]);
   });
 
+  it('gives every decoration Theo comments on three lines to cycle through', () => {
+    for (const id of ROOM_IDS) {
+      for (const h of ROOMS[id].hotspots) {
+        if (h.kind === 'decoration' && h.lines?.length) expect(h.lines.length, `${id}: ${h.id}`).toBe(3);
+      }
+    }
+  });
+
   it('hotspot ids are unique within a room', () => {
     for (const id of ROOM_IDS) {
       const ids = ROOMS[id].hotspots.map((h) => h.id);

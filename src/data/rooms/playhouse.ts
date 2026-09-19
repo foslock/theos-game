@@ -28,9 +28,9 @@ export const playhouse: Room = {
   ],
   hotspots: [
     { kind: 'pickup', id: 'garage_key', item: 'garage_key', zone: { x: 470, y: 300, w: 30, h: 24 }, walkTo: { x: 470, y: 345 } },
-    { kind: 'decoration', id: 'tea_set', zone: { x: 95, y: 240, w: 105, h: 34 }, lines: ['Clink! Tea time!'], sfx: 'ding' },
-    { kind: 'decoration', id: 'table', zone: { x: 65, y: 275, w: 150, h: 85 }, lines: ['A little table, just my size.'], sfx: 'click' },
-    { kind: 'decoration', id: 'window', zone: { x: 30, y: 120, w: 130, h: 110 }, lines: ['I can see the whole yard from here.'], sfx: 'click' },
-    { kind: 'decoration', id: 'teddy', zone: { x: 220, y: 215, w: 60, h: 105 }, lines: ["Hi, Mr. Bear!"], sfx: 'squeak' },
+    { kind: 'decoration', id: 'tea_set', zone: { x: 95, y: 240, w: 105, h: 34 }, lines: ['Clink! Tea time!', 'One cup for me and one for Mr. Bear.', 'Pretend tea. Slurp!'], sfx: 'ding' },
+    { kind: 'decoration', id: 'table', zone: { x: 65, y: 275, w: 150, h: 85 }, lines: ['A little table, just my size.', 'We have tea parties here.', 'Lucy bumped her head on it once.'], sfx: 'click' },
+    { kind: 'decoration', id: 'window', zone: { x: 30, y: 120, w: 130, h: 110 }, lines: ['I can see the whole yard from here.', 'The trees are waving at us.', 'Sometimes a bird lands right there.'], sfx: 'click' },
+    { kind: 'decoration', id: 'teddy', zone: { x: 220, y: 215, w: 60, h: 105 }, lines: ['Hi, Mr. Bear!', 'Mr. Bear is very good at waiting.', 'He needs a hug.'], sfx: 'squeak' },
   ],
 };

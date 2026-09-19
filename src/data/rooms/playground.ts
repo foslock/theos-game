@@ -47,7 +47,7 @@ export const playground: Room = {
       ],
       walkTo: { x: 118, y: 342 },
     },
-    { kind: 'decoration', id: 'swing', zone: { x: 300, y: 90, w: 170, h: 200 }, lines: ['Push me higher!'], sfx: 'squeak' },
+    { kind: 'decoration', id: 'swing', zone: { x: 300, y: 90, w: 170, h: 200 }, lines: ['Push me higher!', 'Wheee! Look how high!', 'The chains go creak, creak.'], sfx: 'squeak' },
     // The big bushes in the bottom-right corner, below the swing.
     { kind: 'decoration', id: 'bushes', zone: { x: 380, y: 300, w: 260, h: 100 }, lines: ['Rustle rustle! Something is hiding in there.', 'The leaves tickle!', 'Shh... I think a bunny lives in here.'], sfx: 'squeak' },
   ],

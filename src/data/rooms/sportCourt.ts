@@ -25,6 +25,6 @@ export const sportCourt: Room = {
     { kind: 'minigame', id: 'hoop_low', game: 'basketball', zone: { x: 408, y: 146, w: 46, h: 118 } },
     { kind: 'minigame', id: 'hoop_mid', game: 'basketball', zone: { x: 462, y: 114, w: 56, h: 152 } },
     { kind: 'minigame', id: 'hoop_high', game: 'basketball', zone: { x: 531, y: 76, w: 56, h: 196 } },
-    { kind: 'decoration', id: 'bench', zone: { x: 70, y: 220, w: 75, h: 52 }, lines: ['A good spot to rest.'], sfx: 'click' },
+    { kind: 'decoration', id: 'bench', zone: { x: 70, y: 220, w: 75, h: 52 }, lines: ['A good spot to rest.', 'Mom sits here and watches us play.', 'The wood is warm from the sun.'], sfx: 'click' },
   ],
 };

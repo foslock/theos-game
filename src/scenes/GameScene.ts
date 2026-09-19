@@ -74,6 +74,9 @@ const BED_DEPTH = 328;
 /** Where Theo lands after hopping out, clear of the bed's footprint. */
 const WAKE_STAND = { x: 300, y: 344 };
 
+/** Which of a decoration's lines comes next, per room and hotspot, kept for the whole session. */
+const lineCursor = new Map<string, number>();
+
 /** Something clickable in the room: a footprint plus what it does. */
 interface Target extends Hitbox {
   id: string;
@@ -554,8 +557,16 @@ export class GameScene extends Phaser.Scene {
       if (this.busy) return;
       unlockAudio();
       playSfx(h.sfx ?? 'click');
-      if (h.lines?.length) void this.sayTheo(Phaser.Utils.Array.GetRandom(h.lines));
+      if (h.lines?.length) void this.sayTheo(this.nextLine(h));
     });
+  }
+
+  /** Theo's remarks about a thing come round in turn, so repeated clicks get some variety. */
+  private nextLine(h: DecorationHotspot): string {
+    const key = `${this.room.id}:${h.id}`;
+    const i = lineCursor.get(key) ?? 0;
+    lineCursor.set(key, i + 1);
+    return h.lines![i % h.lines!.length];
   }
 
   // ---------- Interactions ----------

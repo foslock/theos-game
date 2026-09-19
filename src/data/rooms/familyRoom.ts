@@ -50,7 +50,7 @@ export const familyRoom: Room = {
         { x: 428, y: 186, w: 72, h: 56 },
         { x: 428, y: 230, w: 91, h: 50 },
       ],
-      lines: ['Comfy!'],
+      lines: ['Comfy!', 'Squish squish. The cushions are so soft.', "That's where Dad reads the paper."],
       sfx: 'boing',
     },
     {
@@ -63,7 +63,7 @@ export const familyRoom: Room = {
         { x: 261, y: 195, w: 52, h: 62 },
         { x: 261, y: 235, w: 84, h: 50 },
       ],
-      lines: ['Bouncy checkered chair!'],
+      lines: ['Bouncy checkered chair!', "That's Mom's chair.", 'Red and white, like a picnic blanket.'],
       sfx: 'boing',
     },
     {
@@ -75,10 +75,10 @@ export const familyRoom: Room = {
         { x: 215, y: 152, w: 85, h: 14 },
         { x: 226, y: 170, w: 25, h: 50 },
       ],
-      lines: ['No fire today. Too warm!'],
+      lines: ['No fire today. Too warm!', 'In winter it crackles and pops.', "I'm not allowed to touch the fire poker."],
       sfx: 'click',
     },
-    { kind: 'decoration', id: 'window_seat', zone: { x: 490, y: 90, w: 90, h: 90 }, lines: ['I can see the backyard from here.'], sfx: 'ding' },
-    { kind: 'decoration', id: 'bookshelf', zone: { x: 115, y: 45, w: 85, h: 190 }, lines: ['So many books!'], sfx: 'ding' },
+    { kind: 'decoration', id: 'window_seat', zone: { x: 490, y: 90, w: 90, h: 90 }, lines: ['I can see the backyard from here.', 'The sun is shining on the cushions.', 'A good spot for looking at birds.'], sfx: 'ding' },
+    { kind: 'decoration', id: 'bookshelf', zone: { x: 115, y: 45, w: 85, h: 190 }, lines: ['So many books!', 'The one with the bear is my favourite.', 'Lucy likes the one with the flaps.'], sfx: 'ding' },
   ],
 };
