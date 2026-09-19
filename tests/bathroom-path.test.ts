@@ -12,7 +12,7 @@ describe('bathroom walk-in', () => {
       expect(clearLine(map, prev, p)).toBe(true);
       prev = p;
     }
-    // every waypoint under the tub's x-range must be below its bottom edge (y 352)
-    for (const p of path.slice(0, -1)) if (p.x >= 372 && p.x < 562) expect(p.y).toBeGreaterThanOrEqual(352);
+    // every waypoint under the tub's x-range must be below the block under its feet (y 372)
+    for (const p of path.slice(0, -1)) if (p.x >= 372 && p.x < 562) expect(p.y).toBeGreaterThanOrEqual(372);
   });
 });

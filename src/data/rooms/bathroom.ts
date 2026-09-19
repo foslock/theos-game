@@ -5,14 +5,21 @@ export const bathroom: Room = {
   name: 'Bathroom',
   background: 'bg_bathroom',
   ambientFrames: 1,
-  restPoint: { x: 320, y: 330 },
+  // The middle of the bath mat, well clear of the tub.
+  restPoint: { x: 290, y: 364 },
   palette: { wall: '#9fd4e0', floor: '#e6e6e6', accent: '#4e9ab0' },
-  exits: [{ to: 'bedroom', zone: { x: 585, y: 0, w: 55, h: 400 }, walkTo: { x: 600, y: 370 }, direction: 'right' }],
-  /** The bathtub has no hotspot (the duck is the clickable part) but feet must not cross it. */
-  obstacles: [{ x: 372, y: 200, w: 190, h: 152 }],
+  exits: [{ to: 'bedroom', zone: { x: 585, y: 0, w: 55, h: 400 }, walkTo: { x: 600, y: 380 }, direction: 'right' }],
+  /**
+   * The bathtub has no hotspot (the duck is the clickable part) but feet must not cross it. The
+   * block reaches 20px under its feet so Theo walks past along the bottom of the room rather than
+   * over its front.
+   */
+  obstacles: [{ x: 372, y: 200, w: 190, h: 172 }],
   ambient: [
-    // The tub's tap drips.
-    { kind: 'drip', from: { x: 427, y: 206 }, y: 232, every: [2.5, 6] },
+    // The tub's tap drips from the spout's mouth into the water.
+    { kind: 'drip', from: { x: 434, y: 211 }, y: 232, every: [2.5, 6] },
+    // Dust in the light from the little arched window.
+    { kind: 'motes', area: { x: 22, y: 8, w: 66, h: 108 }, count: 12, drift: { x: 5, y: 5 } },
   ],
   hotspots: [
     { kind: 'decoration', id: 'toilet', zone: { x: 25, y: 190, w: 150, h: 170 }, lines: ['Whooooosh!', 'Flush! There it goes.', 'Round and round and... gone!'], sfx: 'squeak' },
