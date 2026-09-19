@@ -125,8 +125,8 @@ function scheduleNote(ctx: AudioContext, out: GainNode, wave: OscillatorType, no
   osc.type = wave;
   osc.frequency.setValueAtTime(noteFrequency(note), at);
 
-  // A little silence at the end still separates repeated notes, but far less than a hard pluck.
-  const sounding = Math.max(0.05, duration * 0.92);
+  // Each note sounds for most of its slot, then a short rest before the next so they stay distinct.
+  const sounding = Math.max(0.05, duration * 0.78);
   const attack = Math.min(0.04, sounding * 0.3);
   const release = Math.min(0.14, sounding * 0.45);
   const body = Math.max(0, sounding - attack - release);
