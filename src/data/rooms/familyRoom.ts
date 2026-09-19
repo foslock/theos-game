@@ -40,7 +40,7 @@ export const familyRoom: Room = {
       foundComment: 'A basketball! It was behind the chair.',
     },
     // The screen itself; the old box sat 11px left of it and clipped its right edge.
-    { kind: 'decoration', id: 'tv', zone: { x: 330, y: 108, w: 94, h: 84 }, lines: ['Static... Static...', "Nothing good is on."], sfx: 'click' },
+    { kind: 'decoration', id: 'tv', zone: { x: 330, y: 108, w: 94, h: 84 }, lines: ["Golf! He's lining up a really long putt.", 'Shh... he needs to concentrate. Will it go in?', 'That green looks so bouncy.'], sfx: 'click' },
     {
       kind: 'decoration',
       id: 'couch',
