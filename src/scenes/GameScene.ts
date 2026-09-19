@@ -35,7 +35,7 @@ import { Character } from '../systems/Walker';
 import { Dialogue } from '../systems/Dialogue';
 import { AmbientBackground } from '../systems/Ambient';
 import { Ambience } from '../systems/Ambience';
-import { HintTimer, hintLine } from '../systems/Hints';
+import { HintTimer, hintLine, lucyHintLine } from '../systems/Hints';
 import { DitherFade } from '../systems/DitherFade';
 import { buildWalkMap, findPath, type WalkMap } from '../systems/Pathfind';
 import { arrowCursor, setCursor, type CursorKind } from '../systems/Cursor';
@@ -449,7 +449,22 @@ export class GameScene extends Phaser.Scene {
   /** The target a pointer is over, if any. The HUD runs as its own scene and owns the bar below. */
   private targetAt(p: Phaser.Input.Pointer): Target | undefined {
     if (p.y > SCENE_HEIGHT) return undefined;
+    // Lucy goes wherever Theo goes, so she is a target where she stands rather than a fixed zone.
+    const lucy = this.lucyTargetAt(p);
+    if (lucy) return lucy;
     return pick(this.targets, p.x, p.y);
+  }
+
+  private lucyTargetAt(p: Phaser.Input.Pointer): Target | undefined {
+    if (!this.lucy) return undefined;
+    const b = this.lucy.sprite.getBounds();
+    if (!b.contains(p.x, p.y)) return undefined;
+    return {
+      id: 'lucy',
+      zone: { x: b.x, y: b.y, w: b.width, h: b.height },
+      cursor: () => 'talk',
+      press: () => void this.interact(undefined, () => this.talk('lucy')),
+    };
   }
 
   private onPointerMove(p: Phaser.Input.Pointer): void {
@@ -608,11 +623,17 @@ export class GameScene extends Phaser.Scene {
     await this.sayTheo(h.foundComment ?? `Got the ${ITEMS[h.item].name.toLowerCase()}!`);
   }
 
+  /** Asking Lucy: in the kitchen she runs the breakfast puzzle; anywhere else she hints at what to do next. */
   private async talk(id: string): Promise<void> {
-    if (id === 'lucy' && this.room.id === 'kitchen') {
-      this.lucy?.face(this.theo.x - this.lucy.x);
+    if (id !== 'lucy' || !this.lucy) return;
+    this.lucy.face(this.theo.x - this.lucy.x);
+    this.theo.face(this.lucy.x - this.theo.x);
+    if (this.room.id === 'kitchen' && !getFlag(store.get(), FLAGS.breakfastDone)) {
       await this.breakfast.talkToLucy();
+      return;
     }
+    this.hints.reset();
+    await this.sayLucy(lucyHintLine(this.room, store.get()));
   }
 
   /**

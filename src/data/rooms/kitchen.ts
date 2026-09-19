@@ -40,7 +40,6 @@ export const kitchen: Room = {
   ],
   hotspots: [
     ...kitchenContainers,
-    { kind: 'talk', id: 'lucy', zone: { x: 450, y: 185, w: 120, h: 160 }, walkTo: { x: 440, y: 335 }, lines: [] },
     { kind: 'decoration', id: 'oven', zone: { x: 58, y: 95, w: 62, h: 150 }, lines: ["Hot! I'm not allowed to touch the oven.", 'Mom bakes cookies in there.', 'The little clock is blinking.'], sfx: 'click' },
     { kind: 'decoration', id: 'toaster', zone: { x: 150, y: 150, w: 42, h: 32 }, lines: ['POP! No toast, though.', 'It makes the bread all crunchy.', 'Careful, the top gets hot.'], sfx: 'boing' },
     { kind: 'decoration', id: 'clock', zone: { x: 575, y: 0, w: 42, h: 42 }, lines: ['Tick tock, tick tock.', 'The little hand goes round and round.', 'Is it lunchtime yet?'], sfx: 'click' },

@@ -14,7 +14,7 @@ import {
   TRIES_PER_HOOP,
   triesLeft,
 } from '../src/puzzles/basketball';
-import { hintLine } from '../src/systems/Hints';
+import { hintLine, lucyHintLine } from '../src/systems/Hints';
 import { ROOMS, ROOM_IDS } from '../src/data/rooms';
 import { Rng } from '../src/systems/Rng';
 import { addItem, markUnlocked, newGameState, setFlag } from '../src/state/GameState';
@@ -145,5 +145,31 @@ describe('the hunt', () => {
     expect(hintLine(ROOMS.garage, s)).toBeNull();
     expect(hintLine(ROOMS.playhouse, s)).toBeNull();
     expect(hintLine(ROOMS.playground, s)).toMatch(/slide/);
+  });
+});
+
+describe('asking Lucy', () => {
+  it('points at the next thing to do in every room', () => {
+    const s = newGameState(1);
+    expect(lucyHintLine(ROOMS.bedroom, s)).toMatch(/backpack/);
+    setFlag(s, 'hasBackpack');
+    expect(lucyHintLine(ROOMS.kitchen, s)).toMatch(/drawers/);
+    setFlag(s, 'breakfastDone');
+    expect(lucyHintLine(ROOMS.kitchen, s)).toMatch(/key/);
+    expect(lucyHintLine(ROOMS.family_room, s)).toMatch(/key/);
+    markUnlocked(s, 'kitchen', 'backyard');
+    expect(lucyHintLine(ROOMS.backyard, s)).toMatch(/mailbox/);
+    markUnlocked(s, 'backyard', 'playhouse');
+    expect(lucyHintLine(ROOMS.backyard, s)).toMatch(/basketball/);
+    setFlag(s, 'basketballHunt');
+    expect(lucyHintLine(ROOMS.garage, s)).toMatch(/basketball/);
+    expect(lucyHintLine(ROOMS.sport_court, s)).toMatch(/three/);
+    for (let i = 0; i < BALLS_NEEDED; i++) addItem(s, 'basketball');
+    expect(lucyHintLine(ROOMS.sport_court, s)).toMatch(/hoop/);
+    setFlag(s, 'basketballDone');
+    markUnlocked(s, 'family_room', 'garage');
+    expect(lucyHintLine(ROOMS.playhouse, s)).toMatch(/playground/);
+    expect(lucyHintLine(ROOMS.playground, s)).toMatch(/slide/);
+    for (const id of ROOM_IDS) expect(lucyHintLine(ROOMS[id], s).length).toBeGreaterThan(0);
   });
 });

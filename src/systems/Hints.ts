@@ -104,3 +104,51 @@ export function hintLine(room: Room, state: GameState): string | null {
       return null;
   }
 }
+
+/**
+ * What Lucy says when Theo asks her: a nudge toward whatever moves the day along from here, in
+ * her own words, or a bit of chatter when there is nothing left to do in the room.
+ */
+export function lucyHintLine(room: Room, state: GameState): string {
+  const backpack = getFlag(state, FLAGS.hasBackpack);
+  const hoops = getFlag(state, FLAGS.basketballDone);
+  const ballHere = room.hotspots.some((h) => h.kind === 'pickup' && h.id === 'basketball') && !isPickedUp(state, room.id, 'basketball');
+  const wantsBalls = getFlag(state, FLAGS.basketballHunt) && !hoops && itemCount(state, 'basketball') < BALLS_NEEDED;
+  switch (room.id) {
+    case 'bedroom':
+      if (!backpack) return "Theo, don't forget your backpack!";
+      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'bedroom', 'stomp_rocket')) return 'Your rocket is up on the shelf, by the window!';
+      if (wantsBalls && ballHere) return 'I think a basketball is hiding in here somewhere!';
+      return "Let's go downstairs!";
+    case 'bathroom':
+      return backpack ? 'Splash splash! Nothing to do in here.' : 'Your backpack is in your room, silly.';
+    case 'kitchen':
+      if (!getFlag(state, FLAGS.breakfastDone)) return "I'm hungry! Look in the drawers and cabinets.";
+      if (stillNeeds(state, 'kitchen_door_key', 'kitchen', 'backyard')) return 'The back door is locked. Maybe the key is in the family room?';
+      return "Let's go outside and play!";
+    case 'family_room':
+      if (stillNeeds(state, 'kitchen_door_key', 'kitchen', 'backyard')) return 'Mom keeps the back door key around here somewhere!';
+      if (wantsBalls && ballHere) return 'I think a basketball is hiding in here somewhere!';
+      return 'Nothing else in here. Let\'s go!';
+    case 'garage':
+      if (wantsBalls && ballHere) return 'I think a basketball is hiding in here somewhere!';
+      return "Dad's garage is stinky. Let's go!";
+    case 'backyard':
+      if (stillNeeds(state, 'playhouse_key', 'backyard', 'playhouse')) return 'The playhouse key might be in the little mailbox!';
+      if (hasItem(state, 'stomp_rocket')) return 'Put the rocket on the launcher! I want to see it fly!';
+      if (getFlag(state, FLAGS.stompRocketHinted) && !getFlag(state, FLAGS.stompRocketDone)) return 'Your rocket is up in your room!';
+      if (!hoops) return "The sport court is that way! Let's play basketball.";
+      if (!getFlag(state, FLAGS.slideDone)) return 'The playground is past the playhouse. Slide time!';
+      return 'What should we play next?';
+    case 'sport_court':
+      if (hoops) return 'That was fun! What should we play next?';
+      if (itemCount(state, 'basketball') < BALLS_NEEDED) return 'We need three basketballs! Look around the house.';
+      return 'Click a hoop and shoot!';
+    case 'playhouse':
+      if (stillNeeds(state, 'garage_key', 'family_room', 'garage')) return 'Is that a key on the floor?';
+      if (!hoops) return "The playground is through that door, but let's play basketball first!";
+      return 'The playground is through that door!';
+    case 'playground':
+      return getFlag(state, FLAGS.slideDone) ? 'Again! Again! Down the slide!' : "Let's go down the slide!";
+  }
+}
