@@ -66,6 +66,8 @@ async function start(): Promise<void> {
   await frame.powerOn();
   // Pull in close on the screen so the picture, not the case, fills the window.
   await frame.zoomToScreen(() => game.scale.refresh());
+  // The title waits for this before it fades in, so the picture comes up on a settled screen.
+  game.registry.set('screenReady', true);
 
   if (import.meta.env.DEV) {
     // Debug handle for poking at the running game from the browser console.

@@ -7,6 +7,9 @@ interface Manifest {
   spritesheets?: Record<string, { file?: string; frameWidth: number; frameHeight: number }>;
 }
 
+/** How long the title takes to dither in from black the first time, after the Mac is switched on. */
+const FIRST_FADE_MS = 2800;
+
 /** Loads any real art listed in the manifest, then fills every remaining texture with placeholders. */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -28,7 +31,8 @@ export class BootScene extends Phaser.Scene {
     this.load.once(Phaser.Loader.Events.COMPLETE, () => {
       buildPlaceholderTextures(this);
       createCharacterAnimations(this);
-      this.scene.start('Intro');
+      // The picture comes up slowly on the freshly switched-on screen; the music waits for it.
+      this.scene.start('Intro', { fadeInMs: FIRST_FADE_MS });
     });
     this.load.start();
   }

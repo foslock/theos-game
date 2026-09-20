@@ -27,7 +27,7 @@ const BUTTONS_BOTTOM = GAME_HEIGHT - 42;
 interface IntroData {
   /** Skip the title reveal and go straight to the menu (used when coming back from the game or sub-screens). */
   menu?: boolean;
-  /** Dither in from black over this many ms (the ending fades back to the menu this way). */
+  /** Dither in from black over this many ms (the first switch-on and the ending arrive this way); the music starts once it is done. */
   fadeInMs?: number;
 }
 
@@ -44,7 +44,7 @@ export class IntroScene extends Phaser.Scene {
   }
 
   create(data: IntroData = {}): void {
-    playMusic('menu');
+    if (!data.fadeInMs) playMusic('menu');
     this.menuObjects = [];
     this.cameras.main.setBackgroundColor('#f7c9a0');
 
@@ -69,7 +69,15 @@ export class IntroScene extends Phaser.Scene {
     if (data.fadeInMs) {
       const fade = new DitherFade(this, GAME_WIDTH, GAME_HEIGHT);
       fade.setBlack();
-      void fade.in(data.fadeInMs);
+      const ms = data.fadeInMs;
+      // Held black until the Mac has finished zooming in on its screen, then the picture comes up
+      // and the music only once it is fully up, and only if the player has not moved on meanwhile.
+      this.whenScreenReady(() => {
+        if (!this.scene.isActive()) return;
+        void fade.in(ms).then(() => {
+          if (this.scene.isActive()) playMusic('menu');
+        });
+      });
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => fade.destroy());
     }
 
@@ -83,7 +91,7 @@ export class IntroScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(10)
       .setAlpha(0);
-    const blink = this.tweens.add({ targets: prompt, alpha: 1, duration: 300, yoyo: true, hold: 500, repeat: -1, delay: 1200 });
+    const blink = this.tweens.add({ targets: prompt, alpha: 1, duration: 300, yoyo: true, hold: 500, repeat: -1, delay: (data.fadeInMs ?? 0) + 1200 });
 
     this.input.once('pointerdown', () => {
       unlockAudio();
@@ -91,6 +99,21 @@ export class IntroScene extends Phaser.Scene {
       this.tweens.add({ targets: prompt, alpha: 0, duration: 150, onComplete: () => prompt.destroy() });
       this.showMenu();
     });
+  }
+
+  /** Runs `fn` once the frame has zoomed in on the screen (set by main.ts), or at once if it already has. */
+  private whenScreenReady(fn: () => void): void {
+    if (this.registry.get('screenReady')) {
+      fn();
+      return;
+    }
+    const onSet = (_parent: unknown, key: string) => {
+      if (key !== 'screenReady') return;
+      this.registry.events.off('setdata', onSet);
+      fn();
+    };
+    this.registry.events.on('setdata', onSet);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.registry.events.off('setdata', onSet));
   }
 
   // ---------- Backdrop ----------
@@ -174,13 +197,6 @@ export class IntroScene extends Phaser.Scene {
       });
     });
 
-    const version = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 12, 'Demo build', { ...FONT, color: '#fff3b0', stroke: '#000', strokeThickness: 2 })
-      .setOrigin(0.5)
-      .setDepth(20)
-      .setAlpha(0);
-    this.tweens.add({ targets: version, alpha: 1, duration: 400, delay: 120 * items.length + 400 });
-    this.menuObjects.push(version);
   }
 
   private resume(): void {

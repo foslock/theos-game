@@ -50,6 +50,8 @@ const PHONE_BEZEL = { x: 6, top: 6, bottom: 6 };
  */
 const SETTLE_MS = [80, 250, 600];
 const ZOOM_MS = 900;
+/** The floppy drive's little light in the case art: a 3x3 square right of the slot, in frame-image pixels. */
+const DRIVE_LED = { x: 315, y: 343, w: 3, h: 3 };
 const FRAME_URL = 'assets/frame/mac.png';
 const META_URL = 'assets/frame/mac.json';
 
@@ -127,6 +129,8 @@ export async function mountFrame(): Promise<Frame> {
 
   const mac = el('div', 'mac', stage);
   const screen = el('div', 'screen', mac);
+  // The drive light, over the bezel; it blinks as if reading once the Mac is on.
+  const led = el('div', 'led', mac);
   const game = el('div', 'game', screen);
   const flash = el('div', 'flash', screen);
   const vignette = el('div', 'vignette', screen);
@@ -172,6 +176,12 @@ export async function mountFrame(): Promise<Frame> {
     const left = Math.round(view.x + (vw - focus.w * s) / 2 - focus.x * s);
     const top = Math.round(view.y + (vh - focus.h * s) / 2 - focus.y * s);
     Object.assign(mac.style, { left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px` });
+    Object.assign(led.style, {
+      left: `${Math.round(DRIVE_LED.x * s)}px`,
+      top: `${Math.round(DRIVE_LED.y * s)}px`,
+      width: `${Math.max(1, Math.round(DRIVE_LED.w * s))}px`,
+      height: `${Math.max(1, Math.round(DRIVE_LED.h * s))}px`,
+    });
     const sc = meta.screen;
     Object.assign(screen.style, {
       left: `${Math.round(sc.x * s)}px`,
@@ -215,9 +225,34 @@ export async function mountFrame(): Promise<Frame> {
       window.addEventListener('keydown', go);
     });
 
+  /**
+   * The drive light reads in bursts: a few quick flickers, then quiet for a while, at random,
+   * like a floppy being read now and then. Runs for as long as the page is up.
+   */
+  const startDriveLight = (): void => {
+    if (!meta) return;
+    const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+    const set = (on: boolean) => led.classList.toggle('on', on);
+    const flicker = (left: number) => {
+      if (left <= 0) {
+        set(false);
+        window.setTimeout(burst, rand(1500, 6000));
+        return;
+      }
+      set(true);
+      window.setTimeout(() => {
+        set(false);
+        window.setTimeout(() => flicker(left - 1), rand(40, 220));
+      }, rand(40, 140));
+    };
+    const burst = () => flicker(Math.floor(rand(2, 7)));
+    window.setTimeout(burst, rand(600, 1800));
+  };
+
   const powerOn = (): Promise<void> =>
     new Promise((resolve) => {
       power.remove();
+      startDriveLight();
       // A bright line snaps open vertically, then settles; the glass vignette fades in with it.
       flash.classList.add('on');
       requestAnimationFrame(() => {
