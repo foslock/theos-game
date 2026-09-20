@@ -72,8 +72,10 @@ export class IntroScene extends Phaser.Scene {
       const ms = data.fadeInMs;
       // Held black until the Mac has finished zooming in on its screen, then the picture comes up
       // and the music only once it is fully up, and only if the player has not moved on meanwhile.
+      // No liveness check here: when the screen is already ready this runs inside create(), where
+      // the scene does not count as active yet, and the ending's return to the menu stayed black.
+      // The listener for the later case is dropped on shutdown, so a stale call cannot happen.
       this.whenScreenReady(() => {
-        if (!this.scene.isActive()) return;
         void fade.in(ms).then(() => {
           if (this.scene.isActive()) playMusic('menu');
         });
