@@ -34,6 +34,13 @@ describe('save round trip', () => {
     expect(s.inventory).toEqual([{ item: 'spoon', count: 1 }]);
   });
 
+  it('carries a rocket taken from the old bedroom spot over to the garage', () => {
+    const s = parseSave('{"seed":1,"currentRoom":"backyard","inventory":[{"item":"stomp_rocket","count":1}],"flags":{},"pickedUp":["bedroom:stomp_rocket"]}');
+    expect(s.pickedUp).toContain('garage:stomp_rocket');
+    const fresh = parseSave('{"seed":1,"currentRoom":"garage","inventory":[],"flags":{},"pickedUp":[]}');
+    expect(fresh.pickedUp).toEqual([]);
+  });
+
   it('fills defaults for a minimal older save', () => {
     const s = parseSave('{"seed":5,"currentRoom":"garage","inventory":[],"flags":{}}');
     expect(s.version).toBe(1);

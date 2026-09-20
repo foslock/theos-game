@@ -57,6 +57,8 @@ export const garage: Room = {
       walkTo: { x: 342, y: 332 },
       condition: { flag: 'hasBackpack' },
       refusalComment: "My stomp rocket! But I need something to carry it in...",
+      // Once launched it lives on the launcher in the backyard, so it is not lying here as well.
+      goneWhenFlag: 'stompRocketDone',
       spots: [
         // On the floor in front of the garage door.
         { zone: { x: 330, y: 290, w: 24, h: 24 }, walkTo: { x: 342, y: 332 }, where: 'in front of the garage door' },

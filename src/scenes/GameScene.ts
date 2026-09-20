@@ -555,6 +555,7 @@ export class GameScene extends Phaser.Scene {
       case 'pickup':
         if (isPickedUp(state, this.room.id, h.id)) return;
         if (h.hiddenUntilFlag && !getFlag(state, h.hiddenUntilFlag)) return;
+        if (h.goneWhenFlag && getFlag(state, h.goneWhenFlag)) return;
         this.addPickup(h);
         break;
       case 'backpack':

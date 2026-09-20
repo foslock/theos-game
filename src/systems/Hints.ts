@@ -93,7 +93,7 @@ export function hintLine(room: Room, state: GameState): string | null {
         return 'Hmm, I think Mom keeps the back door key around here somewhere.';
       return ballHint(room, state);
     case 'garage':
-      if (getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'garage', 'stomp_rocket'))
+      if (getFlag(state, FLAGS.stompRocketHinted) && !getFlag(state, FLAGS.stompRocketDone) && !isPickedUp(state, 'garage', 'stomp_rocket'))
         return `My stomp rocket! It was ${whereIn(room, 'stomp_rocket') ?? 'in here'} all along.`;
       return ballHint(room, state) ?? (getFlag(state, FLAGS.memoryDone) ? null : "I wonder what Dad keeps in all those boxes on the shelves.");
     case 'backyard':
@@ -144,7 +144,7 @@ export function lucyHintLine(room: Room, state: GameState): string {
   const ballHere = room.hotspots.some((h) => h.kind === 'pickup' && h.id === 'basketball') && !isPickedUp(state, room.id, 'basketball');
   const wantsBalls = getFlag(state, FLAGS.basketballHunt) && !hoops && itemCount(state, 'basketball') < BALLS_NEEDED;
   if (wantsBalls && ballHere) return 'I think a basketball is hiding in here somewhere!';
-  if (room.id === 'garage' && getFlag(state, FLAGS.stompRocketHinted) && !isPickedUp(state, 'garage', 'stomp_rocket')) {
+  if (room.id === 'garage' && getFlag(state, FLAGS.stompRocketHinted) && !getFlag(state, FLAGS.stompRocketDone) && !isPickedUp(state, 'garage', 'stomp_rocket')) {
     const where = whereIn(room, 'stomp_rocket');
     return where ? `Your rocket is ${inLucysWords(where)}!` : 'Your rocket is in here somewhere!';
   }

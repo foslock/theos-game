@@ -68,6 +68,8 @@ export interface PickupHotspot extends Hitbox {
   refusalComment?: string;
   /** Item is not drawn until a flag is set (used by puzzles). */
   hiddenUntilFlag?: string;
+  /** Item is gone for good once a flag is set (the rocket, once it lives on its launcher). */
+  goneWhenFlag?: string;
   /** The item is tucked inside something (a mailbox, a drawer): never drawn, found by clicking the zone. */
   hidden?: boolean;
   /** What Theo says on finding a hidden item. */

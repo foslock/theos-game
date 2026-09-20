@@ -55,6 +55,9 @@ export function parseSave(json: string): GameState {
   const flags: Record<string, boolean> = {};
   for (const [k, v] of Object.entries(m.flags)) flags[k] = v === true;
   const pickedUp = Array.isArray(m.pickedUp) ? m.pickedUp.filter((s): s is string => typeof s === 'string') : [];
+  // The stomp rocket moved from the bedroom to the garage on 2026-09-20: a save that took it from
+  // the bedroom must not find a second one in the garage.
+  if (pickedUp.includes('bedroom:stomp_rocket') && !pickedUp.includes('garage:stomp_rocket')) pickedUp.push('garage:stomp_rocket');
   // Saves written before doors could be unlocked simply have none; their keys were never spent.
   const unlocked = Array.isArray(m.unlocked) ? m.unlocked.filter((s): s is string => typeof s === 'string') : [];
   const puzzles = isRecord(m.puzzles) ? (m.puzzles as GameState['puzzles']) : {};

@@ -104,3 +104,10 @@ describe('hints know where things are this time', () => {
     expect(inLucysWords('behind the chair')).toBe('behind the chair');
   });
 });
+
+describe('the rocket after its launch', () => {
+  it('is marked gone from the garage once it lives on the launcher', () => {
+    const rocket = ROOMS.garage.hotspots.find((h) => h.kind === 'pickup' && h.id === 'stomp_rocket');
+    expect(rocket && rocket.kind === 'pickup' ? rocket.goneWhenFlag : undefined).toBe('stompRocketDone');
+  });
+});
