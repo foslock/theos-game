@@ -39,6 +39,13 @@ export type Direction = 'up' | 'down' | 'left' | 'right';
 export interface Hitbox {
   zone: Rect;
   parts?: Rect[];
+  /**
+   * How far from its shape a click still counts, for small things that need to be forgiving
+   * (defaults to the usual tolerance). Anything beyond the tolerance is also how far it wins
+   * over a bigger footprint under the pointer, so a half-hidden ball can be taken by clicking
+   * the furniture it is tucked behind.
+   */
+  reach?: number;
 }
 
 export interface Exit extends Hitbox {
@@ -68,9 +75,31 @@ export interface PickupHotspot extends Hitbox {
   /**
    * Tucked partly behind furniture: the sprite is centred at `at` rather than on the zone, and
    * the room's background is redrawn over `cover` to hide the rest of it. The zone is then just
-   * the part that shows, which is what the player clicks.
+   * the part that shows, which is what the player clicks. Without a `cover` the item is simply
+   * drawn at `at`, for things hidden by an overlay the room draws itself (the bed).
    */
-  peek?: { at: Pt; cover: Rect };
+  peek?: Peek;
+  /**
+   * Places it could be. One is chosen from the save's seed (see `src/puzzles/spots.ts`) and its
+   * fields replace `zone`, `walkTo` and `peek` above, which then only serve as the fallback.
+   */
+  spots?: ItemSpot[];
+  /** Where it is, in Theo's words ("at the foot of my bed"), filled in from the chosen spot. */
+  where?: string;
+}
+
+export interface Peek {
+  at: Pt;
+  cover?: Rect;
+}
+
+/** One of the places a pickup can be seeded. */
+export interface ItemSpot {
+  zone: Rect;
+  walkTo?: Pt;
+  peek?: Peek;
+  /** Where it is, in Theo's words: "at the foot of my bed". Hints say it. */
+  where: string;
 }
 
 export interface ContainerHotspot extends Hitbox {
@@ -110,7 +139,7 @@ export interface BackpackHotspot extends Hitbox {
 export interface MinigameHotspot extends Hitbox {
   kind: 'minigame';
   id: string;
-  game: 'basketball' | 'slide' | 'rocket';
+  game: 'basketball' | 'slide' | 'rocket' | 'race' | 'memory' | 'tea';
   walkTo?: Pt;
 }
 

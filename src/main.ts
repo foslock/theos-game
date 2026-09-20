@@ -8,6 +8,9 @@ import { SettingsScene } from './scenes/SettingsScene';
 import { GameScene } from './scenes/GameScene';
 import { HudScene } from './scenes/HudScene';
 import { SlideScene } from './scenes/SlideScene';
+import { RaceScene } from './scenes/RaceScene';
+import { MemoryScene } from './scenes/MemoryScene';
+import { TeaScene } from './scenes/TeaScene';
 import { FoyerScene } from './scenes/FoyerScene';
 import { applyCrtSetting, mountFrame } from './frame';
 import { loadFonts } from './ui/text';
@@ -45,13 +48,14 @@ async function start(): Promise<void> {
       // layout keeps sizing the screen to whatever the display is.
       fullscreenTarget: 'stage',
     },
-    scene: [BootScene, IntroScene, StoryScene, LoadScene, SettingsScene, GameScene, SlideScene, FoyerScene, HudScene],
+    scene: [BootScene, IntroScene, StoryScene, LoadScene, SettingsScene, GameScene, SlideScene, RaceScene, MemoryScene, TeaScene, FoyerScene, HudScene],
   });
   const relayout = () => {
     frame.layout();
     game.scale.refresh();
   };
-  window.addEventListener('resize', relayout);
+  // The frame watches the window and the phone's orientation itself; the canvas follows each pass.
+  frame.onLayout(() => game.scale.refresh());
   // Entering or leaving fullscreen resizes the viewport a moment after the event; catch both.
   for (const evt of ['fullscreenchange', 'webkitfullscreenchange']) {
     document.addEventListener(evt, () => {

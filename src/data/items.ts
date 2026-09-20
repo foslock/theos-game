@@ -8,7 +8,7 @@ export type ItemId =
   | 'kitchen_door_key'
   | 'garage_key'
   | 'playhouse_key'
-  | 'toy_bus';
+  | 'toy_car';
 
 export interface ItemDef {
   id: ItemId;
@@ -33,7 +33,7 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   kitchen_door_key: { id: 'kitchen_door_key', name: 'Kitchen Door Key', color: '#d6b83c', glyph: 'K', description: "The gold key that opens the kitchen door to the backyard." },
   garage_key: { id: 'garage_key', name: 'Garage Key', color: '#9a9a9a', glyph: 'G', description: "The silver key to Dad's garage." },
   playhouse_key: { id: 'playhouse_key', name: 'Playhouse Key', color: '#c97a2b', glyph: 'P', description: "A little brass key with a heart. It fits the playhouse door." },
-  toy_bus: { id: 'toy_bus', name: 'Toy Bus', color: '#f2d33a', glyph: 'T', description: "Lucy's yellow toy bus. Beep beep!" },
+  toy_car: { id: 'toy_car', name: 'Race Car', color: '#f07a1c', glyph: 'V', description: "Theo's orange race car. It belongs on the track in his room. Vroom!" },
 };
 
 export const ITEM_IDS = Object.keys(ITEMS) as ItemId[];

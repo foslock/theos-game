@@ -5,6 +5,9 @@ import type { Room } from '../src/data/rooms';
 
 const room: Room = {
   ...bedroom,
+  // The bedroom's own extras (the race track) stay out of this synthetic room.
+  obstacles: [],
+  props: [],
   hotspots: [
     { kind: 'decoration', id: 'table', zone: { x: 280, y: 200, w: 80, h: 140 } }, // reaches into the floor band (280-340)
     { kind: 'decoration', id: 'rug', zone: { x: 0, y: 300, w: 640, h: 100 }, walkable: true },

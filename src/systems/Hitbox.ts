@@ -37,19 +37,25 @@ export function contains(h: Hitbox, x: number, y: number): boolean {
  * The footprint a click at this point belongs to: whichever is nearest, so long as it is within
  * the tolerance. Returns undefined when the point is not near anything. Ties go to whichever
  * came first, so a given point always resolves to the same target.
+ *
+ * A footprint with a longer `reach` answers from that far away, and the extra over the tolerance
+ * is taken off its distance, so a small thing beats a large one it is next to (or hidden behind)
+ * until the pointer is that far onto the large one.
  */
 export function pick<T extends Hitbox>(items: readonly T[], x: number, y: number, tolerance = HIT_TOLERANCE): T | undefined {
   let best: T | undefined;
-  let bestDistance = Infinity;
+  let bestScore = Infinity;
   for (const item of items) {
     const d = distanceTo(item, x, y);
-    if (d < bestDistance) {
+    const reach = Math.max(tolerance, item.reach ?? tolerance);
+    if (d > reach) continue;
+    const score = d - (reach - tolerance);
+    if (score < bestScore) {
       best = item;
-      bestDistance = d;
+      bestScore = score;
     }
-    if (bestDistance === 0) break;
   }
-  return bestDistance <= tolerance ? best : undefined;
+  return best;
 }
 
 /** True when two footprints share any pixel, which would make a click between them ambiguous. */

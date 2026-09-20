@@ -25,10 +25,21 @@ export const familyRoom: Room = {
     { kind: 'motes', area: { x: 470, y: 95, w: 110, h: 130 }, count: 18, drift: { x: -6, y: 4 } },
   ],
   hotspots: [
-    // Left on the coffee table, in the middle of its top.
-    { kind: 'pickup', id: 'kitchen_door_key', item: 'kitchen_door_key', zone: { x: 376, y: 222, w: 24, h: 24 }, walkTo: { x: 388, y: 302 } },
-    { kind: 'pickup', id: 'toy_bus', item: 'toy_bus', zone: { x: 520, y: 272, w: 50, h: 34 }, walkTo: { x: 500, y: 340 } },
-    // Half hidden behind the armchair, peeking out over the rug on its left.
+    {
+      kind: 'pickup',
+      id: 'kitchen_door_key',
+      item: 'kitchen_door_key',
+      zone: { x: 376, y: 222, w: 24, h: 24 },
+      walkTo: { x: 388, y: 302 },
+      spots: [
+        // Left on the coffee table, in the middle of its top.
+        { zone: { x: 376, y: 222, w: 24, h: 24 }, walkTo: { x: 388, y: 302 }, where: 'on the coffee table' },
+        // Dropped on the rug in front of the couch.
+        { zone: { x: 470, y: 284, w: 24, h: 24 }, walkTo: { x: 470, y: 322 }, where: 'on the rug by the couch' },
+        // On the floor at the foot of the fireplace.
+        { zone: { x: 200, y: 232, w: 24, h: 24 }, walkTo: { x: 215, y: 296 }, where: 'by the fireplace' },
+      ],
+    },
     {
       kind: 'pickup',
       id: 'basketball',
@@ -38,7 +49,15 @@ export const familyRoom: Room = {
       walkTo: { x: 245, y: 300 },
       condition: { flag: 'hasBackpack' },
       refusalComment: 'A basketball! But I need my backpack to carry it.',
-      foundComment: 'A basketball! It was behind the chair.',
+      foundComment: 'A basketball! It was hiding in the family room.',
+      spots: [
+        // Half hidden behind the armchair, peeking out over the rug on its left.
+        { zone: { x: 248, y: 246, w: 13, h: 24 }, peek: { at: { x: 256, y: 258 }, cover: { x: 261, y: 244, w: 16, h: 26 } }, walkTo: { x: 245, y: 300 }, where: 'behind the chair' },
+        // Behind the far arm of the couch (its edge is x 524), on the floor by the window.
+        { zone: { x: 524, y: 242, w: 14, h: 24 }, peek: { at: { x: 526, y: 254 }, cover: { x: 512, y: 240, w: 12, h: 28 } }, walkTo: { x: 540, y: 322 }, where: 'behind the couch' },
+        // On the floor at the foot of the kitchen doorway's jamb.
+        { zone: { x: 76, y: 276, w: 24, h: 24 }, walkTo: { x: 110, y: 330 }, where: 'by the door frame' },
+      ],
     },
     // The screen itself; the old box sat 11px left of it and clipped its right edge.
     { kind: 'decoration', id: 'tv', zone: { x: 330, y: 108, w: 94, h: 84 }, lines: ["Golf! He's lining up a really long putt.", 'Shh... he needs to concentrate. Will it go in?', 'That green looks so bouncy.'], sfx: 'click' },

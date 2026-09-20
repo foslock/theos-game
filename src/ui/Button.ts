@@ -7,6 +7,8 @@ export interface ButtonOptions {
   height?: number;
   disabled?: boolean;
   fontSize?: string;
+  /** A picture on the button, drawn big above the label, for buttons that should read at a glance. */
+  icon?: { key: string; scale?: number };
 }
 
 /** Chunky 90s-style text button. Origin is the centre. */
@@ -36,11 +38,19 @@ export function makeButton(
   };
   draw(false);
 
-  const text = scene.add
-    .text(0, 0, label, { ...FONT, fontSize: opts.fontSize ?? '16px', color: disabled ? '#999999' : '#1a0d00' })
-    .setOrigin(0.5);
+  const parts: Phaser.GameObjects.GameObject[] = [bg];
+  if (opts.icon && scene.textures.exists(opts.icon.key)) {
+    // Picture up top, the label along the bottom edge.
+    const scale = opts.icon.scale ?? 2;
+    const icon = scene.add.image(0, -h / 2 + 6 + (24 * scale) / 2, opts.icon.key).setScale(scale);
+    if (disabled) icon.setAlpha(0.5);
+    parts.push(icon);
+    parts.push(scene.add.text(0, h / 2 - 9, label, { ...FONT, fontSize: opts.fontSize ?? '16px', color: disabled ? '#999999' : '#1a0d00' }).setOrigin(0.5));
+  } else {
+    parts.push(scene.add.text(0, 0, label, { ...FONT, fontSize: opts.fontSize ?? '16px', color: disabled ? '#999999' : '#1a0d00' }).setOrigin(0.5));
+  }
 
-  const container = scene.add.container(x, y, [bg, text]);
+  const container = scene.add.container(x, y, parts);
   container.setSize(w, h);
   if (!disabled) {
     container.setInteractive({ useHandCursor: true });

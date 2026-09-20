@@ -5,12 +5,13 @@ import { FLAGS, getFlag, type GameState } from '../state/GameState';
 import { store } from '../state/Store';
 import { exportToFile } from '../state/SaveManager';
 import { makeButton } from '../ui/Button';
-import { TEXT_FONT, TEXT_LINE_SPACING } from '../ui/text';
+import { FONT, TEXT_FONT, TEXT_LINE_SPACING } from '../ui/text';
+import { PANEL_KEY, type MinigamePanel } from '../ui/MinigamePanel';
+import { COLS, GAP, GRID_X, GRID_Y, ROWS, SLOT } from '../ui/backpackSlots';
 
-const SLOT = 36;
-const GAP = 4;
-const COLS = 4;
-const ROWS = 2;
+/** The strip between the item grid and the Save/Menu buttons, shared by the item detail and the mini-game panel. */
+const STRIP_LEFT = 16 + 56 + COLS * SLOT + (COLS - 1) * GAP + 18;
+const STRIP_RIGHT = GAME_WIDTH - 66 - 58 - 12;
 
 /** Inventory bar under the scene, plus save/menu buttons. Runs in parallel with GameScene. */
 export class HudScene extends Phaser.Scene {
@@ -37,7 +38,7 @@ export class HudScene extends Phaser.Scene {
     makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 22, 'Save file', () => exportToFile(store.get()), { width: 116, height: 26 });
     makeButton(this, GAME_WIDTH - 66, SCENE_HEIGHT + 56, 'Menu', () => {
       // The slide ride and the ending run in place of the room scene, so they have to be stopped too.
-      for (const key of ['Game', 'Slide', 'Foyer']) if (this.scene.isActive(key)) this.scene.stop(key);
+      for (const key of ['Game', 'Slide', 'Race', 'Memory', 'Tea', 'Foyer']) if (this.scene.isActive(key)) this.scene.stop(key);
       this.scene.stop('Hud');
       this.scene.start('Intro', { menu: true });
     }, { width: 116, height: 26 });
@@ -46,7 +47,18 @@ export class HudScene extends Phaser.Scene {
     this.unsubscribe = store.subscribe((s) => this.render(s));
     // GameScene flips this while the wake-up intro plays so the prompt stays hidden until Theo is up.
     this.registry.events.on('changedata-hudQuiet', () => this.render(store.get()), this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.registry.events.off('changedata-hudQuiet', undefined, this));
+    // Mini-games put their readouts in the strip beside the backpack while they run. The first
+    // time the key is set the registry announces it as new data rather than a change.
+    this.registry.events.on(`changedata-${PANEL_KEY}`, () => this.renderDetail(), this);
+    const onSet = (_parent: unknown, key: string) => {
+      if (key === PANEL_KEY) this.renderDetail();
+    };
+    this.registry.events.on('setdata', onSet, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.registry.events.off('changedata-hudQuiet', undefined, this);
+      this.registry.events.off(`changedata-${PANEL_KEY}`, undefined, this);
+      this.registry.events.off('setdata', onSet, this);
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.unsubscribe?.());
   }
 
@@ -58,8 +70,8 @@ export class HudScene extends Phaser.Scene {
       return;
     }
     const totalW = COLS * SLOT + (COLS - 1) * GAP;
-    const x0 = 16 + 56;
-    const y0 = SCENE_HEIGHT + (HUD_HEIGHT - (ROWS * SLOT + GAP)) / 2;
+    const x0 = GRID_X;
+    const y0 = GRID_Y;
     this.slotLayer.add(this.add.image(16, SCENE_HEIGHT + HUD_HEIGHT / 2, 'backpack').setOrigin(0, 0.5));
     for (let i = 0; i < COLS * ROWS; i++) {
       const col = i % COLS;
@@ -96,13 +108,21 @@ export class HudScene extends Phaser.Scene {
     this.renderDetail();
   }
 
-  /** Big sprite, name and blurb in the empty strip between the backpack grid and the buttons. */
+  /**
+   * The strip between the backpack grid and the buttons: a mini-game's panel while one is
+   * running, otherwise the clicked item's big sprite, name and blurb.
+   */
   private renderDetail(): void {
     this.detailLayer.removeAll(true);
+    const panel = this.registry.get(PANEL_KEY) as MinigamePanel | null | undefined;
+    if (panel) {
+      this.renderPanel(panel);
+      return;
+    }
     if (!this.shownItem) return;
     const def = ITEMS[this.shownItem];
-    const left = 16 + 56 + COLS * SLOT + (COLS - 1) * GAP + 18; // just right of the grid
-    const right = GAME_WIDTH - 66 - 58 - 12; // just left of the Save/Menu buttons
+    const left = STRIP_LEFT;
+    const right = STRIP_RIGHT;
     const midY = SCENE_HEIGHT + HUD_HEIGHT / 2;
     const big = this.add.image(left + 30, midY, `item_${this.shownItem}`).setScale(2.5);
     // Sits high in the bar: the longest descriptions wrap to three spaced lines and would
@@ -117,5 +137,66 @@ export class HudScene extends Phaser.Scene {
       })
       .setOrigin(0, 0);
     this.detailLayer.add([big, name, blurb]);
+  }
+
+  /** A mini-game's readouts, stacked top to bottom in the strip, with any buttons down its right. */
+  private renderPanel(p: MinigamePanel): void {
+    const left = STRIP_LEFT;
+    let width = STRIP_RIGHT - STRIP_LEFT;
+    const buttons = p.buttons ?? [];
+    if (buttons.some((b) => b.icon)) {
+      // Big picture buttons in a row from the right edge, nearly the height of the bar.
+      const size = 66;
+      const gap = 6;
+      const cy = SCENE_HEIGHT + HUD_HEIGHT / 2;
+      buttons.forEach((b, i) => {
+        const cx = STRIP_RIGHT - size / 2 - (buttons.length - 1 - i) * (size + gap);
+        this.detailLayer.add(makeButton(this, cx, cy, b.label, b.onClick, { width: size, height: size, disabled: b.disabled, fontSize: '16px', icon: b.icon ? { key: b.icon, scale: 1.5 } : undefined }));
+      });
+      width -= buttons.length * (size + gap) + 4;
+    } else if (buttons.length) {
+      // Plain text buttons down the right; the readouts keep to the left of them.
+      const buttonW = 104;
+      const bx = STRIP_RIGHT - buttonW / 2;
+      const gap = 32;
+      const y0 = SCENE_HEIGHT + HUD_HEIGHT / 2 - ((buttons.length - 1) * gap) / 2;
+      buttons.forEach((b, i) => {
+        this.detailLayer.add(makeButton(this, bx, y0 + i * gap, b.label, b.onClick, { width: buttonW, height: 26, disabled: b.disabled }));
+      });
+      width -= buttonW + 10;
+    }
+    let y = SCENE_HEIGHT + 9;
+    if (p.title) {
+      this.detailLayer.add(this.add.text(left, y, p.title, { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0));
+      y += 15;
+    }
+    if (p.text) {
+      const t = this.add.text(left, y, p.text, { ...TEXT_FONT, color: '#d9b98a', lineSpacing: TEXT_LINE_SPACING, wordWrap: { width } }).setOrigin(0);
+      this.detailLayer.add(t);
+      y += t.height + 4;
+    }
+    if (p.big) {
+      this.detailLayer.add(this.add.text(left, y, p.big, { ...FONT, fontSize: '16px', color: '#fff3b0' }).setOrigin(0));
+      y += 20;
+    }
+    if (p.meter) {
+      const w = Math.min(width, 200);
+      const g = this.add.graphics();
+      g.fillStyle(0x000000, 0.55);
+      g.fillRect(left, y, w + 4, 10);
+      g.fillStyle(p.meter.color, 1);
+      g.fillRect(left + 2, y + 2, Math.round(w * Phaser.Math.Clamp(p.meter.value, 0, 1)), 6);
+      this.detailLayer.add(g);
+      y += 14;
+    }
+    if (p.icons) {
+      const scale = p.icons.scale ?? 1;
+      const step = 22 * scale;
+      for (let i = 0; i < p.icons.total; i++) {
+        const img = this.add.image(left + 10 * scale + i * step, y + 10 * scale, p.icons.key).setScale(scale);
+        if (i >= p.icons.count) img.setAlpha(0.25);
+        this.detailLayer.add(img);
+      }
+    }
   }
 }

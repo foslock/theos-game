@@ -44,10 +44,12 @@ export function parseSave(json: string): GameState {
     throw new SaveError('Unknown previous room.');
   }
   if (!Array.isArray(m.inventory)) throw new SaveError('Inventory is not a list.');
-  const inventory = m.inventory.map((e) => {
-    if (!isRecord(e) || typeof e.item !== 'string' || !(e.item in ITEMS)) throw new SaveError('Bad inventory entry.');
+  const inventory = m.inventory.flatMap((e) => {
+    if (!isRecord(e) || typeof e.item !== 'string') throw new SaveError('Bad inventory entry.');
+    // Things the game no longer has (the family room's toy bus, once) are simply left behind.
+    if (!(e.item in ITEMS)) return [];
     const count = typeof e.count === 'number' && e.count > 0 ? Math.floor(e.count) : 1;
-    return { item: e.item as ItemId, count };
+    return [{ item: e.item as ItemId, count }];
   });
   if (!isRecord(m.flags)) throw new SaveError('Flags are not an object.');
   const flags: Record<string, boolean> = {};

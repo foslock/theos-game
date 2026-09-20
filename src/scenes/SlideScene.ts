@@ -9,7 +9,8 @@ import { playMusic } from '../systems/Music';
 import { Rng } from '../systems/Rng';
 import { playSfx, unlockAudio } from '../systems/Sfx';
 import { arrowCursor, setCursor } from '../systems/Cursor';
-import { FONT, pointerVerb } from '../ui/text';
+import { pointerVerb } from '../ui/text';
+import { showPanel } from '../ui/MinigamePanel';
 import {
   generateCourse,
   halfWidthAt,
@@ -70,8 +71,6 @@ export class SlideScene extends Phaser.Scene {
   private lucy!: Rider;
   private surface!: Phaser.GameObjects.Graphics;
   private stripes: number[] = [];
-  private hearts: Phaser.GameObjects.Image[] = [];
-  private progress!: Phaser.GameObjects.Graphics;
   private dialogue!: Dialogue;
   private fade!: DitherFade;
   private ambience?: Ambience;
@@ -113,10 +112,7 @@ export class SlideScene extends Phaser.Scene {
     this.lucy = this.makeRider('lucy', LUCY_D);
     this.placeRiders();
 
-    for (let i = 0; i < MAX_HITS; i++) this.hearts.push(this.add.image(16 + i * 20, 16, 'heart').setDepth(50));
-    this.hearts = this.hearts.slice(-MAX_HITS);
-    this.progress = this.add.graphics().setDepth(50);
-    this.drawProgress();
+    this.renderPanel();
 
     this.fade = new DitherFade(this, GAME_WIDTH, SCENE_HEIGHT);
     this.fade.setBlack();
@@ -134,7 +130,7 @@ export class SlideScene extends Phaser.Scene {
       this.fade.destroy();
       this.ambience?.destroy();
       this.ambience = undefined;
-      this.hearts = [];
+      showPanel(this, null);
       setCursor(this, 'default');
     });
 
@@ -212,7 +208,6 @@ export class SlideScene extends Phaser.Scene {
     if (!this.running) return;
     this.now += dt;
     this.drawSlide(dt);
-    this.drawProgress();
 
     // Obstacles enter in course order as their time comes.
     while (this.next < this.course.obstacles.length && this.course.obstacles[this.next].at <= this.now) {
@@ -244,7 +239,7 @@ export class SlideScene extends Phaser.Scene {
   private bump(): void {
     this.hitCount++;
     playSfx('boing');
-    this.hearts[MAX_HITS - this.hitCount]?.setAlpha(0.25);
+    this.renderPanel();
     if (!this.shaking) {
       this.shaking = true;
       this.cameras.main.shake(220, 0.006, false, () => (this.shaking = false));
@@ -338,23 +333,12 @@ export class SlideScene extends Phaser.Scene {
     }
   }
 
-  private drawProgress(): void {
-    const g = this.progress;
-    const w = 160;
-    const x = GAME_WIDTH - w - 12;
-    const y = 10;
-    const t = Phaser.Math.Clamp(this.now / this.course.seconds, 0, 1);
-    g.clear();
-    g.fillStyle(0x000000, 0.55);
-    g.fillRect(x - 2, y - 2, w + 4, 12);
-    g.fillStyle(0x5dc05a, 1);
-    g.fillRect(x, y, Math.round(w * t), 8);
-    // The bottom of the slide, where the ride ends.
-    g.fillStyle(0xfff3b0, 1);
-    g.fillRect(x + w - 2, y - 3, 3, 14);
-    if (!this.progress.getData('label')) {
-      this.progress.setData('label', true);
-      this.add.text(x - 8, y + 4, 'Slide', { ...FONT, fontSize: '16px', color: '#fff3b0' }).setOrigin(1, 0.5).setDepth(50);
-    }
+  /** In the backpack bar: what to do, and a heart for every bump the riders can still take. */
+  private renderPanel(): void {
+    showPanel(this, {
+      title: 'The slide',
+      text: `${pointerVerb()} left or right to steer. Dodge the leaves and the mud!`,
+      icons: { key: 'heart', count: MAX_HITS - this.hitCount, total: MAX_HITS },
+    });
   }
 }

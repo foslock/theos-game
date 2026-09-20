@@ -189,6 +189,165 @@ function drawItemIcons(scene: Phaser.Scene): void {
   }
 }
 
+/** The race track's booster as a button picture: a blue box with a green lamp and a lightning bolt. */
+function drawBoosterIcon(scene: Phaser.Scene): void {
+  const t = canvas(scene, 'booster_icon', 24, 24);
+  if (!t) return;
+  const { ctx, tex } = t;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(2, 6, 20, 16);
+  ctx.fillStyle = '#3482e4';
+  ctx.fillRect(3, 7, 18, 14);
+  ctx.fillStyle = '#6eb4fa';
+  ctx.fillRect(3, 7, 18, 3);
+  ctx.fillStyle = '#1e54aa';
+  ctx.fillRect(3, 18, 18, 3);
+  // the lamp
+  ctx.fillStyle = '#000';
+  ctx.fillRect(14, 2, 6, 6);
+  ctx.fillStyle = '#5dff4a';
+  ctx.fillRect(15, 3, 4, 4);
+  ctx.fillStyle = '#d8ffd0';
+  ctx.fillRect(15, 3, 2, 1);
+  // the bolt
+  ctx.fillStyle = '#ffd43a';
+  ctx.fillRect(9, 9, 3, 4);
+  ctx.fillRect(7, 12, 5, 2);
+  ctx.fillRect(9, 14, 3, 4);
+  tex.refresh();
+}
+
+/** A little puff of dust for the race car's push: a pale blob with a darker rim. */
+function drawPoof(scene: Phaser.Scene): void {
+  const t = canvas(scene, 'poof', 12, 12);
+  if (!t) return;
+  const { ctx, tex } = t;
+  ctx.fillStyle = '#7a7466';
+  ctx.fillRect(3, 1, 6, 10);
+  ctx.fillRect(1, 3, 10, 6);
+  ctx.fillStyle = '#e8e2d2';
+  ctx.fillRect(4, 2, 4, 8);
+  ctx.fillRect(2, 4, 8, 4);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(4, 4, 3, 2);
+  tex.refresh();
+}
+
+/** Stand-ins for the memory game: a shelf wall, a closed and an open box, and eight coloured things. */
+function drawMemoryPlaceholders(scene: Phaser.Scene): void {
+  const bg = canvas(scene, 'bg_memory_0', GAME_WIDTH, SCENE_HEIGHT);
+  if (bg) {
+    const { ctx, tex } = bg;
+    ctx.fillStyle = '#c9b48a';
+    ctx.fillRect(0, 0, GAME_WIDTH, SCENE_HEIGHT);
+    ctx.fillStyle = '#6a6a6a';
+    ctx.fillRect(0, 370, GAME_WIDTH, 30);
+    for (const y of [118, 196, 274, 352]) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(56, y, 528, 12);
+      ctx.fillStyle = '#8a5a2a';
+      ctx.fillRect(58, y + 1, 524, 10);
+    }
+    tex.refresh();
+  }
+  for (const [key, open] of [['box_closed', false], ['box_open', true]] as const) {
+    const t = canvas(scene, key, 64, 52);
+    if (!t) continue;
+    const { ctx, tex } = t;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(4, 10, 56, 42);
+    ctx.fillStyle = open ? '#3a2a18' : '#c48a4a';
+    ctx.fillRect(6, 12, 52, 38);
+    ctx.fillStyle = '#c48a4a';
+    if (open) {
+      ctx.fillRect(0, 2, 12, 14);
+      ctx.fillRect(52, 2, 12, 14);
+    } else {
+      ctx.fillStyle = '#e0c090';
+      ctx.fillRect(30, 12, 4, 38);
+    }
+    tex.refresh();
+  }
+  const things: [string, string][] = [
+    ['hammer', '#8a6a4a'],
+    ['wrench', '#a0a0b0'],
+    ['paint', '#d03030'],
+    ['flashlight', '#e8c030'],
+    ['ball', '#a0e030'],
+    ['tape', '#3070d0'],
+    ['bulb', '#fff0a0'],
+    ['can', '#40a060'],
+  ];
+  for (const [name, color] of things) {
+    const t = canvas(scene, `mem_${name}`, 24, 24);
+    if (!t) continue;
+    const { ctx, tex } = t;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(2, 2, 20, 20);
+    ctx.fillStyle = color;
+    ctx.fillRect(4, 4, 16, 16);
+    ctx.font = 'bold 12px monospace';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#000';
+    ctx.fillText(name[0].toUpperCase(), 12, 13);
+    tex.refresh();
+  }
+}
+
+/** Stand-ins for the tea party: a table, a teapot and a teacup. */
+function drawTeaPlaceholders(scene: Phaser.Scene): void {
+  const bg = canvas(scene, 'bg_tea_0', GAME_WIDTH, SCENE_HEIGHT);
+  if (bg) {
+    const { ctx, tex } = bg;
+    ctx.fillStyle = '#b98c5a';
+    ctx.fillRect(0, 0, GAME_WIDTH, SCENE_HEIGHT);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(40, 150, 560, 230);
+    ctx.fillStyle = '#d9a86a';
+    ctx.fillRect(42, 152, 556, 226);
+    tex.refresh();
+  }
+  const pot = canvas(scene, 'teapot', 64, 56);
+  if (pot) {
+    const { ctx, tex } = pot;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(8, 14, 48, 40);
+    ctx.fillRect(26, 6, 12, 10);
+    ctx.fillRect(54, 20, 10, 14);
+    ctx.fillStyle = '#f4a6c4';
+    ctx.fillRect(10, 16, 44, 36);
+    ctx.fillRect(28, 8, 8, 8);
+    ctx.fillRect(56, 22, 6, 10);
+    tex.refresh();
+  }
+  // Four cups, each with more tea in it.
+  const fills = { teacup_empty: 0, teacup_partial: 0.45, teacup_full: 0.85, teacup_over: 1.3 };
+  for (const [key, fill] of Object.entries(fills)) {
+    const cup = canvas(scene, key, 56, 48);
+    if (!cup) continue;
+    const { ctx, tex } = cup;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(6, 38, 44, 8);
+    ctx.fillRect(12, 8, 32, 32);
+    ctx.fillStyle = '#f4a6c4';
+    ctx.fillRect(8, 40, 40, 4);
+    ctx.fillRect(14, 10, 28, 28);
+    if (fill > 0) {
+      ctx.fillStyle = '#8e4f22';
+      const h = Math.round(24 * Math.min(1, fill));
+      ctx.fillRect(16, 36 - h, 24, h);
+      // over the brim: tea down the sides and on the saucer
+      if (fill > 1) {
+        ctx.fillRect(10, 12, 4, 26);
+        ctx.fillRect(42, 12, 4, 22);
+        ctx.fillRect(8, 40, 40, 3);
+      }
+    }
+    tex.refresh();
+  }
+}
+
 function drawBackpack(scene: Phaser.Scene): void {
   const t = canvas(scene, 'backpack', 48, 44);
   if (!t) return;
@@ -374,6 +533,10 @@ export function buildPlaceholderTextures(scene: Phaser.Scene): void {
   drawItemIcons(scene);
   drawBackpack(scene);
   drawGlint(scene);
+  drawBoosterIcon(scene);
+  drawPoof(scene);
+  drawMemoryPlaceholders(scene);
+  drawTeaPlaceholders(scene);
   drawSlot(scene);
   drawHeart(scene);
   drawMote(scene);

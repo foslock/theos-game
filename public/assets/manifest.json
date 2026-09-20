@@ -345,14 +345,6 @@
         24
       ]
     },
-    "item_toy_bus": {
-      "file": "items/toy_bus.png",
-      "status": "pixellab",
-      "size": [
-        24,
-        24
-      ]
-    },
     "backpack": {
       "file": "items/backpack.png",
       "status": "pixellab",
@@ -406,6 +398,217 @@
       "file": "foyer/parents.png",
       "status": "pixellab",
       "_note": "Mom and Dad side by side, feet on the bottom edge, drawn at FOYER.parents in the ending"
+    },
+    "toy_track": {
+      "file": "bedroom/toy_track.png",
+      "status": "pixellab",
+      "size": [
+        112,
+        72
+      ],
+      "_note": "the toy race track on the bedroom carpet, drawn at TRACK.at; clicking it starts the race"
+    },
+    "item_toy_car": {
+      "file": "items/toy_car.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ]
+    },
+    "bg_race_0": {
+      "file": "race/bg_0.png",
+      "status": "derived",
+      "size": [
+        640,
+        400
+      ],
+      "_note": "the race mini-game: the carpet close-up (pixellab, art/pixellab/raw/race_floor_seed31.png) with the track painted on by scripts/race_track.py from src/puzzles/race-track.json"
+    },
+    "race_loop_front": {
+      "file": "race/loop_front.png",
+      "status": "derived",
+      "_note": "the loop-the-loop's near rail alone, drawn over the car while it is in the loop; written by scripts/race_track.py"
+    },
+    "car_top": {
+      "file": "race/car_top.png",
+      "status": "pixellab",
+      "size": [
+        32,
+        20
+      ],
+      "_note": "the race car from above, pointing right; turned to follow the track"
+    },
+    "car_side": {
+      "file": "race/car_side.png",
+      "status": "pixellab",
+      "size": [
+        32,
+        20
+      ],
+      "_note": "the race car side-on, pointing right; flipped and turned round the loop"
+    },
+    "booster_icon": {
+      "file": "race/booster_icon.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "the Boost button's picture in the race mini-game; a code-drawn box stands in when it is missing"
+    },
+    "bg_memory_0": {
+      "file": "memory/bg_0.png",
+      "status": "pixellab",
+      "size": [
+        640,
+        400
+      ],
+      "_note": "the garage memory game: a wall of four empty shelves; box positions in SHELVES in src/scenes/MemoryScene.ts"
+    },
+    "box_closed": {
+      "file": "memory/box_closed.png",
+      "status": "pixellab",
+      "size": [
+        64,
+        52
+      ],
+      "_note": "a taped-shut cardboard box, drawn standing on a shelf (origin bottom-centre)"
+    },
+    "box_open": {
+      "file": "memory/box_open.png",
+      "status": "pixellab",
+      "size": [
+        64,
+        52
+      ],
+      "_note": "the same box with its flaps open; the thing inside is drawn over it"
+    },
+    "mem_hammer": {
+      "file": "memory/hammer.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_wrench": {
+      "file": "memory/wrench.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_paint": {
+      "file": "memory/paint.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_flashlight": {
+      "file": "memory/flashlight.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_ball": {
+      "file": "memory/ball.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_tape": {
+      "file": "memory/tape.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_bulb": {
+      "file": "memory/bulb.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "mem_can": {
+      "file": "memory/can.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        24
+      ],
+      "_note": "a thing in Dad's boxes, for the memory game"
+    },
+    "bg_tea_0": {
+      "file": "tea/bg_0.png",
+      "status": "pixellab",
+      "size": [
+        640,
+        400
+      ],
+      "_note": "the tea party: the playhouse table close up; where things stand is TABLE in src/scenes/TeaScene.ts"
+    },
+    "teapot": {
+      "file": "tea/teapot.png",
+      "status": "pixellab",
+      "size": [
+        64,
+        56
+      ],
+      "_note": "one pink teapot, drawn at two sizes for the pots that pour three and two"
+    },
+    "teacup_empty": {
+      "file": "tea/empty.png",
+      "status": "pixellab",
+      "size": [
+        56,
+        48
+      ],
+      "_note": "the teacup empty; all four share one silhouette"
+    },
+    "teacup_partial": {
+      "file": "tea/partial.png",
+      "status": "derived",
+      "size": [
+        56,
+        48
+      ],
+      "_note": "the teacup part way filled (short of its mark); all the cups share one silhouette"
+    },
+    "teacup_full": {
+      "file": "tea/full.png",
+      "status": "derived",
+      "size": [
+        56,
+        48
+      ],
+      "_note": "the teacup filled exactly to its mark"
+    },
+    "teacup_over": {
+      "file": "tea/over.png",
+      "status": "pixellab",
+      "size": [
+        56,
+        48
+      ],
+      "_note": "the teacup overfilled: tea over the rim, down the sides and on the saucer; shown from the spill until the level resets"
     }
   },
   "spritesheets": {

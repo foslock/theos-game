@@ -1,6 +1,6 @@
 import { getSettings } from '../state/Settings';
 
-export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot' | 'stomp' | 'whoosh' | 'theEnd';
+export type SfxName = 'click' | 'pickup' | 'locked' | 'open' | 'boing' | 'squeak' | 'ding' | 'step' | 'menu' | 'success' | 'boot' | 'stomp' | 'whoosh' | 'theEnd' | 'vroom' | 'push' | 'pour';
 
 let ctx: AudioContext | null = null;
 
@@ -111,6 +111,19 @@ const PATTERNS: Record<SfxName, Tone[]> = {
     { freq: 220, to: 1400, dur: 0.7, type: 'sawtooth', gain: 0.18 },
     { freq: 330, to: 1800, dur: 0.6, type: 'sine', gain: 0.2, delay: 0.05 },
   ],
+  // The booster flinging the car: a rising buzz that tails off.
+  vroom: [
+    { freq: 90, to: 420, dur: 0.35, type: 'sawtooth', gain: 0.22 },
+    { freq: 180, to: 840, dur: 0.3, type: 'square', gain: 0.08, delay: 0.03 },
+  ],
+  // Tea pouring: a gurgle that rises as the cup fills.
+  pour: [
+    { freq: 320, to: 560, dur: 0.45, type: 'sine', gain: 0.18 },
+    { freq: 480, to: 760, dur: 0.4, type: 'triangle', gain: 0.1, delay: 0.06 },
+    { freq: 640, to: 900, dur: 0.3, type: 'sine', gain: 0.08, delay: 0.16 },
+  ],
+  // A push on the toy car: a short low tick.
+  push: [{ freq: 260, to: 180, dur: 0.06, type: 'square', gain: 0.25 }],
   // Power-on "boop": a quick upward blip into a soft, ringing major chord.
   boot: [
     { freq: 392, to: 784, dur: 0.16, type: 'sine', gain: 0.5 },
@@ -150,6 +163,50 @@ export function playSfx(name: SfxName): void {
     osc.start(start);
     osc.stop(start + t.dur + 0.02);
   }
+}
+
+let hum: { osc: OscillatorNode; lfo: OscillatorNode; gain: GainNode } | null = null;
+
+/**
+ * The booster's motor: a low buzz with a slow wobble that keeps going until `stopHum`. Only one
+ * runs at a time; starting it again while it is on just leaves it running.
+ */
+export function startHum(): void {
+  const a = audio();
+  if (!a || hum) return;
+  const master = getSettings().sfxVolume;
+  if (master <= 0) return;
+  const osc = a.createOscillator();
+  const lfo = a.createOscillator();
+  const lfoGain = a.createGain();
+  const gain = a.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(70, a.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(110, a.currentTime + 0.25);
+  lfo.type = 'sine';
+  lfo.frequency.setValueAtTime(7, a.currentTime);
+  lfoGain.gain.setValueAtTime(12, a.currentTime);
+  lfo.connect(lfoGain).connect(osc.frequency);
+  gain.gain.setValueAtTime(0.0001, a.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.12 * master, a.currentTime + 0.08);
+  osc.connect(gain).connect(a.destination);
+  osc.start();
+  lfo.start();
+  hum = { osc, lfo, gain };
+}
+
+export function stopHum(): void {
+  const a = audio();
+  if (!a || !hum) return;
+  const { osc, lfo, gain } = hum;
+  hum = null;
+  const t = a.currentTime;
+  gain.gain.cancelScheduledValues(t);
+  gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+  osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+  osc.stop(t + 0.14);
+  lfo.stop(t + 0.14);
 }
 
 export type Voice = 'theo' | 'lucy' | 'parents';

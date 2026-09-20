@@ -34,6 +34,19 @@ for m in re.finditer(r"\{\s*(?:kind: '(\w+)',\s*)?(?:to|id): '(\w+)'(.*?)zone: \
         wx, wy = map(int, wt.groups())
         d.ellipse((wx - 3, wy - 3, wx + 3, wy + 3), fill=c)
         d.line((x + w // 2, y + h // 2, wx, wy), fill=c)
+# Seeded spots: every place a pickup could be, dashed in green with its `where` phrase.
+for m in re.finditer(r"\{ zone: \{ x: (\d+), y: (\d+), w: (\d+), h: (\d+) \}(.*?)where: (['\"])(.+?)\6 \}", src, re.S):
+    x, y, w, h = map(int, m.groups()[:4])
+    where = m.group(7)
+    at = re.search(r"at: \{ x: (\d+), y: (\d+) \}", m.group(5))
+    c = (0, 255, 120)
+    for i in range(x, x + w, 4):
+        d.line((i, y, min(i + 1, x + w - 1), y), fill=c); d.line((i, y + h - 1, min(i + 1, x + w - 1), y + h - 1), fill=c)
+    for j in range(y, y + h, 4):
+        d.line((x, j, x, min(j + 1, y + h - 1)), fill=c); d.line((x + w - 1, j, x + w - 1, min(j + 1, y + h - 1)), fill=c)
+    if at:
+        d.ellipse((int(at.group(1)) - 2, int(at.group(2)) - 2, int(at.group(1)) + 2, int(at.group(2)) + 2), outline=c)
+    d.text((x, y + h + 1), where, fill=c)
 for key, col in (("restPoint", (255, 255, 0)), ("lucyRestPoint", (255, 105, 180))):
     m = re.search(key + r": \{ x: (\d+), y: (\d+) \}", src)
     if m:

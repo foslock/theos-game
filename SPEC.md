@@ -24,11 +24,13 @@ The current interactable mission/quest items are listed here:
 - Cereal, found in cabinet in Kitchen
 - Milk, found in fridge in Kitchen
 - Basketballs (stored in the same grid item, up to 3 stacked) found hidden in Sport Court scene
-- Stomp Rocket found in Theo's Bedroom
+- Stomp Rocket found in the Garage
 - Kitchen Door Key, found in Family Room
 - Garage Door Key, found in Playhouse
 - Playhouse Key, found in Playhouse mailbox
-- Toy Bus, found in Family Room
+- Race Car, found on the floor of Theo's Bedroom (used on the toy track there)
+
+The stomp rocket, the basketballs, the kitchen door key, the garage door key and the race car are each seeded into one of three spots in their room, chosen from the save's seed, so they are not always in the same place.
 
 
 ## Scene Setup and Transitions
@@ -83,9 +85,21 @@ The first task that Theo has is to go downstairs where he finds his younger sist
 Next the kids need to make their way outside to play basketball on the sport court. First this should be a search and find game to find three hidden basketballs (they should be partially visible but hidden in the scene). Then, once they have found all three, they play a mini-game where they need to practice throwing the balls into three different height hoops.
 
 ## Backyard
-Next, the kids need to go to the backyard and play with the sprinkler and stomp rocket. The stomp rockets are missing, but Theo should note to the player that he remembers them being in his room. This forces the player to backtrack through the scenes to get the rockets, which then they can use to play a minigame.
+Next, the kids need to go to the backyard and play with the sprinkler and stomp rocket. The stomp rockets are missing, but Theo should note to the player that he remembers seeing them in the garage. This forces the player to backtrack through the scenes to get the rockets, which then they can use to play a minigame.
 
 The stomp rocket mini-game: the player clicks as many times as they can in five seconds to pump up the launch (nine metres per click), then Theo jumps on the red pad and the rocket shoots up. The camera follows it into the sky, scrolling the backyard away, with a counter showing how many metres it has climbed and clouds and birds drifting past; then it falls back down to the lawn next to Theo and Lucy.
+
+## Race track
+
+Theo's room has a toy race track on the carpet. Picking up the race car reminds him of it; clicking the track with the car starts the race mini-game: a close-up of the track (an oval with a loop-the-loop on the far side and a booster on the near side), Theo and Lucy off screen. Two big buttons beside the backpack drive it: one pushes the car along, the other switches the booster on for a moment, its green light blinking and its motor humming; a car passing over the booster is flung fast enough for the loop, which pushes alone never manage. The car turns to follow the track and is seen side-on inside the loop, tucked behind its near rail. Three laps without the car stopping wins.
+
+## Garage memory boxes
+
+Clicking the shelves in the garage starts a memory game on a wall of four empty shelves. Boxes stand on the shelves; the player opens two at a time. If the things inside match, the boxes stay open and are done for the level; if not, the things go back in and the boxes close. Level one is a 2x2 of boxes (two pairs), level two a 3x3 with the middle spot empty (four pairs), level three a 4x4 (eight pairs, eight different things from the garage: a hammer, a wrench, a paint can, a flashlight, a tennis ball, a roll of tape, a light bulb and a watering can). Matching everything on the 4x4 wins. The things are placed at random each time.
+
+## Playhouse tea party
+
+Clicking Lucy's tea set on the little table starts a pouring puzzle. Two teapots stand at the back of the table: a big one that pours three and a small one that pours two. Cups stand along the front, each sized and marked with how much it holds. The player picks a teapot and clicks a cup to pour; a cup must end up exactly full (a "2" is the small pot once, a "5" is each pot once). Pouring past the mark, or leaving a cup with only one to go (no pot pours one), spills the level and it starts over. Every level has three cups: level one only twos and threes, level two fours to sixes, level three sevens to nines; filling the last level wins.
 
 ## Playground
 

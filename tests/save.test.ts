@@ -24,8 +24,14 @@ describe('save round trip', () => {
     expect(() => parseSave('not json')).toThrow(SaveError);
     expect(() => parseSave('[]')).toThrow(SaveError);
     expect(() => parseSave('{"seed":1,"currentRoom":"moon","inventory":[],"flags":{}}')).toThrow(SaveError);
-    expect(() => parseSave('{"seed":1,"currentRoom":"bedroom","inventory":[{"item":"laser"}],"flags":{}}')).toThrow(SaveError);
+    expect(() => parseSave('{"seed":1,"currentRoom":"bedroom","inventory":[{"count":1}],"flags":{}}')).toThrow(SaveError);
     expect(() => parseSave('{"version":99,"seed":1,"currentRoom":"bedroom","inventory":[],"flags":{}}')).toThrow(SaveError);
+  });
+
+  it('leaves behind things the game no longer has, rather than refusing the save', () => {
+    // The family room's toy bus was removed on 2026-09-20; a save carrying one still loads without it.
+    const s = parseSave('{"seed":1,"currentRoom":"family_room","inventory":[{"item":"toy_bus","count":1},{"item":"spoon","count":1}],"flags":{}}');
+    expect(s.inventory).toEqual([{ item: 'spoon', count: 1 }]);
   });
 
   it('fills defaults for a minimal older save', () => {

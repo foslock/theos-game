@@ -81,9 +81,12 @@ describe('scene graph', () => {
 });
 
 describe('room layout', () => {
+  // Every place a seeded pickup could be counts, so no layout the seed deals can clash.
   const footprints = (id: (typeof ROOM_IDS)[number]) => [
     ...ROOMS[id].exits.map((e) => ({ id: `exit:${e.to}`, box: e })),
-    ...ROOMS[id].hotspots.map((h) => ({ id: h.id, box: h })),
+    ...ROOMS[id].hotspots.flatMap((h) =>
+      h.kind === 'pickup' && h.spots?.length ? h.spots.map((s, i) => ({ id: `${h.id}#${i} (${s.where})`, box: { zone: s.zone } })) : [{ id: h.id, box: h }],
+    ),
   ];
 
   /**

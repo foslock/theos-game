@@ -14,7 +14,7 @@ describe('inventory', () => {
   });
   it('does not stack non-stackable items and caps at 8 slots', () => {
     const s = newGameState(1);
-    const ids = ['spoon', 'bowl', 'cereal', 'milk', 'stomp_rocket', 'kitchen_door_key', 'garage_key', 'playhouse_key', 'toy_bus'] as const;
+    const ids = ['spoon', 'bowl', 'cereal', 'milk', 'stomp_rocket', 'kitchen_door_key', 'garage_key', 'playhouse_key', 'toy_car'] as const;
     const results = ids.map((id) => addItem(s, id));
     expect(results.slice(0, MAX_INVENTORY_SLOTS).every(Boolean)).toBe(true);
     expect(results[MAX_INVENTORY_SLOTS]).toBe(false);

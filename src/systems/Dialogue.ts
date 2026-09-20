@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH } from '../config';
+import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import { SPEECH_FONT } from '../ui/text';
 import { playVoice, type Voice } from './Sfx';
 
@@ -21,8 +21,8 @@ export class Dialogue {
   say(text: string, x: number, y: number, opts: SayOptions = {}): Promise<void> {
     this.clear();
     const t = this.scene.add.text(0, 0, text, SPEECH_FONT);
-    const w = Math.ceil(t.width) + 16;
-    const h = Math.ceil(t.height) + 12;
+    const w = Math.ceil(t.width) + 24;
+    const h = Math.ceil(t.height) + 18;
     const cx = Phaser.Math.Clamp(x, w / 2 + 6, GAME_WIDTH - w / 2 - 6);
     const cy = Math.max(y, h + 24);
 
@@ -44,7 +44,7 @@ export class Dialogue {
     g.lineTo(tailX + 6, -14);
     g.strokePath();
 
-    t.setPosition(-w / 2 + 8, -h - 14 + 6);
+    t.setPosition(-w / 2 + 12, -h - 14 + 9);
     this.container = this.scene.add.container(cx, cy, [g, t]).setDepth(1000);
     if (opts.voice) playVoice(opts.voice, text.split(/\s+/).filter(Boolean).length);
 
@@ -53,6 +53,14 @@ export class Dialogue {
       this.resolver = resolve;
       this.timer = this.scene.time.delayedCall(duration, () => this.clear());
     });
+  }
+
+  /**
+   * A line from someone who is not on screen (Theo during the race or the memory boxes): the
+   * bubble sits centred just above the backpack bar, its tail pointing down at it.
+   */
+  sayOffscreen(text: string, opts: SayOptions = {}): Promise<void> {
+    return this.say(text, GAME_WIDTH / 2, SCENE_HEIGHT + 2, opts);
   }
 
   clear(): void {

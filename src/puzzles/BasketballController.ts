@@ -5,7 +5,8 @@ import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
 import { playMusic } from '../systems/Music';
-import { FONT, pointerVerb, TEXT_FONT } from '../ui/text';
+import { FONT, pointerVerb } from '../ui/text';
+import { showPanel } from '../ui/MinigamePanel';
 import type { GameScene } from '../scenes/GameScene';
 import {
   BALL_RADIUS,
@@ -18,6 +19,7 @@ import {
   stepBall,
   throwBall,
   triesLeft,
+  TRIES_PER_HOOP,
   type Ball,
   type BasketballGame,
   HOOPS,
@@ -59,7 +61,6 @@ export class BasketballController {
   private ball: Ball | null = null;
   private ballImage?: Phaser.GameObjects.Image;
   private meter?: Phaser.GameObjects.Graphics;
-  private panel?: Phaser.GameObjects.Container;
   private rng = new Rng(1);
   /** Playing again after the hoops have already been beaten: the balls live at the court now. */
   private replay = false;
@@ -267,22 +268,19 @@ export class BasketballController {
       return;
     }
     await this.scene.sayLucy('Yay! You got every hoop!');
-    await this.scene.sayTheo("That was fun! Let's go to the playground next. It's just past the playhouse. We can play here again any time.");
+    await this.scene.sayTheo('That was fun! We can play here again any time.');
+    await this.scene.sayWhatsNext();
   }
 
-  /** Small card in the corner: which hoop, and a ball for every try left at it. */
+  /** In the backpack bar: which hoop, and a ball for every try left at it. */
   private renderPanel(): void {
     if (!this.game) return;
-    this.panel?.destroy();
     const hoop = currentHoop(this.game);
-    const tries = triesLeft(this.game);
-    const label = this.scene.add.text(8, 6, `The ${hoop.name}`, { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0);
-    const balls: Phaser.GameObjects.GameObject[] = [];
-    for (let i = 0; i < tries; i++) balls.push(this.scene.add.image(14 + i * 22, 30, 'item_basketball').setScale(0.8));
-    const w = Math.max(label.width, 22 * 3) + 16;
-    const bg = this.scene.add.rectangle(0, 0, w, 42, 0x000000, 0.55).setOrigin(0);
-    this.panel = this.scene.add.container(4, 4, [bg, label, ...balls]).setDepth(960);
-    this.objects.push(this.panel);
+    showPanel(this.scene, {
+      title: `The ${hoop.name}`,
+      text: `${pointerVerb() === 'Tap' ? 'Touch' : 'Press'} and hold to wind up, let go to shoot!`,
+      icons: { key: 'item_basketball', count: triesLeft(this.game), total: TRIES_PER_HOOP, scale: 0.8 },
+    });
   }
 
   private drawMeter(): void {
@@ -322,6 +320,6 @@ export class BasketballController {
     for (const o of this.objects) o.destroy();
     this.objects = [];
     this.meter = undefined;
-    this.panel = undefined;
+    showPanel(this.scene, null);
   }
 }

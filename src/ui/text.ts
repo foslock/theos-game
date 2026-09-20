@@ -51,12 +51,17 @@ export const TEXT_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
  */
 export const TEXT_LINE_SPACING = 5;
 
+/**
+ * What Theo and Lucy say. Twice the font's design size, so it reads from across the room, and
+ * still crisp because it is an exact multiple; the wrap width keeps a bubble well inside the
+ * 640px scene.
+ */
 export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
   fontFamily: TEXT_FAMILY,
-  fontSize: '8px',
+  fontSize: '16px',
   color: '#000000',
-  lineSpacing: TEXT_LINE_SPACING,
-  wordWrap: { width: 220 },
+  lineSpacing: 8,
+  wordWrap: { width: 400 },
 };
 
 /**
@@ -64,5 +69,7 @@ export const SPEECH_FONT: Phaser.Types.GameObjects.Text.TextStyle = {
  * An unsupported query reports no match, so anything we cannot identify gets "Click".
  */
 export function pointerVerb(): 'Tap' | 'Click' {
+  // Outside a browser (the tests) there is no pointer to ask about.
+  if (typeof window === 'undefined' || !window.matchMedia) return 'Click';
   return window.matchMedia('(pointer: coarse)').matches ? 'Tap' : 'Click';
 }

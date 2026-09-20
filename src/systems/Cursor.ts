@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Direction } from '../data/rooms';
 
-export type CursorKind = 'default' | 'ball' | 'rocket' | 'grab' | 'look' | 'talk' | 'wait' | 'play' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
+export type CursorKind = 'default' | 'ball' | 'rocket' | 'teapot' | 'grab' | 'look' | 'talk' | 'wait' | 'play' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
 
 const cache = new Map<CursorKind, string>();
 
@@ -203,6 +203,49 @@ function drawRocket(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(10, 10, 2, 5);
 }
 
+/** A pink teapot tipped to pour: shown while the player is holding one at the tea party. */
+function drawTeapot(ctx: CanvasRenderingContext2D): void {
+  ctx.save();
+  ctx.translate(12, 13);
+  ctx.rotate(-0.5);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.fillStyle = '#f08ab0';
+  // body
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 8, 6.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // lid
+  ctx.beginPath();
+  ctx.roundRect(-4, -7, 8, 4, 1.5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(-1, -9, 2, 2);
+  // spout, off to the right and up
+  ctx.fillStyle = '#f08ab0';
+  ctx.beginPath();
+  ctx.moveTo(6, -1);
+  ctx.lineTo(12, -6);
+  ctx.lineTo(13, -3);
+  ctx.lineTo(8, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // handle on the left
+  ctx.beginPath();
+  ctx.arc(-9, 1, 4, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
+  // highlight
+  ctx.fillStyle = '#ffd6e6';
+  ctx.fillRect(-4, -1, 3, 2);
+  ctx.restore();
+  // a drop of tea falling from the spout
+  ctx.fillStyle = '#8e4f22';
+  ctx.fillRect(20, 12, 2, 3);
+}
+
 /** Faded analog wristwatch: shown while the characters are walking or talking and clicks are ignored. */
 function drawWait(ctx: CanvasRenderingContext2D): void {
   ctx.globalAlpha = 0.55;
@@ -246,6 +289,7 @@ function cursorCss(kind: CursorKind): string {
     ctx.imageSmoothingEnabled = false;
     if (kind === 'ball') drawBall(ctx);
     else if (kind === 'rocket') drawRocket(ctx);
+    else if (kind === 'teapot') drawTeapot(ctx);
     else if (kind === 'look') drawLook(ctx);
     else if (kind === 'talk') drawTalk(ctx);
     else if (kind === 'wait') drawWait(ctx);

@@ -44,8 +44,8 @@ export type AmbientSpec =
   | { kind: 'occluder'; key: string; at: Pt }
   /** A bird flying past a window: across `area`, drawn under the window's `frame`. */
   | { kind: 'passerby'; key: string; area: Rect; every?: [number, number] }
-  /** Wisps rising from a spout or a cup. */
-  | { kind: 'steam'; at: Pt }
+  /** Wisps rising from a spout or a cup; `bold` makes them big and plentiful, for a close-up, and `depth` puts them over things drawn above the room. */
+  | { kind: 'steam'; at: Pt; bold?: boolean; depth?: number }
   /** Leaves drifting down through an area now and then. */
   | { kind: 'leaves'; key: string; area: Rect; every?: [number, number] }
   /**
@@ -672,27 +672,42 @@ class Steam implements Effect {
   private spawn = 0;
 
   constructor(scene: Phaser.Scene, private spec: Extract<AmbientSpec, { kind: 'steam' }>) {
-    this.g = scene.add.graphics().setDepth(FRONT);
+    this.g = scene.add.graphics().setDepth(spec.depth ?? FRONT);
   }
 
   update(dt: number): void {
+    // Bold steam, for a cup seen close up: thicker wisps, more of them, rising faster and further.
+    const m = this.spec.bold ? 2 : 1;
     this.spawn -= dt;
     if (this.spawn <= 0) {
-      this.wisps.push({ x: this.spec.at.x + rand(-2, 2), y: this.spec.at.y, age: 0, life: rand(1.6, 2.4), phase: rand(0, 6) });
-      this.spawn = rand(0.25, 0.45);
+      this.wisps.push({ x: this.spec.at.x + rand(-3 * m, 3 * m), y: this.spec.at.y, age: 0, life: rand(1.6, 2.4), phase: rand(0, 6) });
+      this.spawn = rand(0.25, 0.45) / m;
     }
     const g = this.g;
     g.clear();
-    for (const w of this.wisps) {
-      w.age += dt;
-      w.y -= 14 * dt;
-      w.x += Math.sin(w.age * 3 + w.phase) * 8 * dt;
-      const k = w.age / w.life;
-      const size = k < 0.5 ? 2 : 3;
-      g.fillStyle(0xffffff, 0.55 * (1 - k));
-      g.fillRect(Math.round(w.x) - 1, Math.round(w.y) - 1, size, size);
-    }
+    for (const w of this.wisps) w.age += dt;
+    // Dead wisps go before anything is drawn: past its life a wisp's fade would go negative, and
+    // a negative alpha renders as solid white, which showed as a one-frame pop.
     this.wisps = this.wisps.filter((w) => w.age < w.life);
+    for (const w of this.wisps) {
+      w.y -= 14 * m * dt;
+      w.x += Math.sin(w.age * 3 + w.phase) * 8 * m * dt;
+      const k = w.age / w.life;
+      // Each wisp fades in over its first fifth and out over the rest, so none pops into view.
+      const fade = Phaser.Math.Clamp(k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8, 0, 1);
+      if (this.spec.bold) {
+        // Round puffs that swell as they thin: a soft outer glow round a brighter core.
+        const r = 2 + k * 4;
+        g.fillStyle(0xffffff, 0.25 * fade);
+        g.fillCircle(w.x, w.y, r + 2);
+        g.fillStyle(0xffffff, 0.7 * fade);
+        g.fillCircle(w.x, w.y, r);
+      } else {
+        const size = k < 0.5 ? 2 : 3;
+        g.fillStyle(0xffffff, 0.55 * fade);
+        g.fillRect(Math.round(w.x) - 1, Math.round(w.y) - 1, size, size);
+      }
+    }
   }
 
   destroy(): void {

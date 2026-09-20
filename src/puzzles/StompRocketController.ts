@@ -5,7 +5,8 @@ import { store } from '../state/Store';
 import { Rng, randomSeed } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
 import { playMusic } from '../systems/Music';
-import { FONT, pointerVerb, TEXT_FONT } from '../ui/text';
+import { pointerVerb } from '../ui/text';
+import { showPanel } from '../ui/MinigamePanel';
 import type { GameScene } from '../scenes/GameScene';
 import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, skySpots } from './rocket';
 
@@ -55,9 +56,6 @@ export class StompRocketController {
   private rocket?: Phaser.GameObjects.Image;
   /** Half the rocket's height: in flight it turns about its middle, so its base sits this far below its centre. */
   private rocketHalf = 0;
-  private panel?: Phaser.GameObjects.Container;
-  private meter?: Phaser.GameObjects.Graphics;
-  private counter?: Phaser.GameObjects.Text;
   private sky: Phaser.GameObjects.GameObject[] = [];
   private objects: Phaser.GameObjects.GameObject[] = [];
   private birds: { sprite: Phaser.GameObjects.Sprite; speed: number }[] = [];
@@ -87,7 +85,7 @@ export class StompRocketController {
     if (!hasItem(state, 'stomp_rocket') && !getFlag(state, FLAGS.stompRocketDone)) {
       playSfx('locked');
       store.update((s) => setFlag(s, FLAGS.stompRocketHinted));
-      await this.scene.sayTheo("The stomp rocket launcher! But the rocket is missing... I think I left it up in my room.");
+      await this.scene.sayTheo("The stomp rocket launcher! But the rocket is missing... I think I saw it in Dad's garage.");
       return;
     }
     await this.start();
@@ -113,8 +111,6 @@ export class StompRocketController {
     }
     this.placeRocketOnTube();
     await this.scene.sayLucy(`${pointerVerb()} as fast as you can to pump it up!`);
-    this.meter = this.scene.add.graphics().setDepth(960).setScrollFactor(0);
-    this.objects.push(this.meter);
     this.phase = 'charge';
     this.renderPanel();
   }
@@ -145,7 +141,7 @@ export class StompRocketController {
     const dt = Math.min(deltaMs / 1000, 0.1);
     if (this.phase === 'charge') {
       this.elapsed += dt;
-      this.drawMeter();
+      this.renderPanel();
       if (this.elapsed >= CHARGE_SECONDS) void this.stomp();
     } else if (this.phase === 'flight') {
       this.flightT += dt;
@@ -160,9 +156,7 @@ export class StompRocketController {
     this.phase = 'stomp';
     this.height = heightFor(this.clicks);
     // The wind-up readouts go; the altitude counter takes over once it flies.
-    this.meter?.setVisible(false);
-    this.panel?.destroy();
-    this.panel = undefined;
+    showPanel(this.scene, { title: 'Stomp!', big: `${this.clicks} ${this.clicks === 1 ? 'pump' : 'pumps'}` });
     const theo = this.scene.theo;
     theo.face(-1);
     await new Promise<void>((resolve) =>
@@ -193,12 +187,7 @@ export class StompRocketController {
     // From here it turns about its middle, so its centre starts half a rocket above the tube.
     this.rocket?.setOrigin(0.5, 0.5).setPosition(LAUNCHER.tube.x, LAUNCHER.tube.y - this.rocketHalf);
     this.buildSky();
-    this.counter = this.scene.add
-      .text(GAME_WIDTH / 2, 14, '0 m', { ...FONT, fontSize: '16px', color: '#fff3b0', stroke: '#3a1d00', strokeThickness: 4 })
-      .setOrigin(0.5, 0)
-      .setDepth(970)
-      .setScrollFactor(0);
-    this.objects.push(this.counter);
+    this.showAltitude(0);
     this.flightT = 0;
     this.phase = 'flight';
   }
@@ -279,7 +268,16 @@ export class StompRocketController {
     this.scene.cameras.main.setScroll(0, scroll);
     for (const b of this.birds) b.sprite.x += b.speed / 60;
     this.moveSights(1 / 60);
-    this.counter?.setText(`${Math.round(metres)} m`);
+    this.showAltitude(Math.round(metres));
+  }
+
+  private lastShown = -1;
+
+  /** The altitude readout in the backpack bar, redrawn only when the number changes. */
+  private showAltitude(metres: number): void {
+    if (metres === this.lastShown) return;
+    this.lastShown = metres;
+    showPanel(this.scene, { title: 'Up it goes!', big: `${metres} m` });
   }
 
   /** The plane crosses steadily, the saucer wobbles along, the satellite's light blinks, the moon just hangs. */
@@ -314,10 +312,13 @@ export class StompRocketController {
     this.rocket?.setOrigin(0.5, 1).setPosition(LAUNCHER.landing.x, LAUNCHER.landing.y).setAngle(100).setDepth(LAUNCHER.landing.y);
     playSfx('boing');
     this.scene.cameras.main.shake(100, 0.003);
-    this.counter?.setText(`${this.height} m`);
+    this.showAltitude(this.height);
     this.scene.lucy?.celebrate();
     await this.scene.sayTheo(resultLine(this.height));
-    if (this.firstRun) await this.scene.sayLucy(`Again! ${pointerVerb()} the launcher whenever you want to do it again!`);
+    if (this.firstRun) {
+      await this.scene.sayLucy(`Again! ${pointerVerb()} the launcher whenever you want to do it again!`);
+      await this.scene.sayWhatsNext();
+    }
     this.finish();
   }
 
@@ -339,28 +340,15 @@ export class StompRocketController {
     this.stop();
   }
 
+  /** The wind-up in the backpack bar: the pump count and the time left, a bar that empties over the five seconds. */
   private renderPanel(): void {
-    this.panel?.destroy();
-    const label = this.scene.add.text(8, 6, 'Pump it up!', { ...TEXT_FONT, color: '#fff3b0' }).setOrigin(0);
-    const hint = this.scene.add.text(8, 20, `${this.clicks} ${this.clicks === 1 ? 'pump' : 'pumps'}`, { ...TEXT_FONT, color: '#d9b98a' }).setOrigin(0);
-    const bg = this.scene.add.rectangle(0, 0, Math.max(label.width, hint.width) + 16, 44, 0x000000, 0.55).setOrigin(0);
-    this.panel = this.scene.add.container(4, 4, [bg, label, hint]).setDepth(960).setScrollFactor(0);
-    this.objects.push(this.panel);
-  }
-
-  /** Time left, as a bar that empties over the five seconds. */
-  private drawMeter(): void {
-    if (!this.meter) return;
-    const g = this.meter;
-    const w = 120;
-    const x = 4;
-    const y = 52;
     const left = Math.max(0, 1 - this.elapsed / CHARGE_SECONDS);
-    g.clear();
-    g.fillStyle(0x000000, 0.55);
-    g.fillRect(x, y, w + 4, 10);
-    g.fillStyle(left > 0.3 ? 0x5dc05a : 0xd94b3a, 1);
-    g.fillRect(x + 2, y + 2, Math.round(w * left), 6);
+    showPanel(this.scene, {
+      title: 'Pump it up!',
+      text: `${pointerVerb()} as fast as you can!`,
+      big: `${this.clicks} ${this.clicks === 1 ? 'pump' : 'pumps'}`,
+      meter: { value: left, color: left > 0.3 ? 0x5dc05a : 0xd94b3a },
+    });
   }
 
   /** Ends the game in whatever state it is in and gives the yard back. */
@@ -383,9 +371,8 @@ export class StompRocketController {
     this.birds = [];
     this.sights = [];
     this.skyT = 0;
-    this.meter = undefined;
-    this.panel = undefined;
-    this.counter = undefined;
+    this.lastShown = -1;
+    showPanel(this.scene, null);
     this.scene.theo.idle();
   }
 }

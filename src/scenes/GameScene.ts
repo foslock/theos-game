@@ -20,6 +20,7 @@ import {
   carriedCount,
   FLAGS,
   getFlag,
+  hasItem,
   isPickedUp,
   isUnlocked,
   itemCount,
@@ -43,11 +44,15 @@ import { pick } from '../systems/Hitbox';
 import { playSfx, unlockAudio } from '../systems/Sfx';
 import { playMusic, stopMusic } from '../systems/Music';
 import { pointerVerb } from '../ui/text';
+import { slotCentre, slotFor } from '../ui/backpackSlots';
 import { BreakfastController } from '../puzzles/BreakfastController';
 import { BasketballController } from '../puzzles/BasketballController';
 import { StompRocketController } from '../puzzles/StompRocketController';
 import { BALLS_NEEDED } from '../puzzles/basketball';
 import { endingTriggers } from '../puzzles/ending';
+import { afterGameLine } from '../puzzles/progress';
+import { placeRoom } from '../puzzles/spots';
+import { TRACK } from '../data/rooms/bedroom';
 
 const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
@@ -74,6 +79,8 @@ const BED_POS = { x: 124, y: 196 };
 const BED_DEPTH = 328;
 /** Where Theo lands after hopping out, clear of the bed's footprint. */
 const WAKE_STAND = { x: 300, y: 344 };
+/** How far a half-hidden pickup answers a click: only a sliver of it shows, so it is generous. */
+const PEEK_REACH = 30;
 
 /** Which of a decoration's lines comes next, per room and hotspot, kept for the whole session. */
 const lineCursor = new Map<string, number>();
@@ -96,6 +103,10 @@ interface GameData {
   wakeUp?: boolean;
   /** Back from the slide ride: the party is already in the playground, no walking in. */
   afterSlide?: boolean;
+  /** Back from a mini-game scene (the race, the memory boxes): the party is already in the room. */
+  afterMinigame?: boolean;
+  /** What Lucy says on the way back, if the game was won. */
+  cheer?: string;
 }
 
 /** Renders whichever room the store says we are in, and runs all point-and-click interaction. */
@@ -170,7 +181,7 @@ export class GameScene extends Phaser.Scene {
       () => this.showHints(true),
     );
     const s = store.get();
-    this.room = getRoom(s.currentRoom);
+    this.room = placeRoom(getRoom(s.currentRoom), s.seed);
     const wake = !!data.wakeUp && this.room.id === 'bedroom' && ['theo_front', 'bed_asleep', 'bed_sit'].every((k) => this.textures.exists(k));
     // During the wake-up intro the HUD is shown but keeps its backpack prompt quiet.
     this.registry.set('hudQuiet', wake);
@@ -179,7 +190,7 @@ export class GameScene extends Phaser.Scene {
     if (wake) stopMusic();
     this.buildRoom(!wake);
 
-    const entryExit = s.previousRoom && !data.afterSlide ? findExit(this.room.id, s.previousRoom) : undefined;
+    const entryExit = s.previousRoom && !data.afterSlide && !data.afterMinigame ? findExit(this.room.id, s.previousRoom) : undefined;
     const spawn = entryExit?.walkTo ?? this.room.restPoint;
     this.theo = new Character(this, 'theo', spawn.x, spawn.y);
     if (s.lucyJoined) {
@@ -211,6 +222,9 @@ export class GameScene extends Phaser.Scene {
     } else if (data.afterSlide) {
       void this.fade.in(FADE_MS);
       void this.backFromSlide();
+    } else if (data.afterMinigame) {
+      void this.fade.in(FADE_MS);
+      void this.backFromMinigame(data.cheer);
     } else {
       void this.fade.in(FADE_MS);
       void this.enterRoom(!!entryExit);
@@ -224,8 +238,29 @@ export class GameScene extends Phaser.Scene {
     this.placeParty(this.room.restPoint);
     await this.sayLucy('Again! Again!');
     if (this.stale(gen)) return;
-    await this.sayTheo('What a day! Mom and Dad will be home soon.');
+    await this.sayTheo(afterGameLine(store.get()));
     if (this.stale(gen)) return;
+    this.busy = false;
+    this.hints.reset();
+  }
+
+  /** After a game is won: Theo points at the next one, or says it is time to head home. */
+  async sayWhatsNext(): Promise<void> {
+    await this.sayTheo(afterGameLine(store.get()));
+  }
+
+  /** Back from a mini-game scene; Lucy cheers if it was won. */
+  private async backFromMinigame(cheer: string | undefined): Promise<void> {
+    this.busy = true;
+    const gen = this.generation;
+    this.placeParty(this.room.restPoint);
+    if (cheer) {
+      this.lucy?.celebrate();
+      await this.sayLucy(cheer);
+      if (this.stale(gen)) return;
+      await this.sayWhatsNext();
+      if (this.stale(gen)) return;
+    }
     this.busy = false;
     this.hints.reset();
   }
@@ -302,6 +337,10 @@ export class GameScene extends Phaser.Scene {
     for (const exit of this.room.exits) this.addExitZone(exit);
     for (const h of this.room.hotspots) this.addHotspot(h, state);
     if (this.room.id === 'backyard') this.rocket.roomBuilt();
+    if (this.room.id === 'bedroom' && getFlag(state, FLAGS.raceCarOnTrack) && this.textures.exists('car_top')) {
+      // The race car lives on its track once it has been put there.
+      this.roomObjects.push(this.add.image(TRACK.car.x, TRACK.car.y, 'car_top').setScale(0.5).setDepth(TRACK.at.y + 1));
+    }
     if (this.room.id === 'kitchen') {
       for (const id of this.breakfast.ensureState().opened) this.showContainerOpen(id);
       this.breakfast.roomBuilt();
@@ -470,7 +509,7 @@ export class GameScene extends Phaser.Scene {
    * shapes hug the art and still forgive a near miss.
    */
   private addTarget(id: string, box: Hitbox, cursor: () => CursorKind, press: () => void): void {
-    this.targets.push({ id, zone: box.zone, parts: box.parts, cursor, press });
+    this.targets.push({ id, zone: box.zone, parts: box.parts, reach: box.reach, cursor, press });
   }
 
   private removeTarget(id: string): void {
@@ -547,6 +586,18 @@ export class GameScene extends Phaser.Scene {
       await this.rocket.launcherClicked();
       return;
     }
+    if (h.game === 'race') {
+      await this.trackClicked();
+      return;
+    }
+    if (h.game === 'memory') {
+      await this.shelvesClicked();
+      return;
+    }
+    if (h.game === 'tea') {
+      await this.teaSetClicked();
+      return;
+    }
     const gen = this.generation;
     await this.sayTheo(getFlag(store.get(), FLAGS.slideDone) ? 'One more time down the slide!' : "Let's go down the slide! Hold on, Lucy!");
     if (this.stale(gen)) return;
@@ -557,6 +608,64 @@ export class GameScene extends Phaser.Scene {
     this.scene.start('Slide');
   }
 
+  /**
+   * The race track: with the car (or once it lives on the track) the race scene takes over;
+   * without it, Theo wonders where the car went, which lets the room hint at it.
+   */
+  private async trackClicked(): Promise<void> {
+    const state = store.get();
+    const onTrack = getFlag(state, FLAGS.raceCarOnTrack);
+    if (!onTrack && !hasItem(state, 'toy_car')) {
+      playSfx('locked');
+      store.update((s) => setFlag(s, FLAGS.raceHinted));
+      await this.sayTheo('My race track! But where did my race car go?');
+      return;
+    }
+    const gen = this.generation;
+    if (!onTrack) {
+      store.update((s) => {
+        removeItem(s, 'toy_car');
+        setFlag(s, FLAGS.raceCarOnTrack);
+      });
+      playSfx('pickup');
+      await this.sayTheo('Race car, meet race track! Three laps, here we go!');
+    } else {
+      await this.sayTheo('Race time!');
+    }
+    if (this.stale(gen)) return;
+    this.hints.stop();
+    this.hoverKind = 'default';
+    await this.fadeOut();
+    if (this.stale(gen)) return;
+    this.scene.start('Race', { again: onTrack });
+  }
+
+  /** The boxes on the garage shelves: the memory game takes over the screen. */
+  private async shelvesClicked(): Promise<void> {
+    const gen = this.generation;
+    const again = getFlag(store.get(), FLAGS.memoryDone);
+    await this.sayTheo(again ? "Dad's boxes again! What's in them this time?" : "So many boxes. Let's see what's in them!");
+    if (this.stale(gen)) return;
+    this.hints.stop();
+    this.hoverKind = 'default';
+    await this.fadeOut();
+    if (this.stale(gen)) return;
+    this.scene.start('Memory', { again });
+  }
+
+  /** The tea set on the playhouse table: the tea party takes over the screen. */
+  private async teaSetClicked(): Promise<void> {
+    const gen = this.generation;
+    const again = getFlag(store.get(), FLAGS.teaDone);
+    await this.sayLucy(again ? 'Another tea party? Yes please!' : 'Tea party! Theo, will you pour?');
+    if (this.stale(gen)) return;
+    this.hints.stop();
+    this.hoverKind = 'default';
+    await this.fadeOut();
+    if (this.stale(gen)) return;
+    this.scene.start('Tea', { again });
+  }
+
   private addPickup(h: PickupHotspot): void {
     if (h.hidden) {
       this.hiddenPickups.set(h.id, h.zone);
@@ -564,7 +673,7 @@ export class GameScene extends Phaser.Scene {
       // Drawn where it really is, then the furniture in front is painted back over it.
       const depth = h.zone.y + h.zone.h;
       const img = this.add.image(h.peek.at.x, h.peek.at.y, `item_${h.item}`).setDepth(depth);
-      this.ambient?.cover(h.peek.cover, depth + 1);
+      if (h.peek.cover) this.ambient?.cover(h.peek.cover, depth + 1);
       this.roomObjects.push(img);
       this.pickupSprites.set(h.id, img);
     } else {
@@ -572,7 +681,7 @@ export class GameScene extends Phaser.Scene {
       this.roomObjects.push(img);
       this.pickupSprites.set(h.id, img);
     }
-    this.addTarget(h.id, h, () => 'grab', () => void this.interact(h.walkTo, () => this.pickUp(h)));
+    this.addTarget(h.id, h.peek ? { ...h, reach: h.reach ?? PEEK_REACH } : h, () => 'grab', () => void this.interact(h.walkTo, () => this.pickUp(h)));
   }
 
   private addBackpack(h: Extract<Hotspot, { kind: 'backpack' }>): void {
@@ -649,7 +758,7 @@ export class GameScene extends Phaser.Scene {
     this.hints.reset();
     const gen = this.generation;
     const img = this.pickupSprites.get(h.id);
-    if (img) await this.popImage(img);
+    if (img) await this.popImage(img, h.item);
     else await this.popItem(h.item, h.zone.x + h.zone.w / 2, h.zone.y + h.zone.h / 2);
     if (this.stale(gen)) return;
     store.update((s) => {
@@ -727,7 +836,7 @@ export class GameScene extends Phaser.Scene {
         s.currentRoom = exit.to;
       });
       this.clearRoom();
-      this.room = getRoom(exit.to);
+      this.room = placeRoom(getRoom(exit.to), store.get().seed);
       this.buildRoom();
       const back = findExit(this.room.id, from);
       const spawn = back?.walkTo ?? this.room.restPoint;
@@ -771,21 +880,30 @@ export class GameScene extends Phaser.Scene {
     await new Promise<void>((resolve) => {
       this.tweens.add({ targets: img, y: y - 30, scale: 1.4, duration: 250, ease: 'Back.easeOut', onComplete: () => resolve() });
     });
-    await this.popImage(img);
+    await this.popImage(img, item);
   }
 
-  private popImage(img: Phaser.GameObjects.Image): Promise<void> {
+  /**
+   * Flies a picked-up thing down into the backpack slot it is about to land in. The HUD runs as
+   * its own scene drawn over this one, so the flight is handed to it: drawn there, the thing
+   * passes over the bar's frame instead of vanishing behind it.
+   */
+  private popImage(img: Phaser.GameObjects.Image, item: ItemId): Promise<void> {
+    const slot = slotCentre(slotFor(store.get(), item));
+    const hud = this.scene.get('Hud');
+    const fly = hud.add.image(img.x, img.y, img.texture.key, img.frame.name).setScale(img.scaleX, img.scaleY).setAlpha(img.alpha).setDepth(2000);
+    img.destroy();
     return new Promise((resolve) => {
-      this.tweens.add({
-        targets: img,
-        x: 40,
-        y: SCENE_HEIGHT + 40,
-        scale: 0.3,
-        alpha: 0.6,
-        duration: 320,
+      hud.tweens.add({
+        targets: fly,
+        x: slot.x,
+        y: slot.y,
+        scale: 1,
+        alpha: 1,
+        duration: 360,
         ease: 'Quad.easeIn',
         onComplete: () => {
-          img.destroy();
+          fly.destroy();
           resolve();
         },
       });

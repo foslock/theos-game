@@ -42,3 +42,8 @@ always clean; only the background was wrong.
   y 128-175), each cropped from a 96x68 render at (4,16). Frame 1
   seed 116 candidate 2 with the old screen picture as the reference ("television" in the prompt
   drew a whole TV set; describing the scene edge to edge worked). Frame 2 is seed 117 candidate 1 and frame 3 seed 118 candidate 0, both referencing frame 1. Dust motes drift in front of the bay window.
+
+## 2026-09-20
+
+The toy bus pickup was removed: the race car in Theo's room replaced it. The floor under it was
+already repaired in the art, so nothing changes on screen.

@@ -57,4 +57,17 @@ describe('picking a target', () => {
     expect(pick([a, b], 15, 5)).toBe(a);
     expect(pick([a, b], 15, 5)).toBe(a);
   });
+
+  it('lets a small footprint with a longer reach win over a big one it is tucked against', () => {
+    // A half-hidden ball showing 12px beside a desk; the ball reaches 30px, the desk the usual 14.
+    const desk = { zone: { x: 200, y: 100, w: 100, h: 200 } };
+    const ball = { zone: { x: 188, y: 150, w: 12, h: 24 }, reach: 30 };
+    expect(pick([desk, ball], 194, 160)).toBe(ball); // on the ball
+    expect(pick([desk, ball], 210, 160)).toBe(ball); // 10px onto the desk, where the rest of the ball is
+    expect(pick([desk, ball], 230, 160)).toBe(desk); // 30px onto the desk: that is the desk
+    expect(pick([desk, ball], 165, 160)).toBe(ball); // 23px out on the open floor, beyond the usual tolerance
+    expect(pick([desk, ball], 150, 160)).toBeUndefined(); // 38px out: nothing
+    // A reach shorter than the tolerance changes nothing.
+    expect(pick([{ ...ball, reach: 4 }], 188 - 10, 160)).toBeDefined();
+  });
 });

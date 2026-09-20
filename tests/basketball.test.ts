@@ -130,7 +130,8 @@ describe('the hunt', () => {
   it('only nags about the balls once Lucy has asked for them', () => {
     const s = newGameState(1);
     setFlag(s, 'hasBackpack');
-    expect(hintLine(ROOMS.garage, s)).toBeNull();
+    // Before the hunt the garage may still mention Dad's boxes, but never the ball.
+    expect(hintLine(ROOMS.garage, s)).not.toMatch(/basketball/);
     setFlag(s, 'basketballHunt');
     expect(hintLine(ROOMS.garage, s)).toMatch(/basketball/);
     expect(hintLine(ROOMS.sport_court, s)).toMatch(/three basketballs/);
@@ -142,7 +143,7 @@ describe('the hunt', () => {
     expect(hintLine(ROOMS.playhouse, s)).toMatch(/basketball first/);
     setFlag(s, 'basketballDone');
     expect(hintLine(ROOMS.sport_court, s)).toBeNull();
-    expect(hintLine(ROOMS.garage, s)).toBeNull();
+    expect(hintLine(ROOMS.garage, s)).not.toMatch(/basketball/);
     expect(hintLine(ROOMS.playhouse, s)).toBeNull();
     expect(hintLine(ROOMS.playground, s)).toMatch(/slide/);
   });
@@ -160,7 +161,9 @@ describe('asking Lucy', () => {
     markUnlocked(s, 'kitchen', 'backyard');
     expect(lucyHintLine(ROOMS.backyard, s)).toMatch(/mailbox/);
     markUnlocked(s, 'backyard', 'playhouse');
-    expect(lucyHintLine(ROOMS.backyard, s)).toMatch(/basketball/);
+    // The backyard's own game is the rocket, so that comes first there; the kitchen has none, so the next overall.
+    expect(lucyHintLine(ROOMS.backyard, s)).toMatch(/launcher|rocket/);
+    expect(lucyHintLine(ROOMS.kitchen, s)).toMatch(/basketball/);
     setFlag(s, 'basketballHunt');
     expect(lucyHintLine(ROOMS.garage, s)).toMatch(/basketball/);
     expect(lucyHintLine(ROOMS.sport_court, s)).toMatch(/three/);
@@ -168,8 +171,10 @@ describe('asking Lucy', () => {
     expect(lucyHintLine(ROOMS.sport_court, s)).toMatch(/hoop/);
     setFlag(s, 'basketballDone');
     markUnlocked(s, 'family_room', 'garage');
-    expect(lucyHintLine(ROOMS.playhouse, s)).toMatch(/playground/);
-    expect(lucyHintLine(ROOMS.playground, s)).toMatch(/slide/);
+    // In a room with its own game still to win, Lucy points at that; elsewhere, at the next game overall.
+    expect(lucyHintLine(ROOMS.playhouse, s)).toMatch(/[Tt]ea/);
+    expect(lucyHintLine(ROOMS.playground, s)).toMatch(/[Ss]lide/);
+    expect(lucyHintLine(ROOMS.kitchen, s)).toMatch(/rocket/);
     for (const id of ROOM_IDS) expect(lucyHintLine(ROOMS[id], s).length).toBeGreaterThan(0);
   });
 });

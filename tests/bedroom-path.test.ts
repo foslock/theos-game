@@ -15,6 +15,7 @@ describe('bedroom floor', () => {
       bedroom.restPoint,
       ...bedroom.exits.map((e) => e.walkTo),
       ...bedroom.hotspots.flatMap((h) => ('walkTo' in h && h.walkTo ? [h.walkTo] : [])),
+      ...bedroom.hotspots.flatMap((h) => (h.kind === 'pickup' ? (h.spots ?? []).flatMap((s) => (s.walkTo ? [s.walkTo] : [])) : [])),
     ];
     for (const t of targets) expect(isWalkable(map, t.x, t.y)).toBe(true);
   });

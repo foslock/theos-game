@@ -1,0 +1,35 @@
+{
+  "_readme": "The race track's geometry in scene pixels, shared by src/puzzles/race.ts (the game) and scripts/race_track.py (which paints it onto the carpet). Change it here and rerun the script.",
+  "width": 26,
+  "straight": {
+    "top": 152,
+    "bottom": 328,
+    "left": 176,
+    "right": 464
+  },
+  "end": {
+    "rx": 118,
+    "ry": 88
+  },
+  "loop": {
+    "x": 300,
+    "r": 62,
+    "band": 22,
+    "lip": 7
+  },
+  "booster": {
+    "x0": 386,
+    "x1": 430
+  },
+  "start": {
+    "x": 250
+  },
+  "loopFront": {
+    "x": 242,
+    "y": 32
+  },
+  "light": {
+    "x": 431,
+    "y": 353
+  }
+}

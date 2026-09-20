@@ -8,6 +8,12 @@ export const playhouse: Room = {
   restPoint: { x: 320, y: 330 },
   lucyRestPoint: { x: 270, y: 335 },
   palette: { wall: '#f4c2d7', floor: '#b98c5a', accent: '#7b4fb0' },
+  // Feet stay off the table top (it is the tea party's click zone, not furniture) and out from
+  // under it, even though the space between its legs can be clicked.
+  obstacles: [
+    { x: 65, y: 275, w: 150, h: 54 },
+    { x: 65, y: 329, w: 150, h: 31 },
+  ],
   exits: [
     { to: 'backyard', zone: { x: 590, y: 105, w: 50, h: 285 }, walkTo: { x: 600, y: 345 }, direction: 'right' },
     {
@@ -27,9 +33,36 @@ export const playhouse: Room = {
     { kind: 'steam', at: { x: 148, y: 242 } },
   ],
   hotspots: [
-    { kind: 'pickup', id: 'garage_key', item: 'garage_key', zone: { x: 470, y: 300, w: 30, h: 24 }, walkTo: { x: 470, y: 345 } },
-    { kind: 'decoration', id: 'tea_set', zone: { x: 95, y: 240, w: 105, h: 34 }, lines: ['Clink! Tea time!', 'One cup for me and one for Mr. Bear.', 'Pretend tea. Slurp!'], sfx: 'ding' },
-    { kind: 'decoration', id: 'table', zone: { x: 65, y: 275, w: 150, h: 85 }, lines: ['A little table, just my size.', 'We have tea parties here.', 'Lucy bumped her head on it once.'], sfx: 'click' },
+    {
+      kind: 'pickup',
+      id: 'garage_key',
+      item: 'garage_key',
+      zone: { x: 470, y: 300, w: 30, h: 24 },
+      walkTo: { x: 470, y: 345 },
+      spots: [
+        // On the floor beside the playground door.
+        { zone: { x: 470, y: 300, w: 30, h: 24 }, walkTo: { x: 470, y: 345 }, where: 'on the floor by the little door' },
+        // On the rug, in front of Mr. Bear.
+        { zone: { x: 218, y: 350, w: 24, h: 24 }, walkTo: { x: 232, y: 388 }, where: 'on the rug' },
+        // On the floor under the table, between its legs.
+        { zone: { x: 100, y: 332, w: 24, h: 24 }, walkTo: { x: 112, y: 385 }, where: 'under the table' },
+      ],
+    },
+    // Lucy's tea set and the whole table top with it: the tea party game.
+    { kind: 'minigame', id: 'tea_set', game: 'tea', zone: { x: 65, y: 240, w: 150, h: 89 }, walkTo: { x: 150, y: 385 } },
+    {
+      kind: 'decoration',
+      id: 'table',
+      // Just the legs: the top belongs to the tea party above, and the floor between them is open.
+      zone: { x: 65, y: 329, w: 150, h: 31 },
+      parts: [
+        { x: 65, y: 329, w: 22, h: 31 },
+        { x: 140, y: 329, w: 17, h: 31 },
+        { x: 195, y: 329, w: 20, h: 31 },
+      ],
+      lines: ['A little table, just my size.', 'We have tea parties here.', 'Lucy bumped her head on it once.'],
+      sfx: 'click',
+    },
     { kind: 'decoration', id: 'window', zone: { x: 30, y: 120, w: 130, h: 110 }, lines: ['I can see the whole yard from here.', 'The trees are waving at us.', 'Sometimes a bird lands right there.'], sfx: 'click' },
     { kind: 'decoration', id: 'teddy', zone: { x: 220, y: 215, w: 60, h: 105 }, lines: ['Hi, Mr. Bear!', 'Mr. Bear is very good at waiting.', 'He needs a hug.'], sfx: 'squeak' },
   ],

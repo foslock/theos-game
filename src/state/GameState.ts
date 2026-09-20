@@ -35,6 +35,15 @@ export const FLAGS = {
   basketballDone: 'basketballDone',
   slideDone: 'slideDone',
   stompRocketDone: 'stompRocketDone',
+  /** Theo has looked at the track without the car, so the room may hint at where the car is. */
+  raceHinted: 'raceHinted',
+  /** The race car has been put on its track (and left the backpack); the race can be replayed. */
+  raceCarOnTrack: 'raceCarOnTrack',
+  raceDone: 'raceDone',
+  /** The garage's memory game has been beaten. */
+  memoryDone: 'memoryDone',
+  /** The playhouse tea party has been poured to the last cup. */
+  teaDone: 'teaDone',
 } as const;
 
 export function newGameState(seed: number): GameState {
