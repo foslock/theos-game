@@ -44,8 +44,17 @@ by tweens: no animation frames.
   and hops out of the room, squashing to 1.2x0.8 before each spring. **Drawn facing left**,
   which `faces: 'left'` records, so a leftward hop is the art as drawn and a rightward one is
   mirrored. The batch came out facing the camera rather than side-on.
-- Still to draw: `gag_mouse` 24x16 (circles the floor, then bolts past the camera off the
-  bottom), `gag_spider` 20x16 (climbs the wall off the top), `gag_ball` 16x16 (bounces away
-  left), `gag_pots` 32x24 (roll), `gag_socks` 24x20 (flop). `empty` has no sprite by design.
+- `kitchen/gag_mouse.png` 24x16 (seed 161, candidate 2): drops to the floor, tears round one
+  circle and bolts past the camera off the bottom, growing as it comes. Drawn facing right
+  (nose and eye right, tail trailing left), which `faces: 'right'` records.
+- `kitchen/gag_spider.png` 24x20 (seed 164, candidate 26): climbs the wall and off the top of
+  the screen. Symmetrical, so no `faces` and it is never mirrored; drawn at `scale: 0.8`.
+  The first attempt at 20x16 (seed 162) gave beetles with stubby legs: eight legs plus a body
+  need the extra room, and spelling out "four legs left, four legs right, gaps between them"
+  is what produced real spiders.
+- `kitchen/gag_ball.png` 16x16 (seed 163, candidate 33): bounces away to the left, spinning. A
+  two-tone swirl was chosen over a plain ball so the spin is visible; round, so no `faces`.
+- Still to draw: `gag_pots` 32x24 (roll) and `gag_socks` 24x20 (flop). `empty` has no sprite
+  by design.
 - Check a sprite's drawn facing before setting `faces`; getting it backwards makes the thing
   moonwalk out of the room.

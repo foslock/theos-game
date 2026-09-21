@@ -103,6 +103,33 @@
       ],
       "_note": "breakfast gag: hops out of a kitchen cupboard and away across the floor; drawn facing left"
     },
+    "gag_spider": {
+      "file": "kitchen/gag_spider.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        20
+      ],
+      "_note": "breakfast gag: crawls out of a kitchen cupboard and climbs the wall off the top; symmetrical, so it is never mirrored"
+    },
+    "gag_ball": {
+      "file": "kitchen/gag_ball.png",
+      "status": "pixellab",
+      "size": [
+        16,
+        16
+      ],
+      "_note": "breakfast gag: bounces out of a kitchen cupboard and away to the left, spinning; round, so it is never mirrored"
+    },
+    "gag_mouse": {
+      "file": "kitchen/gag_mouse.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        16
+      ],
+      "_note": "breakfast gag: bolts out of a kitchen cupboard, circles the floor and runs past the camera; drawn facing right"
+    },
     "bg_family_room_0": {
       "file": "family_room/bg_0.png",
       "status": "pixellab",
