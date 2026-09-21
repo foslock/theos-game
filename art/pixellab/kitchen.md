@@ -54,7 +54,9 @@ by tweens: no animation frames.
   is what produced real spiders.
 - `kitchen/gag_ball.png` 16x16 (seed 163, candidate 33): bounces away to the left, spinning. A
   two-tone swirl was chosen over a plain ball so the spin is visible; round, so no `faces`.
-- Still to draw: `gag_pots` 32x24 (roll) and `gag_socks` 24x20 (flop). `empty` has no sprite
-  by design.
+- The **pots** are a clatter from inside the cupboard and the **empty** one is just a line:
+  neither has a sprite, so `GagSpec.sprite` is left out for both. The socks gag was dropped on
+  2026-09-20 and its place in the pool went to a second `empty`, so more than one cupboard in a
+  kitchen turns out to be bare. A save still holding `socks` is emptied by `dropUnknownGags`.
 - Check a sprite's drawn facing before setting `faces`; getting it backwards makes the thing
   moonwalk out of the room.

@@ -6,7 +6,7 @@ import { addItem, FLAGS, isPickedUp, markPickedUp, removeItem, setFlag } from '.
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
-import { BREAKFAST_ITEMS, fillMissingContainers, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type GagSpec, type BreakfastState } from './breakfast';
+import { BREAKFAST_ITEMS, dropUnknownGags, fillMissingContainers, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type GagSprite, type BreakfastState } from './breakfast';
 import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -29,8 +29,6 @@ const CIRCLE = { rx: 34, ry: 15, ms: 780 };
 const CLIMB = { ms: 1300 };
 /** How the ball bounces away: the first bounce's height, what each one keeps, and where it gives up. */
 const BOUNCE = { height: 36, least: 5, decay: 0.62, step: 66, ms: 320 };
-const ROLL = { ms: 1200 };
-const FLOP = { ms: 900 };
 
 /** Where the empty bowl and spoon sit on the kitchen table once Lucy has eaten (icon centres). */
 const TABLE_SETTING = { bowl: { x: 484, y: 221 }, spoon: { x: 506, y: 221 } };
@@ -65,10 +63,13 @@ export class BreakfastController {
         s.puzzles.breakfast = generateBreakfast(new Rng(s.seed).fork('breakfast'), kitchenContainers);
       });
       st = store.get().puzzles.breakfast!;
-    } else if (kitchenContainers.some((c) => !st!.placements[c.id])) {
-      // A save written before a cupboard was added to the room: give the new one something.
+    } else {
+      // A save written against an older kitchen: fill any cupboard that has been added since,
+      // and empty any that holds a gag the game has dropped.
       store.update((s) => {
-        fillMissingContainers(s.puzzles.breakfast!, new Rng(s.seed).fork('breakfast:added'), kitchenContainers);
+        const b = s.puzzles.breakfast!;
+        fillMissingContainers(b, new Rng(s.seed).fork('breakfast:added'), kitchenContainers);
+        dropUnknownGags(b);
       });
       st = store.get().puzzles.breakfast!;
     }
@@ -118,39 +119,34 @@ export class BreakfastController {
   }
 
   /**
-   * What was in the cupboard pops out and leaves the kitchen the way its kind would. A gag with
-   * no art (or none drawn yet) simply keeps to Theo's line.
+   * What was in the cupboard pops out and leaves the kitchen the way its kind would. A gag that
+   * is only a noise (the pots, a bare cupboard), or one whose art is not drawn yet, keeps to
+   * Theo's line and puts nothing on screen.
    */
   private async runGag(gag: Gag, x: number, y: number): Promise<void> {
-    const spec = GAG_SPECS[gag];
+    const sprite = GAG_SPECS[gag].sprite;
     const scene = this.scene;
-    if (!spec.key || !scene.textures.exists(spec.key)) return;
-    const full = spec.scale ?? 1;
-    const img = scene.add.image(x, y, spec.key).setDepth(GAG_DEPTH).setScale(full * 0.3);
+    if (!sprite || !scene.textures.exists(sprite.key)) return;
+    const full = sprite.scale ?? 1;
+    const img = scene.add.image(x, y, sprite.key).setDepth(GAG_DEPTH).setScale(full * 0.3);
     scene.keepInRoom(img);
     // Whatever runs along the floor heads for whichever side of the kitchen it is nearer.
     const dir: 1 | -1 = x < GAME_WIDTH / 2 ? -1 : 1;
-    img.setFlipX(gagFlipped(spec, dir));
+    img.setFlipX(gagFlipped(sprite, dir));
     await this.tween(img, { y: y - 20, scale: full }, 220, 'Back.easeOut');
     if (!img.scene) return;
-    switch (spec.exit) {
+    switch (sprite.exit) {
       case 'hop':
         await this.hopAway(img, dir, full);
         break;
       case 'dash':
-        await this.dashPastCamera(img, spec, dir, full);
+        await this.dashPastCamera(img, sprite, dir, full);
         break;
       case 'climb':
         await this.climbAway(img);
         break;
       case 'bounce':
         await this.bounceAway(img);
-        break;
-      case 'roll':
-        await this.rollAway(img, dir);
-        break;
-      case 'flutter':
-        await this.flopAway(img, dir);
         break;
     }
     if (!img.scene) return;
@@ -175,12 +171,12 @@ export class BreakfastController {
    * Drops to the floor, tears round in one panicked circle, then bolts straight past the camera,
    * growing as it comes.
    */
-  private async dashPastCamera(img: Phaser.GameObjects.Image, spec: GagSpec, dir: -1 | 1, full: number): Promise<void> {
+  private async dashPastCamera(img: Phaser.GameObjects.Image, sprite: GagSprite, dir: -1 | 1, full: number): Promise<void> {
     await this.tween(img, { y: GAG_FLOOR }, 200, 'Quad.easeIn');
     if (!img.scene) return;
     // Little legs going, all the way out of the room.
     this.scene.tweens.add({ targets: img, angle: dir * 7, duration: 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    await this.circleOnFloor(img, spec, dir);
+    await this.circleOnFloor(img, sprite, dir);
     if (!img.scene) return;
     // Bigger the nearer it gets.
     this.scene.tweens.add({ targets: img, scale: full * DASH.grow, duration: DASH.ms, ease: 'Quad.easeIn' });
@@ -192,7 +188,7 @@ export class BreakfastController {
    * sits to the side it will leave by, so it sets off towards the camera and comes round; the
    * sprite turns to face whichever way it is running at the time.
    */
-  private circleOnFloor(img: Phaser.GameObjects.Image, spec: GagSpec, dir: -1 | 1): Promise<void> {
+  private circleOnFloor(img: Phaser.GameObjects.Image, sprite: GagSprite, dir: -1 | 1): Promise<void> {
     const cx = img.x + dir * CIRCLE.rx;
     const cy = img.y;
     // Starting on the near side of the circle, it runs towards the camera first either way.
@@ -210,7 +206,7 @@ export class BreakfastController {
           const a = start + sweep * lap.t;
           img.setPosition(cx + Math.cos(a) * CIRCLE.rx, cy + Math.sin(a) * CIRCLE.ry);
           // Its heading is the tangent; the sign of that is all the facing needs.
-          img.setFlipX(gagFlipped(spec, -Math.sin(a) * sweep > 0 ? 1 : -1));
+          img.setFlipX(gagFlipped(sprite, -Math.sin(a) * sweep > 0 ? 1 : -1));
         },
         onComplete: () => resolve(),
       });
@@ -237,26 +233,6 @@ export class BreakfastController {
     // The last bounce can already have carried it out of the room; the roll must never pull it back.
     const exit = -img.displayWidth;
     if (img.x > exit) await this.tween(img, { x: exit, angle: img.angle - 200 }, 400, 'Linear');
-  }
-
-  /** Clatters onto the floor and rolls off, spinning. */
-  private async rollAway(img: Phaser.GameObjects.Image, dir: -1 | 1): Promise<void> {
-    await this.tween(img, { y: GAG_FLOOR }, 240, 'Quad.easeIn');
-    if (!img.scene) return;
-    this.scene.tweens.add({ targets: img, angle: dir * 540, duration: ROLL.ms, ease: 'Linear' });
-    await this.tween(img, { x: this.offscreenX(img, dir) }, ROLL.ms, 'Linear');
-  }
-
-  /** No legs to run on: socks see-saw down to the floor and scoot off. */
-  private async flopAway(img: Phaser.GameObjects.Image, dir: -1 | 1): Promise<void> {
-    await this.tween(img, { y: GAG_FLOOR, angle: dir * 20 }, 700, 'Sine.easeIn');
-    if (!img.scene) return;
-    this.scene.tweens.add({ targets: img, y: GAG_FLOOR - 4, duration: 110, yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
-    await this.tween(img, { x: this.offscreenX(img, dir) }, FLOP.ms, 'Linear');
-  }
-
-  private offscreenX(img: Phaser.GameObjects.Image, dir: -1 | 1): number {
-    return dir < 0 ? -img.displayWidth : GAME_WIDTH + img.displayWidth;
   }
 
   private tween(target: Phaser.GameObjects.Image, props: Record<string, number>, duration: number, ease: string): Promise<void> {

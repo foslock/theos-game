@@ -13,43 +13,55 @@ export interface ContainerSpec {
   category: ContainerCategory;
 }
 
-export type Gag = 'frog' | 'pots' | 'mouse' | 'socks' | 'empty' | 'spider' | 'ball';
-export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'socks', 'empty', 'spider', 'ball'];
+export type Gag = 'frog' | 'pots' | 'mouse' | 'empty' | 'spider' | 'ball';
+export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'empty', 'spider', 'ball'];
+
+/**
+ * What the cupboards that are not hiding breakfast are dealt from. `empty` is in twice, so more
+ * than one cupboard in a kitchen turns out to be simply bare.
+ */
+export const GAG_POOL: readonly Gag[] = ['frog', 'pots', 'mouse', 'empty', 'empty', 'spider', 'ball'];
 
 /**
  * How a gag leaves the kitchen once it has popped out of its cupboard. Each one goes the way
  * that thing would: the frog hops along the floor and out of the room, the mouse tears round in
  * a panicked circle and then bolts past the camera and off the bottom, the spider climbs the
- * wall and off the top, the ball bounces away to the left, the pots roll and the socks flop.
+ * wall and off the top, and the ball bounces away to the left.
  */
-export type GagExit = 'hop' | 'dash' | 'climb' | 'bounce' | 'roll' | 'flutter';
+export type GagExit = 'hop' | 'dash' | 'climb' | 'bounce';
 
-export interface GagSpec {
-  /** The sprite that pops out. An empty cupboard has none, and neither has one whose art is missing. */
-  key?: string;
+/** What a gag puts on screen. A gag without one is heard and talked about but never seen. */
+export interface GagSprite {
+  key: string;
   exit: GagExit;
-  /** What it sounds like coming out. */
-  sfx: SfxName;
   /** Which way the art is drawn, so it can be mirrored to face the way it goes. */
   faces?: 'left' | 'right';
   /** How big it is against the room, since the art is drawn at its own size. */
   scale?: number;
+}
+
+export interface GagSpec {
+  /** Left out for the gags that are only a noise and a line: an empty cupboard, a clatter of pots. */
+  sprite?: GagSprite;
+  /** What it sounds like coming out. */
+  sfx: SfxName;
   line: string;
 }
 
 /**
- * The gags, with what Theo says and what the thing does about being found: the live ones make
- * for the nearest door, and the rest clatter or flop onto the floor and go from there.
+ * The gags, with what Theo says and what the thing does about being found. The live ones bolt
+ * for the way out that suits them; the pots are heard and never seen, and an empty cupboard is
+ * just the line.
  */
 export const GAG_SPECS: Record<Gag, GagSpec> = {
   // Drawn facing left: his tongue and his lean are to the left, so a leftward hop needs no mirror.
-  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', faces: 'left', line: 'Whoa! A frog! How did you get in there?' },
-  pots: { key: 'gag_pots', exit: 'roll', sfx: 'locked', line: 'CLANG! Just a bunch of noisy pots.' },
-  mouse: { key: 'gag_mouse', exit: 'dash', sfx: 'squeak', faces: 'right', line: 'Eek! A little mouse. Hi, mouse!' },
-  socks: { key: 'gag_socks', exit: 'flutter', sfx: 'open', line: 'Socks? Who keeps socks in the kitchen?' },
-  empty: { exit: 'flutter', sfx: 'open', line: 'Nothing in here but crumbs.' },
-  spider: { key: 'gag_spider', exit: 'climb', sfx: 'squeak', scale: 0.8, line: 'A spider! Okay, okay, you can stay.' },
-  ball: { key: 'gag_ball', exit: 'bounce', sfx: 'boing', line: 'A bouncy ball... not breakfast.' },
+  frog: { sprite: { key: 'gag_frog', exit: 'hop', faces: 'left' }, sfx: 'boing', line: 'Whoa! A frog! How did you get in there?' },
+  // A clatter from inside the cupboard: nothing comes out, so there is nothing to draw.
+  pots: { sfx: 'locked', line: 'CLANG! Just a bunch of noisy pots.' },
+  mouse: { sprite: { key: 'gag_mouse', exit: 'dash', faces: 'right' }, sfx: 'squeak', line: 'Eek! A little mouse. Hi, mouse!' },
+  empty: { sfx: 'open', line: 'Nothing in here but crumbs.' },
+  spider: { sprite: { key: 'gag_spider', exit: 'climb', scale: 0.8 }, sfx: 'squeak', line: 'A spider! Okay, okay, you can stay.' },
+  ball: { sprite: { key: 'gag_ball', exit: 'bounce' }, sfx: 'boing', line: 'A bouncy ball... not breakfast.' },
 };
 
 export type BreakfastContent = { type: 'item'; item: ItemId } | { type: 'decoy'; gag: Gag };
@@ -82,7 +94,7 @@ export function generateBreakfast(rng: Rng, containers: readonly ContainerSpec[]
   placements[cerealCab] = { type: 'item', item: 'cereal' };
   placements[rng.pick(fridges)] = { type: 'item', item: 'milk' };
 
-  const gagPool = rng.shuffle(GAGS);
+  const gagPool = rng.shuffle(GAG_POOL);
   let g = 0;
   for (const c of containers) {
     if (!placements[c.id]) {
@@ -99,10 +111,26 @@ export function generateBreakfast(rng: Rng, containers: readonly ContainerSpec[]
  * a cupboard added in a later version is not silently empty in an old save. Returns whether
  * anything was filled in, so the caller knows to save.
  */
+/**
+ * Replaces anything in the layout the game no longer has (the socks that used to be in a
+ * cupboard) with a bare cupboard, so an old save does not ask for a gag that has been dropped.
+ * Returns whether anything was changed.
+ */
+export function dropUnknownGags(state: BreakfastState): boolean {
+  let changed = false;
+  for (const [id, content] of Object.entries(state.placements)) {
+    if (content.type === 'decoy' && !GAGS.includes(content.gag)) {
+      state.placements[id] = { type: 'decoy', gag: 'empty' };
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 export function fillMissingContainers(state: BreakfastState, rng: Rng, containers: readonly ContainerSpec[]): boolean {
   const missing = containers.filter((c) => !state.placements[c.id]);
   if (!missing.length) return false;
-  const pool = rng.shuffle(GAGS);
+  const pool = rng.shuffle(GAG_POOL);
   missing.forEach((c, i) => {
     state.placements[c.id] = { type: 'decoy', gag: pool[i % pool.length] };
   });
@@ -131,7 +159,7 @@ export function gagLine(gag: Gag): string {
 }
 
 /** Whether a gag's art has to be mirrored to face the way it is heading. */
-export function gagFlipped(spec: GagSpec, dir: -1 | 1): boolean {
-  if (!spec.faces) return false;
-  return (dir > 0) !== (spec.faces === 'right');
+export function gagFlipped(sprite: GagSprite, dir: -1 | 1): boolean {
+  if (!sprite.faces) return false;
+  return (dir > 0) !== (sprite.faces === 'right');
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBreakfast, BREAKFAST_ITEMS, fillMissingContainers, GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
+import { generateBreakfast, BREAKFAST_ITEMS, dropUnknownGags, fillMissingContainers, GAGS, GAG_POOL, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
 import { pick } from '../src/systems/Hitbox';
 import { Rng } from '../src/systems/Rng';
@@ -47,51 +47,69 @@ describe('breakfast placement', () => {
 });
 
 describe('the gags in the cupboards', () => {
-  it('gives every gag a line, a sound and a way out', () => {
+  it('gives every gag a line and a sound', () => {
     for (const gag of GAGS) {
       const spec = GAG_SPECS[gag];
       expect(gagLine(gag)).toBe(spec.line);
       expect(spec.line.length).toBeGreaterThan(0);
       expect(spec.sfx.length).toBeGreaterThan(0);
-      expect(spec.exit).toBeTruthy();
     }
   });
 
-  it('gives every gag but the empty cupboard something that pops out, each its own sprite', () => {
-    const keys = GAGS.map((g) => GAG_SPECS[g].key).filter(Boolean);
-    expect(GAG_SPECS.empty.key).toBeUndefined();
-    expect(keys).toHaveLength(GAGS.length - 1);
-    expect(new Set(keys).size).toBe(keys.length);
+  it('only gives a sprite to the gags that something comes out of', () => {
+    // The pots are a clatter from inside the cupboard and an empty one is just the line.
+    expect(GAG_SPECS.pots.sprite).toBeUndefined();
+    expect(GAG_SPECS.empty.sprite).toBeUndefined();
+    const seen = GAGS.map((g) => GAG_SPECS[g].sprite).filter(Boolean);
+    expect(seen).toHaveLength(4);
+    expect(new Set(seen.map((sp) => sp!.key)).size).toBe(4);
   });
-});
 
-describe('the way each gag leaves', () => {
   it('sends each live thing out the way that thing would go', () => {
-    expect(GAG_SPECS.frog.exit).toBe('hop');
-    expect(GAG_SPECS.mouse.exit).toBe('dash');
-    expect(GAG_SPECS.spider.exit).toBe('climb');
-    expect(GAG_SPECS.ball.exit).toBe('bounce');
+    expect(GAG_SPECS.frog.sprite!.exit).toBe('hop');
+    expect(GAG_SPECS.mouse.sprite!.exit).toBe('dash');
+    expect(GAG_SPECS.spider.sprite!.exit).toBe('climb');
+    expect(GAG_SPECS.ball.sprite!.exit).toBe('bounce');
   });
 
   it('mirrors the art of the ones that run along the floor', () => {
     // The frog is drawn facing left, so hopping left needs no mirror and hopping right does.
-    expect(GAG_SPECS.frog.faces).toBe('left');
-    expect(gagFlipped(GAG_SPECS.frog, -1)).toBe(false);
-    expect(gagFlipped(GAG_SPECS.frog, 1)).toBe(true);
+    expect(GAG_SPECS.frog.sprite!.faces).toBe('left');
+    expect(gagFlipped(GAG_SPECS.frog.sprite!, -1)).toBe(false);
+    expect(gagFlipped(GAG_SPECS.frog.sprite!, 1)).toBe(true);
     // The mouse's art faces the other way, so it mirrors the other way round.
-    expect(GAG_SPECS.mouse.faces).toBe('right');
-    expect(gagFlipped(GAG_SPECS.mouse, -1)).toBe(true);
+    expect(GAG_SPECS.mouse.sprite!.faces).toBe('right');
+    expect(gagFlipped(GAG_SPECS.mouse.sprite!, -1)).toBe(true);
   });
 
   it('never mirrors a gag with no facing of its own', () => {
-    expect(GAG_SPECS.ball.faces).toBeUndefined();
-    expect(gagFlipped(GAG_SPECS.ball, -1)).toBe(false);
-    expect(gagFlipped(GAG_SPECS.ball, 1)).toBe(false);
+    expect(GAG_SPECS.ball.sprite!.faces).toBeUndefined();
+    expect(gagFlipped(GAG_SPECS.ball.sprite!, -1)).toBe(false);
+    expect(gagFlipped(GAG_SPECS.ball.sprite!, 1)).toBe(false);
   });
 
-  it('gives every gag an exit the controller knows how to run', () => {
-    const known = ['hop', 'dash', 'climb', 'bounce', 'roll', 'flutter'];
-    for (const gag of GAGS) expect(known).toContain(GAG_SPECS[gag].exit);
+  it('leaves more than one cupboard simply bare', () => {
+    expect(GAG_POOL.filter((g) => g === 'empty')).toHaveLength(2);
+    // Everything in the pool is a gag the game still has.
+    for (const g of GAG_POOL) expect(GAGS).toContain(g);
+  });
+
+  it('empties a cupboard holding a gag the game has dropped', () => {
+    const st = generateBreakfast(new Rng(3), kitchenContainers);
+    const id = Object.keys(st.placements).find((k) => st.placements[k].type === 'decoy')!;
+    // A save from when socks were still in the game.
+    st.placements[id] = { type: 'decoy', gag: 'socks' as never };
+    expect(dropUnknownGags(st)).toBe(true);
+    expect(st.placements[id]).toEqual({ type: 'decoy', gag: 'empty' });
+    // Nothing left to do the second time round.
+    expect(dropUnknownGags(st)).toBe(false);
+  });
+
+  it('leaves a breakfast item alone when it drops a gag', () => {
+    const st = generateBreakfast(new Rng(5), kitchenContainers);
+    const items = Object.entries(st.placements).filter(([, c]) => c.type === 'item');
+    dropUnknownGags(st);
+    for (const [id, content] of items) expect(st.placements[id]).toEqual(content);
   });
 });
 
