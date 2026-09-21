@@ -21,10 +21,11 @@ const HOP = { step: 44, height: 26, ms: 260 };
 /** How the mouse bolts at the camera: how long it takes, how far it veers, and how much it grows. */
 const DASH = { ms: 760, drift: 60, grow: 1.7 };
 /**
- * The lap of the floor it runs first. The circle is drawn flat, so it is an ellipse: `rx` across
- * and the shallower `ry` up and down, the way a ring on the ground looks from here.
+ * The laps of the floor it runs first. The circle is drawn flat, so it is an ellipse: `rx`
+ * across and the shallower `ry` up and down, the way a ring on the ground looks from here.
+ * `ms` is the whole thing, so two laps are a little quicker each than one would be.
  */
-const CIRCLE = { rx: 34, ry: 15, ms: 780 };
+const CIRCLE = { rx: 34, ry: 15, ms: 1400, laps: 2 };
 /** How long the spider takes to climb out of sight. */
 const CLIMB = { ms: 1300 };
 /** How the ball bounces away: the first bounce's height, what each one keeps, and where it gives up. */
@@ -168,8 +169,8 @@ export class BreakfastController {
   }
 
   /**
-   * Drops to the floor, tears round in one panicked circle, then bolts straight past the camera,
-   * growing as it comes.
+   * Drops to the floor, tears round in two panicked circles, then bolts straight past the
+   * camera, growing as it comes.
    */
   private async dashPastCamera(img: Phaser.GameObjects.Image, sprite: GagSprite, dir: -1 | 1, full: number): Promise<void> {
     await this.tween(img, { y: GAG_FLOOR }, 200, 'Quad.easeIn');
@@ -184,16 +185,16 @@ export class BreakfastController {
   }
 
   /**
-   * One quick lap of the floor from where it is standing, and back to the same spot. The circle
-   * sits to the side it will leave by, so it sets off towards the camera and comes round; the
-   * sprite turns to face whichever way it is running at the time.
+   * Two quick laps of the floor from where it is standing, ending back on the same spot. The
+   * circle sits to the side it will leave by, so it sets off towards the camera and comes
+   * round; the sprite turns to face whichever way it is running at the time.
    */
   private circleOnFloor(img: Phaser.GameObjects.Image, sprite: GagSprite, dir: -1 | 1): Promise<void> {
     const cx = img.x + dir * CIRCLE.rx;
     const cy = img.y;
     // Starting on the near side of the circle, it runs towards the camera first either way.
     const start = dir < 0 ? 0 : Math.PI;
-    const sweep = (dir < 0 ? 1 : -1) * Math.PI * 2;
+    const sweep = (dir < 0 ? 1 : -1) * Math.PI * 2 * CIRCLE.laps;
     const lap = { t: 0 };
     return new Promise((resolve) => {
       this.scene.tweens.add({

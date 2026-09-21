@@ -25,7 +25,7 @@ export const GAG_POOL: readonly Gag[] = ['frog', 'pots', 'mouse', 'empty', 'empt
 /**
  * How a gag leaves the kitchen once it has popped out of its cupboard. Each one goes the way
  * that thing would: the frog hops along the floor and out of the room, the mouse tears round in
- * a panicked circle and then bolts past the camera and off the bottom, the spider climbs the
+ * two panicked circles and then bolts past the camera and off the bottom, the spider climbs the
  * wall and off the top, and the ball bounces away to the left.
  */
 export type GagExit = 'hop' | 'dash' | 'climb' | 'bounce';
