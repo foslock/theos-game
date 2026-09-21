@@ -93,6 +93,8 @@ export interface PickupHotspot extends Hitbox {
 export interface Peek {
   at: Pt;
   cover?: Rect;
+  /** Drawn at this depth rather than at the zone's base, to sit behind an overlay that hides it. */
+  depth?: number;
 }
 
 /** One of the places a pickup can be seeded. */

@@ -52,7 +52,7 @@ import { BALLS_NEEDED } from '../puzzles/basketball';
 import { endingTriggers } from '../puzzles/ending';
 import { afterGameLine, gameDoneById } from '../puzzles/progress';
 import { placeRoom } from '../puzzles/spots';
-import { TRACK } from '../data/rooms/bedroom';
+import { BED, TRACK } from '../data/rooms/bedroom';
 
 const LUCY_FOLLOW_GAP = 56;
 const LUCY_FOLLOW_DY = 6;
@@ -70,13 +70,6 @@ const DOORWAY_FAR_JAMB = 619;
 const GLINT_STAGGER_MS = 1400;
 /** How long Theo's greeting stays up before he climbs out of bed on his own. */
 const WAKE_GREETING_MS = 2800;
-/**
- * The bedroom art has no bed in it, so the bed is always an overlay drawn here. All three poses
- * share one silhouette, which is what lets them swap without the frame appearing to move.
- */
-const BED_POS = { x: 124, y: 196 };
-/** The bed's base, so feet in front of it sort ahead of it and feet up by the wall sort behind. */
-const BED_DEPTH = 328;
 /** Where Theo lands after hopping out, clear of the bed's footprint. */
 const WAKE_STAND = { x: 300, y: 344 };
 /** How far a half-hidden pickup answers a click: only a sliver of it shows, so it is generous. */
@@ -287,7 +280,9 @@ export class GameScene extends Phaser.Scene {
     if (this.stale(gen)) return;
     // Out from under the covers and down onto the carpet, then hand over to the walking sprite.
     this.setBed('bed_empty');
-    const stander = this.add.image(276, 322, 'theo_front').setOrigin(0.5, 1).setDepth(BED_DEPTH + 12);
+    const stander = this.add.image(276, 322, 'theo_front').setOrigin(0.5, 1);
+    // It stands in for the walking sprite, so it sorts by its feet the same way.
+    stander.setDepth(stander.y);
     this.roomObjects.push(stander);
     await this.tween(stander, { x: WAKE_STAND.x, y: 332 }, 200, 'Quad.easeOut');
     await this.tween(stander, { y: WAKE_STAND.y }, 200, 'Quad.easeIn');
@@ -354,7 +349,7 @@ export class GameScene extends Phaser.Scene {
       this.bed.setTexture(texture);
       return;
     }
-    this.bed = this.add.image(BED_POS.x, BED_POS.y, texture).setOrigin(0).setDepth(BED_DEPTH);
+    this.bed = this.add.image(BED.at.x, BED.at.y, texture).setOrigin(0).setDepth(BED.depth);
     this.roomObjects.push(this.bed);
   }
 
@@ -673,7 +668,7 @@ export class GameScene extends Phaser.Scene {
       this.hiddenPickups.set(h.id, h.zone);
     } else if (h.peek) {
       // Drawn where it really is, then the furniture in front is painted back over it.
-      const depth = h.zone.y + h.zone.h;
+      const depth = h.peek.depth ?? h.zone.y + h.zone.h;
       const img = this.add.image(h.peek.at.x, h.peek.at.y, `item_${h.item}`).setDepth(depth);
       if (h.peek.cover) this.ambient?.cover(h.peek.cover, depth + 1);
       this.roomObjects.push(img);

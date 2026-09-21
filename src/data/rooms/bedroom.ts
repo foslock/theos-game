@@ -10,6 +10,19 @@ export const TRACK = {
   car: { x: 478, y: 380 },
 };
 
+/**
+ * The bed, an overlay because the room art has no bed in it. All three poses share one
+ * silhouette, which is what lets them swap without the frame appearing to move.
+ */
+export const BED = {
+  at: { x: 124, y: 196 },
+  /**
+   * Just short of the top of the walkable floor (y 280), so everyone on the floor is drawn in
+   * front of the bed however close to its foot they stand. What the bed hides is drawn behind it.
+   */
+  depth: 279,
+};
+
 export const bedroom: Room = {
   id: 'bedroom',
   name: "Theo's Bedroom",
@@ -84,7 +97,7 @@ export const bedroom: Room = {
         // Rolled in behind the desk: only its left half shows on the carpet.
         { zone: { x: 446, y: 278, w: 13, h: 24 }, peek: { at: { x: 455, y: 290 }, cover: { x: 459, y: 276, w: 14, h: 26 } }, walkTo: { x: 430, y: 322 }, where: 'behind my desk' },
         // Tucked under the foot of the bed, which is an overlay, so it hides the ball on its own.
-        { zone: { x: 252, y: 288, w: 20, h: 12 }, peek: { at: { x: 261, y: 289 } }, walkTo: { x: 275, y: 334 }, where: 'under the foot of my bed' },
+        { zone: { x: 252, y: 288, w: 20, h: 12 }, peek: { at: { x: 261, y: 289 }, depth: BED.depth - 1 }, walkTo: { x: 275, y: 334 }, where: 'under the foot of my bed' },
         // Behind the front leg of the desk chair (the leg is x 412-418).
         { zone: { x: 394, y: 268, w: 18, h: 24 }, peek: { at: { x: 406, y: 280 }, cover: { x: 412, y: 266, w: 7, h: 26 } }, walkTo: { x: 380, y: 320 }, where: 'under my chair' },
       ],
