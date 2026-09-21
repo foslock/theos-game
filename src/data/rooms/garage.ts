@@ -83,6 +83,18 @@ export const garage: Room = {
       ],
       walkTo: { x: 150, y: 310 },
     },
-    { kind: 'decoration', id: 'garage_door', zone: { x: 300, y: 70, w: 270, h: 68 }, lines: ["Rrrrumble! It only opens for Dad's car.", 'It goes up and up and up.', 'It is way too heavy for me.'], sfx: 'ding' },
+    // The big door: the band above the car's roof runs its full width, and the part left of the
+    // car carries on down to where the door meets the concrete at y 252.
+    {
+      kind: 'decoration',
+      id: 'garage_door',
+      zone: { x: 300, y: 70, w: 270, h: 182 },
+      parts: [
+        { x: 300, y: 70, w: 270, h: 68 },
+        { x: 300, y: 138, w: 138, h: 114 },
+      ],
+      lines: ["Rrrrumble! It only opens for Dad's car.", 'It goes up and up and up.', 'It is way too heavy for me.'],
+      sfx: 'ding',
+    },
   ],
 };
