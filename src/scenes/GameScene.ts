@@ -866,9 +866,10 @@ export class GameScene extends Phaser.Scene {
     return this.dialogue.say(text, this.theo.x, this.theo.y - this.theo.sprite.displayHeight, { voice: 'theo' });
   }
 
+  /** Nothing to say while Lucy is still asleep upstairs: her lines wait until she is here. */
   sayLucy(text: string): Promise<void> {
-    const who = this.lucy ?? this.theo;
-    return this.dialogue.say(text, who.x, who.y - who.sprite.displayHeight, { fill: 0xffe3f0, voice: 'lucy' });
+    if (!this.lucy) return Promise.resolve();
+    return this.dialogue.say(text, this.lucy.x, this.lucy.y - this.lucy.sprite.displayHeight, { fill: 0xffe3f0, voice: 'lucy' });
   }
 
   /** Marks a container as opened. Nothing is drawn for it; the sound and what comes out are the feedback. */

@@ -88,8 +88,12 @@ export function dayDoneLine(state: GameState): string {
   return INDOOR_ROOMS.has(state.currentRoom) ? HOME_NOW : HOME_SOON;
 }
 
+/** Before Lucy is up there is no day of games yet, only a sister to go and find. */
+export const FIND_LUCY = 'I should see if Lucy is awake yet.';
+
 /** What Theo says once a game is won: where to go next, or that the day is done. */
 export function afterGameLine(state: GameState): string {
+  if (!state.lucyJoined) return FIND_LUCY;
   const next = nextGame(state);
   return next ? next.theo(state) : dayDoneLine(state);
 }

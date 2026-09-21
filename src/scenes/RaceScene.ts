@@ -123,8 +123,9 @@ export class RaceScene extends Phaser.Scene {
     if (!again) {
       await this.dialogue.sayOffscreen(`Three laps! ${this.verb()} Push to get the car going, and ${this.verb().toLowerCase()} Boost just before the car reaches the booster to zoom round the loop!`, { voice: 'theo' });
     } else {
-      // Lucy calls out the time to beat from the doorway.
-      const best = recallLine(store.get(), 'race');
+      // Lucy calls out the time to beat from the doorway, once she is up; before she has joined
+      // Theo the race is his alone and she says nothing.
+      const best = store.get().lucyJoined ? recallLine(store.get(), 'race') : null;
       if (best) await this.dialogue.sayOffscreen(best, { fill: 0xffe3f0, voice: 'lucy' });
     }
     this.running = true;
@@ -315,7 +316,7 @@ export class RaceScene extends Phaser.Scene {
     });
     showPanel(this, { title: 'Race track', big: seconds(time) });
     await this.dialogue.sayOffscreen(`Three whole laps in ${seconds(time)}! What a race car!`, { voice: 'theo' });
-    const brag = beatLine('race', result, time);
+    const brag = store.get().lucyJoined ? beatLine('race', result, time) : null;
     if (brag) await this.dialogue.sayOffscreen(brag, { fill: 0xffe3f0, voice: 'lucy' });
     await this.leave(true);
   }

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { afterGameLine, allGamesDone, gameDoneById, HOME_NOW, HOME_SOON, lucyNextLine, MINIGAMES, nextGame } from '../src/puzzles/progress';
+import { afterGameLine, allGamesDone, FIND_LUCY, gameDoneById, HOME_NOW, HOME_SOON, lucyNextLine, MINIGAMES, nextGame } from '../src/puzzles/progress';
 import { addItem, newGameState, setFlag } from '../src/state/GameState';
 
 describe('what to play next', () => {
   it('walks through the six games in order and ends with heading home', () => {
     const s = newGameState(1);
+    s.lucyJoined = true;
     s.currentRoom = 'backyard';
     expect(MINIGAMES).toHaveLength(6);
     for (const g of MINIGAMES) {
@@ -21,6 +22,7 @@ describe('what to play next', () => {
 
   it('says to go and see Mom and Dad when the last game was won inside the house', () => {
     const s = newGameState(1);
+    s.lucyJoined = true;
     for (const g of MINIGAMES) setFlag(s, g.flag);
     s.currentRoom = 'garage';
     expect(afterGameLine(s)).toBe(HOME_NOW);
@@ -28,6 +30,15 @@ describe('what to play next', () => {
     s.currentRoom = 'backyard';
     expect(afterGameLine(s)).toBe(HOME_SOON);
     expect(lucyNextLine(s)).toMatch(/home/);
+  });
+
+  it('sends Theo to find Lucy, not to another game, while she is still asleep', () => {
+    const s = newGameState(1);
+    setFlag(s, 'raceDone');
+    expect(afterGameLine(s)).toBe(FIND_LUCY);
+    // Once she is up, the day's list takes over again.
+    s.lucyJoined = true;
+    expect(afterGameLine(s)).toBe(nextGame(s)?.theo(s));
   });
 
   it('skips games already won, whatever the order', () => {
@@ -41,6 +52,7 @@ describe('what to play next', () => {
 
   it('only sends Theo to the garage for the rocket when he is not carrying it', () => {
     const s = newGameState(1);
+    s.lucyJoined = true;
     setFlag(s, 'basketballDone');
     expect(afterGameLine(s)).toMatch(/garage/);
     addItem(s, 'stomp_rocket');
