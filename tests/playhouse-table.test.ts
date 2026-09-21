@@ -4,9 +4,9 @@ import { placeRoom, spotIndex } from '../src/puzzles/spots';
 import { hitRects, pick } from '../src/systems/Hitbox';
 
 /*
- * The whole of the little table starts the tea party: the tea set on it, the table top and the
- * legs under it. The floor between the legs stays open, because the garage key may be hidden
- * there and has to stay findable.
+ * The tea set and the whole table top start the tea party. The legs below are scenery with no
+ * hotspot of their own, and the floor between them stays open, because the garage key may be
+ * hidden there and has to stay findable.
  */
 
 const room = ROOMS.playhouse;
@@ -20,25 +20,27 @@ describe('the playhouse table', () => {
     expect(room.hotspots.find((h) => h.id === 'table')).toBeUndefined();
   });
 
-  it('starts the tea party from the table top and from every leg', () => {
-    const [top, ...legs] = hitRects(tea);
-    for (const rect of [top, ...legs]) {
-      for (const [x, y] of [
-        [rect.x + 1, rect.y + 1],
-        [rect.x + rect.w / 2, rect.y + rect.h / 2],
-        [rect.x + rect.w - 1, rect.y + rect.h - 1],
-      ]) {
-        expect(pick(room.hotspots, x, y)?.id, `table part at ${x},${y}`).toBe('tea_set');
+  it('starts the tea party from anywhere on the table top', () => {
+    const [top] = hitRects(tea);
+    for (let x = top.x + 1; x < top.x + top.w; x += 12) {
+      for (let y = top.y + 1; y < top.y + top.h; y += 12) {
+        expect(pick(room.hotspots, x, y)?.id, `table top at ${x},${y}`).toBe('tea_set');
       }
     }
   });
 
-  it('covers the table top and three legs, and nothing else', () => {
+  it('is the table top alone: the legs below are scenery', () => {
     const rects = hitRects(tea);
-    expect(rects).toHaveLength(4);
-    // The gap between the legs is not part of it.
-    const gap = { x: 100, y: 344 };
-    expect(rects.some((r) => gap.x >= r.x && gap.x <= r.x + r.w && gap.y >= r.y && gap.y <= r.y + r.h)).toBe(false);
+    expect(rects).toHaveLength(1);
+    expect(rects[0]).toEqual({ x: 65, y: 240, w: 150, h: 89 });
+    // Well down a leg is nobody's business, though the tolerance still covers just under the top.
+    for (const [x, y] of [
+      [75, 352],
+      [148, 352],
+      [205, 352],
+    ]) {
+      expect(pick(room.hotspots, x, y), `leg at ${x},${y}`).toBeUndefined();
+    }
   });
 
   it('still lets the key be picked up from under the table', () => {
