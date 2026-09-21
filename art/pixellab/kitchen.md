@@ -32,3 +32,20 @@ a second render. Cost: 40 generations.
 - Second hand on the wall clock: centre (596,12), length 13. Dust motes drift in the light from
   the back door. (A swaying-foliage layer behind the door's mullions was tried and dropped: with
   the whole view moving it read as the door moving, not the leaves.)
+
+## Gags in the cupboards (2026-09-20)
+
+Four of the eight containers hold a breakfast item; the rest hold a gag, and the live ones pop
+out and leave the kitchen the way that thing would (`GAG_SPECS` in `src/puzzles/breakfast.ts`
+says which, `BreakfastController` runs the paths). One static sprite each, deformed and rotated
+by tweens: no animation frames.
+
+- `kitchen/gag_frog.png` 24x20 (generate-image-v2, seed 152, candidate 34): lands on the floor
+  and hops out of the room, squashing to 1.2x0.8 before each spring. **Drawn facing left**,
+  which `faces: 'left'` records, so a leftward hop is the art as drawn and a rightward one is
+  mirrored. The batch came out facing the camera rather than side-on.
+- Still to draw: `gag_mouse` 24x16 (circles the floor, then bolts past the camera off the
+  bottom), `gag_spider` 20x16 (climbs the wall off the top), `gag_ball` 16x16 (bounces away
+  left), `gag_pots` 32x24 (roll), `gag_socks` 24x20 (flop). `empty` has no sprite by design.
+- Check a sprite's drawn facing before setting `faces`; getting it backwards makes the thing
+  moonwalk out of the room.

@@ -94,6 +94,15 @@
         400
       ]
     },
+    "gag_frog": {
+      "file": "kitchen/gag_frog.png",
+      "status": "pixellab",
+      "size": [
+        24,
+        20
+      ],
+      "_note": "breakfast gag: hops out of a kitchen cupboard and away across the floor; drawn facing left"
+    },
     "bg_family_room_0": {
       "file": "family_room/bg_0.png",
       "status": "pixellab",
