@@ -23,9 +23,10 @@ const DASH = { ms: 760, drift: 60, grow: 1.7 };
 /**
  * The laps of the floor it runs first. The circle is drawn flat, so it is an ellipse: `rx`
  * across and the shallower `ry` up and down, the way a ring on the ground looks from here.
- * `ms` is the whole thing, so two laps are a little quicker each than one would be.
+ * `ms` covers all the laps together. `apart` is how far to the right the second lap sits, so
+ * the two rings read as two rather than one gone round twice.
  */
-const CIRCLE = { rx: 34, ry: 15, ms: 1400, laps: 2 };
+const CIRCLE = { rx: 34, ry: 15, ms: 2000, laps: 2, apart: 22 };
 /** How long the spider takes to climb out of sight. */
 const CLIMB = { ms: 1300 };
 /** How the ball bounces away: the first bounce's height, what each one keeps, and where it gives up. */
@@ -185,9 +186,10 @@ export class BreakfastController {
   }
 
   /**
-   * Two quick laps of the floor from where it is standing, ending back on the same spot. The
-   * circle sits to the side it will leave by, so it sets off towards the camera and comes
-   * round; the sprite turns to face whichever way it is running at the time.
+   * Two quick laps of the floor from where it is standing. The circle sits to the side it will
+   * leave by, so it sets off towards the camera and comes round; the second lap slides right of
+   * the first as it goes, so the two rings are told apart. The sprite turns to face whichever
+   * way it is running at the time.
    */
   private circleOnFloor(img: Phaser.GameObjects.Image, sprite: GagSprite, dir: -1 | 1): Promise<void> {
     const cx = img.x + dir * CIRCLE.rx;
@@ -205,7 +207,10 @@ export class BreakfastController {
         onUpdate: () => {
           if (!img.scene) return;
           const a = start + sweep * lap.t;
-          img.setPosition(cx + Math.cos(a) * CIRCLE.rx, cy + Math.sin(a) * CIRCLE.ry);
+          // Nothing for the first lap, then eased across the second so the ring slides right.
+          const k = Math.min(1, Math.max(0, lap.t * CIRCLE.laps - 1));
+          const shift = CIRCLE.apart * k * k * (3 - 2 * k);
+          img.setPosition(cx + shift + Math.cos(a) * CIRCLE.rx, cy + Math.sin(a) * CIRCLE.ry);
           // Its heading is the tangent; the sign of that is all the facing needs.
           img.setFlipX(gagFlipped(sprite, -Math.sin(a) * sweep > 0 ? 1 : -1));
         },
