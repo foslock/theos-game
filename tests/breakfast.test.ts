@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateBreakfast, BREAKFAST_ITEMS, GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
+import { pick } from '../src/systems/Hitbox';
 import { Rng } from '../src/systems/Rng';
 import { newGameState, addItem } from '../src/state/GameState';
 
@@ -88,5 +89,34 @@ describe('the way each gag leaves', () => {
   it('gives every gag an exit the controller knows how to run', () => {
     const known = ['hop', 'dash', 'climb', 'bounce', 'roll', 'flutter'];
     for (const gag of GAGS) expect(known).toContain(GAG_SPECS[gag].exit);
+  });
+});
+
+describe('the kitchen units answer over their whole fronts', () => {
+  /*
+   * The art draws three drawer fronts in the left column, with edges measured off bg_0.png at
+   * y 193, 217, 243 and 268. Every row of every front has to resolve to a container: the bottom
+   * one used to answer only down to y 258, where the hit tolerance below drawer_2 ran out, so
+   * its lower half did nothing.
+   */
+  const LEFT_COLUMN_X = 155;
+  const FRONTS = [
+    { name: 'top', from: 194, to: 216 },
+    { name: 'middle', from: 218, to: 242 },
+    { name: 'bottom', from: 244, to: 267 },
+  ];
+
+  it('gives every row of every drawer front a container to open', () => {
+    for (const front of FRONTS) {
+      for (let y = front.from; y <= front.to; y++) {
+        const hit = pick(kitchenContainers, LEFT_COLUMN_X, y);
+        expect(hit?.category, `${front.name} drawer front at y ${y}`).toBe('drawer');
+      }
+    }
+  });
+
+  it('keeps the bottom front out of the floor below it', () => {
+    // Well under the units is nobody's business.
+    expect(pick(kitchenContainers, LEFT_COLUMN_X, 300)).toBeUndefined();
   });
 });

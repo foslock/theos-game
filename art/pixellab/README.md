@@ -67,6 +67,14 @@ positions the Phaser canvas there, keeps everything centred on resize, draws
 the glass vignette and runs the power-on stretch. Regenerate the JSON if the
 art changes (the hole is the transparent area inside the bezel).
 
+## References change the subject, not just the look (2026-09-20)
+
+`--reference <img> "<usage>"` is for matching an **existing asset** (the same bed in a new pose,
+a body that must stay the same size). It is not a style swatch: passing an unrelated sprite to
+convey "outline weight and detail" made all 64 candidates of a frog come back as copies of the
+autumn leaf that was passed in, prompt and all. Small props take the prose style prefix below
+and no reference; `--style` is the lever for look alone.
+
 ## Global style (paste at the top of every prompt)
 
 > 1990s children's point-and-click adventure game background in the style of
