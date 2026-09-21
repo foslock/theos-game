@@ -69,8 +69,20 @@ export const garage: Room = {
       ],
     },
     { kind: 'decoration', id: 'bike', zone: { x: 185, y: 180, w: 110, h: 95 }, lines: ['Ring ring!', 'The wheels go round and round.', "One day I'll ride a bike this big."], sfx: 'squeak' },
-    // Dad's boxes on the shelves: the memory game.
-    { kind: 'minigame', id: 'shelves', game: 'memory', zone: { x: 100, y: 45, w: 140, h: 130 }, walkTo: { x: 150, y: 310 } },
+    // Dad's boxes on the shelves: the memory game. The whole unit answers, top to bottom. The
+    // lower half is narrower: right of x 175 is the bike, and the basketball hides in the gap
+    // between the bottom box and the bike's wheel.
+    {
+      kind: 'minigame',
+      id: 'shelves',
+      game: 'memory',
+      zone: { x: 100, y: 45, w: 140, h: 242 },
+      parts: [
+        { x: 100, y: 45, w: 140, h: 130 },
+        { x: 100, y: 175, w: 75, h: 112 },
+      ],
+      walkTo: { x: 150, y: 310 },
+    },
     { kind: 'decoration', id: 'garage_door', zone: { x: 300, y: 70, w: 270, h: 68 }, lines: ["Rrrrumble! It only opens for Dad's car.", 'It goes up and up and up.', 'It is way too heavy for me.'], sfx: 'ding' },
   ],
 };
