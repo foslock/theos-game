@@ -56,7 +56,10 @@ by tweens: no animation frames.
   two-tone swirl was chosen over a plain ball so the spin is visible; round, so no `faces`.
 - The **pots** are a clatter from inside the cupboard and the **empty** one is just a line:
   neither has a sprite, so `GagSpec.sprite` is left out for both. The socks gag was dropped on
-  2026-09-20 and its place in the pool went to a second `empty`, so more than one cupboard in a
-  kitchen turns out to be bare. A save still holding `socks` is emptied by `dropUnknownGags`.
+  2026-09-20; a save still holding `socks` is emptied by `dropUnknownGags`.
+- Nine cupboards, four of which hide breakfast, leave five for gags. All four gags with a sprite
+  (`SEEN_GAGS`) get one each, in a cupboard drawn at random, and the fifth gets a clatter or
+  nothing (`UNSEEN_GAGS`). Dealing five from a shuffled pool, as it used to, meant a child could
+  open every cupboard and never meet the bouncy ball.
 - Check a sprite's drawn facing before setting `faces`; getting it backwards makes the thing
   moonwalk out of the room.

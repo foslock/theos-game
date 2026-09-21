@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBreakfast, BREAKFAST_ITEMS, dropUnknownGags, fillMissingContainers, GAGS, GAG_POOL, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
+import { generateBreakfast, BREAKFAST_ITEMS, dropUnknownGags, fillMissingContainers, GAGS, SEEN_GAGS, UNSEEN_GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
 import { pick } from '../src/systems/Hitbox';
 import { Rng } from '../src/systems/Rng';
@@ -88,10 +88,35 @@ describe('the gags in the cupboards', () => {
     expect(gagFlipped(GAG_SPECS.ball.sprite!, 1)).toBe(false);
   });
 
-  it('leaves more than one cupboard simply bare', () => {
-    expect(GAG_POOL.filter((g) => g === 'empty')).toHaveLength(2);
-    // Everything in the pool is a gag the game still has.
-    for (const g of GAG_POOL) expect(GAGS).toContain(g);
+  it('splits the gags into the ones worth seeing and the ones that are only heard', () => {
+    expect([...SEEN_GAGS].sort()).toEqual(['ball', 'frog', 'mouse', 'spider']);
+    expect([...UNSEEN_GAGS].sort()).toEqual(['empty', 'pots']);
+    for (const g of [...SEEN_GAGS, ...UNSEEN_GAGS]) expect(GAGS).toContain(g);
+  });
+
+  it('puts every gag worth seeing in a cupboard, every game', () => {
+    for (let seed = 0; seed < 200; seed++) {
+      const st = generateBreakfast(new Rng(seed), kitchenContainers);
+      const dealt = Object.values(st.placements)
+        .filter((c) => c.type === 'decoy')
+        .map((c) => (c as { gag: string }).gag);
+      for (const gag of SEEN_GAGS) {
+        expect(dealt.filter((g) => g === gag), `${gag} on seed ${seed}`).toHaveLength(1);
+      }
+    }
+  });
+
+  it('does not always hide them in the same cupboards', () => {
+    const where = new Set<string>();
+    for (let seed = 0; seed < 60; seed++) {
+      const st = generateBreakfast(new Rng(seed), kitchenContainers);
+      const id = Object.keys(st.placements).find((k) => {
+        const c = st.placements[k];
+        return c.type === 'decoy' && c.gag === 'ball';
+      })!;
+      where.add(id);
+    }
+    expect(where.size).toBeGreaterThan(2);
   });
 
   it('empties a cupboard holding a gag the game has dropped', () => {

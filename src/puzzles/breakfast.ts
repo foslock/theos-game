@@ -17,12 +17,6 @@ export type Gag = 'frog' | 'pots' | 'mouse' | 'empty' | 'spider' | 'ball';
 export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'empty', 'spider', 'ball'];
 
 /**
- * What the cupboards that are not hiding breakfast are dealt from. `empty` is in twice, so more
- * than one cupboard in a kitchen turns out to be simply bare.
- */
-export const GAG_POOL: readonly Gag[] = ['frog', 'pots', 'mouse', 'empty', 'empty', 'spider', 'ball'];
-
-/**
  * How a gag leaves the kitchen once it has popped out of its cupboard. Each one goes the way
  * that thing would: the frog hops along the floor and out of the room, the mouse tears round in
  * two panicked circles and then bolts past the camera and off the bottom, the spider climbs the
@@ -64,6 +58,14 @@ export const GAG_SPECS: Record<Gag, GagSpec> = {
   ball: { sprite: { key: 'gag_ball', exit: 'bounce' }, sfx: 'boing', line: 'A bouncy ball... not breakfast.' },
 };
 
+/**
+ * The gags with something to see. Every kitchen gets all of them, one cupboard each, so a
+ * playthrough never misses the frog or the bouncy ball.
+ */
+export const SEEN_GAGS: readonly Gag[] = GAGS.filter((g) => !!GAG_SPECS[g].sprite);
+/** The rest: a clatter, a bare cupboard. They fill whatever cupboards are left over. */
+export const UNSEEN_GAGS: readonly Gag[] = GAGS.filter((g) => !GAG_SPECS[g].sprite);
+
 export type BreakfastContent = { type: 'item'; item: ItemId } | { type: 'decoy'; gag: Gag };
 
 export interface BreakfastState {
@@ -94,14 +96,15 @@ export function generateBreakfast(rng: Rng, containers: readonly ContainerSpec[]
   placements[cerealCab] = { type: 'item', item: 'cereal' };
   placements[rng.pick(fridges)] = { type: 'item', item: 'milk' };
 
-  const gagPool = rng.shuffle(GAG_POOL);
-  let g = 0;
-  for (const c of containers) {
-    if (!placements[c.id]) {
-      placements[c.id] = { type: 'decoy', gag: gagPool[g % gagPool.length] };
-      g++;
-    }
-  }
+  // Every gag worth seeing gets a cupboard of its own, in a random one, and whatever cupboards
+  // are left over get a clatter or nothing. With fewer spare cupboards than there are things to
+  // see, the ones that miss out are the last of a shuffle, so it is a different one each game.
+  const spare = rng.shuffle(containers.filter((c) => !placements[c.id]).map((c) => c.id));
+  const seen = rng.shuffle(SEEN_GAGS);
+  const rest = rng.shuffle(UNSEEN_GAGS);
+  spare.forEach((id, i) => {
+    placements[id] = { type: 'decoy', gag: i < seen.length ? seen[i] : rest[(i - seen.length) % rest.length] };
+  });
 
   return { placements, opened: [], delivered: false };
 }
@@ -130,7 +133,9 @@ export function dropUnknownGags(state: BreakfastState): boolean {
 export function fillMissingContainers(state: BreakfastState, rng: Rng, containers: readonly ContainerSpec[]): boolean {
   const missing = containers.filter((c) => !state.placements[c.id]);
   if (!missing.length) return false;
-  const pool = rng.shuffle(GAG_POOL);
+  // A cupboard added later gets a clatter or nothing, so it cannot double up on a creature
+  // that has already been dealt.
+  const pool = rng.shuffle(UNSEEN_GAGS);
   missing.forEach((c, i) => {
     state.placements[c.id] = { type: 'decoy', gag: pool[i % pool.length] };
   });
