@@ -48,20 +48,20 @@ export const playhouse: Room = {
         { zone: { x: 100, y: 332, w: 24, h: 24 }, walkTo: { x: 112, y: 385 }, where: 'under the table' },
       ],
     },
-    // Lucy's tea set and the whole table top with it: the tea party game.
-    { kind: 'minigame', id: 'tea_set', game: 'tea', zone: { x: 65, y: 240, w: 150, h: 89 }, walkTo: { x: 150, y: 385 } },
+    // Lucy's tea set, the table top it stands on and the legs under it: anywhere on the table
+    // starts the tea party. The floor between the legs is left open, since a key hides there.
     {
-      kind: 'decoration',
-      id: 'table',
-      // Just the legs: the top belongs to the tea party above, and the floor between them is open.
-      zone: { x: 65, y: 329, w: 150, h: 31 },
+      kind: 'minigame',
+      id: 'tea_set',
+      game: 'tea',
+      zone: { x: 65, y: 240, w: 150, h: 120 },
       parts: [
+        { x: 65, y: 240, w: 150, h: 89 },
         { x: 65, y: 329, w: 22, h: 31 },
         { x: 140, y: 329, w: 17, h: 31 },
         { x: 195, y: 329, w: 20, h: 31 },
       ],
-      lines: ['A little table, just my size.', 'We have tea parties here.', 'Lucy bumped her head on it once.'],
-      sfx: 'click',
+      walkTo: { x: 150, y: 385 },
     },
     { kind: 'decoration', id: 'window', zone: { x: 30, y: 120, w: 130, h: 110 }, lines: ['I can see the whole yard from here.', 'The trees are waving at us.', 'Sometimes a bird lands right there.'], sfx: 'click' },
     { kind: 'decoration', id: 'teddy', zone: { x: 220, y: 215, w: 60, h: 105 }, lines: ['Hi, Mr. Bear!', 'Mr. Bear is very good at waiting.', 'He needs a hug.'], sfx: 'squeak' },
