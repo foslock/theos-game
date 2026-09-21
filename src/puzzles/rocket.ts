@@ -101,8 +101,9 @@ export const SIGHTS: readonly Sight[] = [
   { key: 'sky_satellite', metres: 150, drift: 0, light: true },
   { key: 'sky_ufo', metres: 200, drift: 45, bob: 6 },
   { key: 'sky_moon', metres: 250, drift: 0 },
-  { key: 'sky_comet', metres: 300, drift: 150 },
-  { key: 'sky_astronaut', metres: 350, drift: 18, bob: 8 },
+  // Both are drawn heading left: the comet's icy head leads and the astronaut's tether trails.
+  { key: 'sky_comet', metres: 300, drift: 150, faces: 'left' },
+  { key: 'sky_astronaut', metres: 350, drift: 18, bob: 8, faces: 'left' },
   { key: 'sky_planet', metres: 400, drift: 0 },
 ];
 

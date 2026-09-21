@@ -60,8 +60,15 @@ a second render. Cost: 40 generations.
   and the kite's tail are both drawn to the left; the saucer is symmetrical and never mirrors.
   - `sky_kite.png` 32x40 (seed 141, candidate 12): drifts across at 50 m, the first thing the
     rocket passes. A kite whose tail trails to the right, so it faces left.
-  - Still to draw: `sky_comet` (300 m), `sky_astronaut` (350 m), `sky_planet` (400 m). Set each
-    one's `faces` when it lands, or leave it off if the art is symmetrical.
+  - `sky_comet.png` 48x24 (seed 171, candidate 0): streaks across at 300 m. Its icy head leads
+    to the left with the tail trailing right, so `faces: 'left'`.
+  - `sky_astronaut.png` 32x32 (seed 172, candidate 33): drifts and bobs at 350 m, waving, tether
+    trailing behind to the right, so `faces: 'left'` too.
+  - `sky_planet.png` 64x48 (seed 174, candidate 12): hangs at 400 m, the highest thing there is.
+    The first batch at 48x48 had **every** candidate's ring running off both edges; regenerated
+    at 64x48 asking for the ring to "stop well short of the left and right edges", which gave
+    two clean ones out of sixteen. Check `Image.getbbox()` against the canvas before picking:
+    a ring or a tail touching an edge has been cut, and it is not obvious at 1x.
   - The 64-candidate batch a call returns is **overwritten** by a re-run with the same seed and
     does not reproduce, so a batch worth picking from goes in its own `raw/<name>_batch/` folder
     before anything else is generated.

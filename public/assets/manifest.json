@@ -261,6 +261,33 @@
       ],
       "_note": "stomp rocket flight: hangs at 250 m"
     },
+    "sky_comet": {
+      "file": "ambient/sky_comet.png",
+      "status": "pixellab",
+      "size": [
+        48,
+        24
+      ],
+      "_note": "stomp rocket flight: streaks across at 300 m; its icy head leads to the left, so it is drawn facing left"
+    },
+    "sky_astronaut": {
+      "file": "ambient/sky_astronaut.png",
+      "status": "pixellab",
+      "size": [
+        32,
+        32
+      ],
+      "_note": "stomp rocket flight: drifts and bobs at 350 m, tether trailing behind; drawn facing left"
+    },
+    "sky_planet": {
+      "file": "ambient/sky_planet.png",
+      "status": "pixellab",
+      "size": [
+        64,
+        48
+      ],
+      "_note": "stomp rocket flight: hangs at 400 m, the highest thing there is; symmetrical enough that it never mirrors"
+    },
     "backyard_sky": {
       "file": "backyard/sky_occluder.png",
       "status": "derived",
