@@ -66,7 +66,13 @@ export class HudScene extends Phaser.Scene {
     this.slotLayer.removeAll(true);
     if (!getFlag(state, FLAGS.hasBackpack)) {
       if (this.registry.get('hudQuiet')) return;
-      this.slotLayer.add(this.add.text(16, SCENE_HEIGHT + HUD_HEIGHT / 2, 'Find your backpack to carry things!', { ...TEXT_FONT, color: '#d9b98a' }).setOrigin(0, 0.5));
+      // Twice the font's design size so it reads from across the room, which takes two lines to
+      // stay clear of the Save/Menu buttons.
+      this.slotLayer.add(
+        this.add
+          .text(16, SCENE_HEIGHT + HUD_HEIGHT / 2, 'Find your backpack\nto carry things!', { ...TEXT_FONT, fontSize: '16px', lineSpacing: 8, color: '#d9b98a' })
+          .setOrigin(0, 0.5),
+      );
       return;
     }
     const totalW = COLS * SLOT + (COLS - 1) * GAP;
