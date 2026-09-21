@@ -6,25 +6,26 @@ import { addItem, FLAGS, isPickedUp, markPickedUp, removeItem, setFlag } from '.
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
-import { BREAKFAST_ITEMS, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type GagExit, type BreakfastState } from './breakfast';
-import { GAME_WIDTH } from '../config';
+import { BREAKFAST_ITEMS, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type BreakfastState } from './breakfast';
+import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import type { GameScene } from '../scenes/GameScene';
 
 /** The kitchen floor in front of the units: where something that jumps out lands. */
 const GAG_FLOOR = 372;
 /** Over the room but under the speech bubbles. */
 const GAG_DEPTH = 880;
-/**
- * The run for the door, by what popped out: how long it takes to cross the kitchen, how high it
- * hops on the way (a scurry barely leaves the floor) and how much it spins doing it.
- */
-const GAG_TRAVEL: Record<GagExit, { ms: number; hop: number; spin: number }> = {
-  hop: { ms: 1100, hop: 30, spin: 0 },
-  scurry: { ms: 700, hop: 3, spin: 0 },
-  bounce: { ms: 1000, hop: 22, spin: 360 },
-  roll: { ms: 1200, hop: 0, spin: 540 },
-  flutter: { ms: 900, hop: 4, spin: 0 },
-};
+/** The most hops or bounces before a gag is given up on and taken off the floor. */
+const MAX_STEPS = 30;
+/** How the frog springs: how far and how high a hop, and how long one takes. */
+const HOP = { step: 44, height: 26, ms: 260 };
+/** How the mouse bolts at the camera: how long it takes, how far it veers, and how much it grows. */
+const DASH = { ms: 760, drift: 60, grow: 1.7 };
+/** How long the spider takes to climb out of sight. */
+const CLIMB = { ms: 1300 };
+/** How the ball bounces away: the first bounce's height, what each one keeps, and where it gives up. */
+const BOUNCE = { height: 36, least: 5, decay: 0.62, step: 66, ms: 320 };
+const ROLL = { ms: 1200 };
+const FLOP = { ms: 900 };
 
 /** Where the empty bowl and spoon sit on the kitchen table once Lucy has eaten (icon centres). */
 const TABLE_SETTING = { bowl: { x: 484, y: 221 }, spoon: { x: 506, y: 221 } };
@@ -106,8 +107,8 @@ export class BreakfastController {
   }
 
   /**
-   * What was in the cupboard pops out, drops to the floor and leaves the kitchen the way its
-   * kind does. A gag with no art (or none drawn yet) simply keeps to Theo's line.
+   * What was in the cupboard pops out and leaves the kitchen the way its kind would. A gag with
+   * no art (or none drawn yet) simply keeps to Theo's line.
    */
   private async runGag(gag: Gag, x: number, y: number): Promise<void> {
     const spec = GAG_SPECS[gag];
@@ -116,22 +117,99 @@ export class BreakfastController {
     const full = spec.scale ?? 1;
     const img = scene.add.image(x, y, spec.key).setDepth(GAG_DEPTH).setScale(full * 0.3);
     scene.keepInRoom(img);
-    // It heads for whichever side of the kitchen it is nearer.
+    // Whatever runs along the floor heads for whichever side of the kitchen it is nearer.
     const dir: 1 | -1 = x < GAME_WIDTH / 2 ? -1 : 1;
-    img.setFlipX(dir < 0);
+    img.setFlipX(gagFlipped(spec, dir));
     await this.tween(img, { y: y - 20, scale: full }, 220, 'Back.easeOut');
     if (!img.scene) return;
-    // Socks have no legs: they see-saw down instead of landing on their feet.
-    if (spec.exit === 'flutter') await this.tween(img, { y: GAG_FLOOR, angle: dir * 20 }, 700, 'Sine.easeIn');
-    else await this.tween(img, { y: GAG_FLOOR }, 240, 'Quad.easeIn');
-    if (!img.scene) return;
-    const travel = GAG_TRAVEL[spec.exit];
-    if (travel.hop) scene.tweens.add({ targets: img, y: GAG_FLOOR - travel.hop, duration: Math.max(120, travel.ms / 5), yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
-    if (travel.spin) scene.tweens.add({ targets: img, angle: dir * travel.spin, duration: travel.ms, ease: 'Linear' });
-    await this.tween(img, { x: dir < 0 ? -img.displayWidth : GAME_WIDTH + img.displayWidth }, travel.ms, 'Linear');
+    switch (spec.exit) {
+      case 'hop':
+        await this.hopAway(img, dir, full);
+        break;
+      case 'dash':
+        await this.dashPastCamera(img, dir, full);
+        break;
+      case 'climb':
+        await this.climbAway(img);
+        break;
+      case 'bounce':
+        await this.bounceAway(img);
+        break;
+      case 'roll':
+        await this.rollAway(img, dir);
+        break;
+      case 'flutter':
+        await this.flopAway(img, dir);
+        break;
+    }
     if (!img.scene) return;
     scene.tweens.killTweensOf(img);
     img.destroy();
+  }
+
+  /** Lands on the floor, then hops out of the room, squashing down before each spring. */
+  private async hopAway(img: Phaser.GameObjects.Image, dir: -1 | 1, full: number): Promise<void> {
+    await this.tween(img, { y: GAG_FLOOR }, 220, 'Quad.easeIn');
+    for (let i = 0; i < MAX_STEPS && img.scene && img.x > -HOP.step && img.x < GAME_WIDTH + HOP.step; i++) {
+      await this.tween(img, { scaleX: full * 1.2, scaleY: full * 0.8 }, 90, 'Quad.easeOut');
+      if (!img.scene) return;
+      // The spring and the flight happen together: it stretches as it leaves the floor.
+      this.scene.tweens.add({ targets: img, y: GAG_FLOOR - HOP.height, duration: HOP.ms / 2, yoyo: true, ease: 'Quad.easeOut' });
+      this.scene.tweens.add({ targets: img, scaleX: full, scaleY: full, duration: HOP.ms / 3, ease: 'Quad.easeOut' });
+      await this.tween(img, { x: img.x + HOP.step * dir }, HOP.ms, 'Linear');
+    }
+  }
+
+  /** Drops to the floor and bolts straight past the camera, growing as it comes. */
+  private async dashPastCamera(img: Phaser.GameObjects.Image, dir: -1 | 1, full: number): Promise<void> {
+    await this.tween(img, { y: GAG_FLOOR }, 200, 'Quad.easeIn');
+    if (!img.scene) return;
+    // Little legs going, and bigger the nearer it gets.
+    this.scene.tweens.add({ targets: img, angle: dir * 7, duration: 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.scene.tweens.add({ targets: img, scale: full * DASH.grow, duration: DASH.ms, ease: 'Quad.easeIn' });
+    await this.tween(img, { x: img.x + dir * DASH.drift, y: SCENE_HEIGHT + 80 }, DASH.ms, 'Quad.easeIn');
+  }
+
+  /** Straight up the wall from the cupboard and off the top, legs working all the way. */
+  private async climbAway(img: Phaser.GameObjects.Image): Promise<void> {
+    this.scene.tweens.add({ targets: img, angle: 9, duration: 110, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    await this.tween(img, { y: -img.displayHeight }, CLIMB.ms, 'Linear');
+  }
+
+  /** Bounces away to the left, each bounce lower than the last, and rolls out of the room. */
+  private async bounceAway(img: Phaser.GameObjects.Image): Promise<void> {
+    await this.tween(img, { y: GAG_FLOOR }, 240, 'Quad.easeIn');
+    let height = BOUNCE.height;
+    for (let i = 0; i < MAX_STEPS && img.scene && img.x > 0 && height > BOUNCE.least; i++) {
+      this.scene.tweens.add({ targets: img, y: GAG_FLOOR - height, duration: BOUNCE.ms / 2, yoyo: true, ease: 'Quad.easeOut' });
+      this.scene.tweens.add({ targets: img, angle: img.angle - 120, duration: BOUNCE.ms, ease: 'Linear' });
+      await this.tween(img, { x: img.x - BOUNCE.step }, BOUNCE.ms, 'Linear');
+      height *= BOUNCE.decay;
+    }
+    if (!img.scene) return;
+    // The last bounce can already have carried it out of the room; the roll must never pull it back.
+    const exit = -img.displayWidth;
+    if (img.x > exit) await this.tween(img, { x: exit, angle: img.angle - 200 }, 400, 'Linear');
+  }
+
+  /** Clatters onto the floor and rolls off, spinning. */
+  private async rollAway(img: Phaser.GameObjects.Image, dir: -1 | 1): Promise<void> {
+    await this.tween(img, { y: GAG_FLOOR }, 240, 'Quad.easeIn');
+    if (!img.scene) return;
+    this.scene.tweens.add({ targets: img, angle: dir * 540, duration: ROLL.ms, ease: 'Linear' });
+    await this.tween(img, { x: this.offscreenX(img, dir) }, ROLL.ms, 'Linear');
+  }
+
+  /** No legs to run on: socks see-saw down to the floor and scoot off. */
+  private async flopAway(img: Phaser.GameObjects.Image, dir: -1 | 1): Promise<void> {
+    await this.tween(img, { y: GAG_FLOOR, angle: dir * 20 }, 700, 'Sine.easeIn');
+    if (!img.scene) return;
+    this.scene.tweens.add({ targets: img, y: GAG_FLOOR - 4, duration: 110, yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
+    await this.tween(img, { x: this.offscreenX(img, dir) }, FLOP.ms, 'Linear');
+  }
+
+  private offscreenX(img: Phaser.GameObjects.Image, dir: -1 | 1): number {
+    return dir < 0 ? -img.displayWidth : GAME_WIDTH + img.displayWidth;
   }
 
   private tween(target: Phaser.GameObjects.Image, props: Record<string, number>, duration: number, ease: string): Promise<void> {

@@ -16,8 +16,13 @@ export interface ContainerSpec {
 export type Gag = 'frog' | 'pots' | 'mouse' | 'socks' | 'empty' | 'spider' | 'ball';
 export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'socks', 'empty', 'spider', 'ball'];
 
-/** How a gag leaves the kitchen once it has popped out of its cupboard. */
-export type GagExit = 'hop' | 'scurry' | 'bounce' | 'roll' | 'flutter';
+/**
+ * How a gag leaves the kitchen once it has popped out of its cupboard. Each one goes the way
+ * that thing would: the frog hops along the floor and out of the room, the mouse bolts past the
+ * camera and off the bottom, the spider climbs the wall and off the top, the ball bounces away
+ * to the left, the pots roll and the socks flop.
+ */
+export type GagExit = 'hop' | 'dash' | 'climb' | 'bounce' | 'roll' | 'flutter';
 
 export interface GagSpec {
   /** The sprite that pops out. An empty cupboard has none, and neither has one whose art is missing. */
@@ -25,6 +30,8 @@ export interface GagSpec {
   exit: GagExit;
   /** What it sounds like coming out. */
   sfx: SfxName;
+  /** Which way the art is drawn, so it can be mirrored to face the way it goes. */
+  faces?: 'left' | 'right';
   /** How big it is against the room, since the art is drawn at its own size. */
   scale?: number;
   line: string;
@@ -35,12 +42,12 @@ export interface GagSpec {
  * for the nearest door, and the rest clatter or flop onto the floor and go from there.
  */
 export const GAG_SPECS: Record<Gag, GagSpec> = {
-  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', line: 'Whoa! A frog! How did you get in there?' },
+  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', faces: 'right', line: 'Whoa! A frog! How did you get in there?' },
   pots: { key: 'gag_pots', exit: 'roll', sfx: 'locked', line: 'CLANG! Just a bunch of noisy pots.' },
-  mouse: { key: 'gag_mouse', exit: 'scurry', sfx: 'squeak', line: 'Eek! A little mouse. Hi, mouse!' },
+  mouse: { key: 'gag_mouse', exit: 'dash', sfx: 'squeak', faces: 'right', line: 'Eek! A little mouse. Hi, mouse!' },
   socks: { key: 'gag_socks', exit: 'flutter', sfx: 'open', line: 'Socks? Who keeps socks in the kitchen?' },
   empty: { exit: 'flutter', sfx: 'open', line: 'Nothing in here but crumbs.' },
-  spider: { key: 'gag_spider', exit: 'scurry', sfx: 'squeak', scale: 0.8, line: 'A spider! Okay, okay, you can stay.' },
+  spider: { key: 'gag_spider', exit: 'climb', sfx: 'squeak', scale: 0.8, line: 'A spider! Okay, okay, you can stay.' },
   ball: { key: 'gag_ball', exit: 'bounce', sfx: 'boing', line: 'A bouncy ball... not breakfast.' },
 };
 
@@ -105,4 +112,10 @@ export function lucyRequestLine(missing: readonly ItemId[]): string {
 
 export function gagLine(gag: Gag): string {
   return GAG_SPECS[gag].line;
+}
+
+/** Whether a gag's art has to be mirrored to face the way it is heading. */
+export function gagFlipped(spec: GagSpec, dir: -1 | 1): boolean {
+  if (!spec.faces) return false;
+  return (dir > 0) !== (spec.faces === 'right');
 }

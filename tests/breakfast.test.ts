@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBreakfast, BREAKFAST_ITEMS, GAGS, GAG_SPECS, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
+import { generateBreakfast, BREAKFAST_ITEMS, GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
 import { Rng } from '../src/systems/Rng';
 import { newGameState, addItem } from '../src/state/GameState';
@@ -61,5 +61,32 @@ describe('the gags in the cupboards', () => {
     expect(GAG_SPECS.empty.key).toBeUndefined();
     expect(keys).toHaveLength(GAGS.length - 1);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('the way each gag leaves', () => {
+  it('sends each live thing out the way that thing would go', () => {
+    expect(GAG_SPECS.frog.exit).toBe('hop');
+    expect(GAG_SPECS.mouse.exit).toBe('dash');
+    expect(GAG_SPECS.spider.exit).toBe('climb');
+    expect(GAG_SPECS.ball.exit).toBe('bounce');
+  });
+
+  it('mirrors the art of the ones that run along the floor', () => {
+    // Drawn facing right: heading left it is mirrored, heading right it is left alone.
+    expect(GAG_SPECS.frog.faces).toBe('right');
+    expect(gagFlipped(GAG_SPECS.frog, -1)).toBe(true);
+    expect(gagFlipped(GAG_SPECS.frog, 1)).toBe(false);
+  });
+
+  it('never mirrors a gag with no facing of its own', () => {
+    expect(GAG_SPECS.ball.faces).toBeUndefined();
+    expect(gagFlipped(GAG_SPECS.ball, -1)).toBe(false);
+    expect(gagFlipped(GAG_SPECS.ball, 1)).toBe(false);
+  });
+
+  it('gives every gag an exit the controller knows how to run', () => {
+    const known = ['hop', 'dash', 'climb', 'bounce', 'roll', 'flutter'];
+    for (const gag of GAGS) expect(known).toContain(GAG_SPECS[gag].exit);
   });
 });
