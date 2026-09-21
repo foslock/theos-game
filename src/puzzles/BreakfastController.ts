@@ -6,7 +6,7 @@ import { addItem, FLAGS, isPickedUp, markPickedUp, removeItem, setFlag } from '.
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
-import { BREAKFAST_ITEMS, fillMissingContainers, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type BreakfastState } from './breakfast';
+import { BREAKFAST_ITEMS, fillMissingContainers, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type GagSpec, type BreakfastState } from './breakfast';
 import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -20,6 +20,11 @@ const MAX_STEPS = 30;
 const HOP = { step: 44, height: 26, ms: 260 };
 /** How the mouse bolts at the camera: how long it takes, how far it veers, and how much it grows. */
 const DASH = { ms: 760, drift: 60, grow: 1.7 };
+/**
+ * The lap of the floor it runs first. The circle is drawn flat, so it is an ellipse: `rx` across
+ * and the shallower `ry` up and down, the way a ring on the ground looks from here.
+ */
+const CIRCLE = { rx: 34, ry: 15, ms: 780 };
 /** How long the spider takes to climb out of sight. */
 const CLIMB = { ms: 1300 };
 /** How the ball bounces away: the first bounce's height, what each one keeps, and where it gives up. */
@@ -133,7 +138,7 @@ export class BreakfastController {
         await this.hopAway(img, dir, full);
         break;
       case 'dash':
-        await this.dashPastCamera(img, dir, full);
+        await this.dashPastCamera(img, spec, dir, full);
         break;
       case 'climb':
         await this.climbAway(img);
@@ -166,14 +171,50 @@ export class BreakfastController {
     }
   }
 
-  /** Drops to the floor and bolts straight past the camera, growing as it comes. */
-  private async dashPastCamera(img: Phaser.GameObjects.Image, dir: -1 | 1, full: number): Promise<void> {
+  /**
+   * Drops to the floor, tears round in one panicked circle, then bolts straight past the camera,
+   * growing as it comes.
+   */
+  private async dashPastCamera(img: Phaser.GameObjects.Image, spec: GagSpec, dir: -1 | 1, full: number): Promise<void> {
     await this.tween(img, { y: GAG_FLOOR }, 200, 'Quad.easeIn');
     if (!img.scene) return;
-    // Little legs going, and bigger the nearer it gets.
+    // Little legs going, all the way out of the room.
     this.scene.tweens.add({ targets: img, angle: dir * 7, duration: 80, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    await this.circleOnFloor(img, spec, dir);
+    if (!img.scene) return;
+    // Bigger the nearer it gets.
     this.scene.tweens.add({ targets: img, scale: full * DASH.grow, duration: DASH.ms, ease: 'Quad.easeIn' });
     await this.tween(img, { x: img.x + dir * DASH.drift, y: SCENE_HEIGHT + 80 }, DASH.ms, 'Quad.easeIn');
+  }
+
+  /**
+   * One quick lap of the floor from where it is standing, and back to the same spot. The circle
+   * sits to the side it will leave by, so it sets off towards the camera and comes round; the
+   * sprite turns to face whichever way it is running at the time.
+   */
+  private circleOnFloor(img: Phaser.GameObjects.Image, spec: GagSpec, dir: -1 | 1): Promise<void> {
+    const cx = img.x + dir * CIRCLE.rx;
+    const cy = img.y;
+    // Starting on the near side of the circle, it runs towards the camera first either way.
+    const start = dir < 0 ? 0 : Math.PI;
+    const sweep = (dir < 0 ? 1 : -1) * Math.PI * 2;
+    const lap = { t: 0 };
+    return new Promise((resolve) => {
+      this.scene.tweens.add({
+        targets: lap,
+        t: 1,
+        duration: CIRCLE.ms,
+        ease: 'Sine.easeInOut',
+        onUpdate: () => {
+          if (!img.scene) return;
+          const a = start + sweep * lap.t;
+          img.setPosition(cx + Math.cos(a) * CIRCLE.rx, cy + Math.sin(a) * CIRCLE.ry);
+          // Its heading is the tangent; the sign of that is all the facing needs.
+          img.setFlipX(gagFlipped(spec, -Math.sin(a) * sweep > 0 ? 1 : -1));
+        },
+        onComplete: () => resolve(),
+      });
+    });
   }
 
   /** Straight up the wall from the cupboard and off the top, legs working all the way. */

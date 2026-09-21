@@ -74,10 +74,13 @@ describe('the way each gag leaves', () => {
   });
 
   it('mirrors the art of the ones that run along the floor', () => {
-    // Drawn facing right: heading left it is mirrored, heading right it is left alone.
-    expect(GAG_SPECS.frog.faces).toBe('right');
-    expect(gagFlipped(GAG_SPECS.frog, -1)).toBe(true);
-    expect(gagFlipped(GAG_SPECS.frog, 1)).toBe(false);
+    // The frog is drawn facing left, so hopping left needs no mirror and hopping right does.
+    expect(GAG_SPECS.frog.faces).toBe('left');
+    expect(gagFlipped(GAG_SPECS.frog, -1)).toBe(false);
+    expect(gagFlipped(GAG_SPECS.frog, 1)).toBe(true);
+    // The mouse's art faces the other way, so it mirrors the other way round.
+    expect(GAG_SPECS.mouse.faces).toBe('right');
+    expect(gagFlipped(GAG_SPECS.mouse, -1)).toBe(true);
   });
 
   it('never mirrors a gag with no facing of its own', () => {

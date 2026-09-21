@@ -18,9 +18,9 @@ export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'socks', 'empty', 
 
 /**
  * How a gag leaves the kitchen once it has popped out of its cupboard. Each one goes the way
- * that thing would: the frog hops along the floor and out of the room, the mouse bolts past the
- * camera and off the bottom, the spider climbs the wall and off the top, the ball bounces away
- * to the left, the pots roll and the socks flop.
+ * that thing would: the frog hops along the floor and out of the room, the mouse tears round in
+ * a panicked circle and then bolts past the camera and off the bottom, the spider climbs the
+ * wall and off the top, the ball bounces away to the left, the pots roll and the socks flop.
  */
 export type GagExit = 'hop' | 'dash' | 'climb' | 'bounce' | 'roll' | 'flutter';
 
@@ -42,7 +42,8 @@ export interface GagSpec {
  * for the nearest door, and the rest clatter or flop onto the floor and go from there.
  */
 export const GAG_SPECS: Record<Gag, GagSpec> = {
-  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', faces: 'right', line: 'Whoa! A frog! How did you get in there?' },
+  // Drawn facing left: his tongue and his lean are to the left, so a leftward hop needs no mirror.
+  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', faces: 'left', line: 'Whoa! A frog! How did you get in there?' },
   pots: { key: 'gag_pots', exit: 'roll', sfx: 'locked', line: 'CLANG! Just a bunch of noisy pots.' },
   mouse: { key: 'gag_mouse', exit: 'dash', sfx: 'squeak', faces: 'right', line: 'Eek! A little mouse. Hi, mouse!' },
   socks: { key: 'gag_socks', exit: 'flutter', sfx: 'open', line: 'Socks? Who keeps socks in the kitchen?' },
