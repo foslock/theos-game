@@ -29,11 +29,29 @@ export const SHELVES = {
   left: 70,
   right: 570,
 };
-/** The box art's size, and how much bigger it is drawn: as big as the shelf spacing allows. */
+/** The box art's canvas, and how much bigger it is drawn: as big as the shelf spacing allows. */
 const BOX = { w: 64, h: 52 };
 const BOX_SCALE = 1.25;
-/** How far down each picture the box's bottom corner is: the closed one has clear rows under it. */
-const BOX_BASE: Record<string, number> = { box_closed: 49 / 52, box_open: 1 };
+/**
+ * Dad's boxes are not all the same box. Each one on the shelves is dealt one of these, so a wall
+ * of them has some variety without any being mirrored: a mirrored box is lit from the wrong
+ * side, and the light in this room comes from the left.
+ *
+ * `base` is how far down its picture the box's bottom corner sits, measured off the art, so
+ * every variant stands on the shelf rather than hovering over it or sinking into it. The open
+ * picture of a variant is the same box with its flaps folded out.
+ */
+interface BoxArt {
+  closed: string;
+  open: string;
+  base: { closed: number; open: number };
+}
+
+const BOX_ARTS: readonly BoxArt[] = [
+  { closed: 'box_closed', open: 'box_open', base: { closed: 49 / 52, open: 1 } },
+  { closed: 'box_closed_1', open: 'box_open_1', base: { closed: 45 / 52, open: 1 } },
+  { closed: 'box_closed_2', open: 'box_open_2', base: { closed: 45 / 52, open: 1 } },
+];
 /** The most room a box gets across a shelf. */
 const MAX_PITCH = 150;
 /** How long a mismatched pair stays showing before the boxes close. */
@@ -48,8 +66,8 @@ interface BoxView {
   image: Phaser.GameObjects.Image;
   item: Phaser.GameObjects.Image;
   rect: Phaser.Geom.Rectangle;
-  /** Drawn mirrored, so a row of boxes is not a row of identical boxes. */
-  mirrored: boolean;
+  /** Which of Dad's boxes this one is, closed and open. */
+  art: BoxArt;
 }
 
 interface MemoryData {
@@ -128,6 +146,12 @@ export class MemoryScene extends Phaser.Scene {
     showPanel(this, { title: 'Memory boxes', text: levelText(this.state), big: pairsText(this.state) });
   }
 
+  /** One of Dad's boxes, at random, but only the ones whose art is actually there. */
+  private pickArt(): BoxArt {
+    const drawn = BOX_ARTS.filter((a) => this.textures.exists(a.closed) && this.textures.exists(a.open));
+    return this.rng.pick(drawn.length ? drawn : BOX_ARTS);
+  }
+
   /** Lays the level's boxes out on the shelves, centred: fewer rows use the middle shelves. */
   private buildBoxes(): void {
     for (const v of this.views) {
@@ -145,15 +169,15 @@ export class MemoryScene extends Phaser.Scene {
       const bottom = SHELVES.y[firstShelf + box.row];
       const w = BOX.w * BOX_SCALE;
       const h = BOX.h * BOX_SCALE;
-      const mirrored = this.rng.next() < 0.5;
-      const image = this.add.image(cx, bottom, 'box_closed').setOrigin(0.5, BOX_BASE.box_closed).setScale(BOX_SCALE).setFlipX(mirrored).setDepth(10 + box.row);
+      const art = this.pickArt();
+      const image = this.add.image(cx, bottom, art.closed).setOrigin(0.5, art.base.closed).setScale(BOX_SCALE).setDepth(10 + box.row);
       const item = this.add
         .image(cx, bottom - h / 2 - 4, `mem_${box.item}`)
         .setScale(ITEM_SCALE)
         .setDepth(10 + box.row + 0.5)
         .setVisible(false);
       const rect = new Phaser.Geom.Rectangle(cx - w / 2, bottom - h, w, h);
-      this.views.push({ index, image, item, rect, mirrored });
+      this.views.push({ index, image, item, rect, art });
     });
     this.refresh();
   }
@@ -163,8 +187,7 @@ export class MemoryScene extends Phaser.Scene {
     for (const v of this.views) {
       const box = this.state.boxes[v.index];
       const open = box.state !== 'closed';
-      const key = open ? 'box_open' : 'box_closed';
-      v.image.setTexture(key).setOrigin(0.5, BOX_BASE[key]).setFlipX(v.mirrored);
+      v.image.setTexture(open ? v.art.open : v.art.closed).setOrigin(0.5, open ? v.art.base.open : v.art.base.closed);
       v.item.setVisible(open);
     }
   }
