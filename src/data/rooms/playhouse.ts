@@ -54,6 +54,14 @@ export const playhouse: Room = {
     // Lucy's tea set and the whole table top it stands on: the tea party game. The legs below
     // are scenery, and the floor between them is open, since a key hides there on some seeds.
     { kind: 'minigame', id: 'tea_set', game: 'tea', zone: { x: 65, y: 240, w: 150, h: 89 }, walkTo: { x: 150, y: 385 } },
+    // The sign hangs at (401, 174) turned -7 degrees; the zone is the box that turn puts it in.
+    {
+      kind: 'decoration',
+      id: 'playground_sign',
+      zone: { x: 353, y: 154, w: 96, h: 40 },
+      lines: ['I made that sign all by myself!', 'Dad let me use the big paints for it.', "That's how you spell playground. I checked."],
+      sfx: 'click',
+    },
     { kind: 'decoration', id: 'window', zone: { x: 30, y: 120, w: 130, h: 110 }, lines: ['I can see the whole yard from here.', 'The trees are waving at us.', 'Sometimes a bird lands right there.'], sfx: 'click' },
     { kind: 'decoration', id: 'teddy', zone: { x: 220, y: 215, w: 60, h: 105 }, lines: ['Hi, Mr. Bear!', 'Mr. Bear is very good at waiting.', 'He needs a hug.'], sfx: 'squeak' },
   ],

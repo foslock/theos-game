@@ -66,3 +66,35 @@ describe('the playhouse table', () => {
     expect(pick(placed.hotspots, z.x + z.w / 2, z.y + z.h / 2)?.id).toBe('garage_key');
   });
 });
+
+describe('the playground sign', () => {
+  const sign = room.hotspots.find((h) => h.id === 'playground_sign')!;
+  const prop = room.ambient!.find((a) => a.kind === 'prop')!;
+
+  it('can be clicked, and says three things', () => {
+    expect(sign.kind).toBe('decoration');
+    const lines = (sign.kind === 'decoration' && sign.lines) || [];
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe('I made that sign all by myself!');
+    expect(new Set(lines).size).toBe(3);
+  });
+
+  it('sits over the art it is standing in for', () => {
+    // The zone is the box the -7 degree turn puts the 96x32 plank in, centred on where it hangs.
+    const at = prop.kind === 'prop' ? prop.at : { x: 0, y: 0 };
+    expect(Math.round(sign.zone.x + sign.zone.w / 2)).toBe(at.x);
+    expect(Math.round(sign.zone.y + sign.zone.h / 2)).toBe(at.y);
+    for (const [x, y] of [
+      [sign.zone.x + 2, sign.zone.y + 2],
+      [at.x, at.y],
+      [sign.zone.x + sign.zone.w - 2, sign.zone.y + sign.zone.h - 2],
+    ]) {
+      expect(pick(room.hotspots, x, y)?.id, `sign at ${x},${y}`).toBe('playground_sign');
+    }
+  });
+
+  it('keeps clear of the door below it', () => {
+    const door = room.exits.find((e) => e.to === 'playground')!;
+    expect(sign.zone.y + sign.zone.h).toBeLessThan(door.zone.y);
+  });
+});
