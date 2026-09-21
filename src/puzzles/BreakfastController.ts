@@ -6,7 +6,7 @@ import { addItem, FLAGS, isPickedUp, markPickedUp, removeItem, setFlag } from '.
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
-import { BREAKFAST_ITEMS, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type BreakfastState } from './breakfast';
+import { BREAKFAST_ITEMS, fillMissingContainers, gagFlipped, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type BreakfastState } from './breakfast';
 import { GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import type { GameScene } from '../scenes/GameScene';
 
@@ -58,6 +58,12 @@ export class BreakfastController {
     if (!st) {
       store.update((s) => {
         s.puzzles.breakfast = generateBreakfast(new Rng(s.seed).fork('breakfast'), kitchenContainers);
+      });
+      st = store.get().puzzles.breakfast!;
+    } else if (kitchenContainers.some((c) => !st!.placements[c.id])) {
+      // A save written before a cupboard was added to the room: give the new one something.
+      store.update((s) => {
+        fillMissingContainers(s.puzzles.breakfast!, new Rng(s.seed).fork('breakfast:added'), kitchenContainers);
       });
       st = store.get().puzzles.breakfast!;
     }

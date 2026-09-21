@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBreakfast, BREAKFAST_ITEMS, GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
+import { generateBreakfast, BREAKFAST_ITEMS, fillMissingContainers, GAGS, GAG_SPECS, gagFlipped, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
 import { pick } from '../src/systems/Hitbox';
 import { Rng } from '../src/systems/Rng';
@@ -101,9 +101,9 @@ describe('the kitchen units answer over their whole fronts', () => {
    */
   const LEFT_COLUMN_X = 155;
   const FRONTS = [
-    { name: 'top', from: 194, to: 216 },
-    { name: 'middle', from: 218, to: 242 },
-    { name: 'bottom', from: 244, to: 267 },
+    { name: 'top', from: 196, to: 215 },
+    { name: 'middle', from: 220, to: 241 },
+    { name: 'bottom', from: 246, to: 266 },
   ];
 
   it('gives every row of every drawer front a container to open', () => {
@@ -115,8 +115,34 @@ describe('the kitchen units answer over their whole fronts', () => {
     }
   });
 
+  it('gives each of the three fronts a drawer of its own', () => {
+    const ids = FRONTS.map((f) => pick(kitchenContainers, LEFT_COLUMN_X, Math.round((f.from + f.to) / 2))?.id);
+    expect(new Set(ids).size).toBe(3);
+    expect(ids).not.toContain(undefined);
+  });
+
   it('keeps the bottom front out of the floor below it', () => {
     // Well under the units is nobody's business.
     expect(pick(kitchenContainers, LEFT_COLUMN_X, 300)).toBeUndefined();
+  });
+});
+
+describe('a cupboard added after the save was written', () => {
+  it('is given something rather than staying empty for good', () => {
+    const st = generateBreakfast(new Rng(7), kitchenContainers);
+    const added = [...kitchenContainers, { id: 'drawer_9', category: 'drawer' as const }];
+    expect(fillMissingContainers(st, new Rng(7), added)).toBe(true);
+    expect(st.placements.drawer_9).toEqual({ type: 'decoy', gag: expect.any(String) });
+    // The cupboards that were already there keep whatever was in them.
+    const again = JSON.parse(JSON.stringify(st.placements));
+    expect(fillMissingContainers(st, new Rng(7), added)).toBe(false);
+    expect(st.placements).toEqual(again);
+  });
+
+  it('never turns a breakfast item into a gag', () => {
+    const st = generateBreakfast(new Rng(11), kitchenContainers);
+    const items = Object.entries(st.placements).filter(([, c]) => c.type === 'item');
+    fillMissingContainers(st, new Rng(11), [...kitchenContainers, { id: 'drawer_9', category: 'drawer' as const }]);
+    for (const [id, content] of items) expect(st.placements[id]).toEqual(content);
   });
 });

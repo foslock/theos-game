@@ -93,6 +93,21 @@ export function generateBreakfast(rng: Rng, containers: readonly ContainerSpec[]
   return { placements, opened: [], delivered: false };
 }
 
+/**
+ * Gives a gag to any container that has been added to the room since the layout was written, so
+ * a cupboard added in a later version is not silently empty in an old save. Returns whether
+ * anything was filled in, so the caller knows to save.
+ */
+export function fillMissingContainers(state: BreakfastState, rng: Rng, containers: readonly ContainerSpec[]): boolean {
+  const missing = containers.filter((c) => !state.placements[c.id]);
+  if (!missing.length) return false;
+  const pool = rng.shuffle(GAGS);
+  missing.forEach((c, i) => {
+    state.placements[c.id] = { type: 'decoy', gag: pool[i % pool.length] };
+  });
+  return true;
+}
+
 export function missingBreakfastItems(state: GameState): ItemId[] {
   return BREAKFAST_ITEMS.filter((id) => !hasItem(state, id));
 }

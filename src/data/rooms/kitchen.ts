@@ -3,9 +3,9 @@ import type { Room, ContainerHotspot } from './types';
 // He stands well below the counter so his head clears the lowest drawers and cupboard door.
 export const kitchenContainers: ContainerHotspot[] = [
   { kind: 'container', id: 'drawer_1', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 195, w: 46, h: 22 }, walkTo: { x: 155, y: 372 } },
-  // The art draws three drawer fronts in this column; this one covers the lower two, down to the
-  // bottom front's edge at y 268, so the whole of it answers rather than just the top half.
-  { kind: 'container', id: 'drawer_2', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 222, w: 46, h: 46 }, walkTo: { x: 155, y: 372 } },
+  { kind: 'container', id: 'drawer_2', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 219, w: 46, h: 23 }, walkTo: { x: 155, y: 372 } },
+  // The third front in the left column, measured off the art: its edges are y 243 and y 268.
+  { kind: 'container', id: 'drawer_4', label: 'Drawer', category: 'drawer', zone: { x: 132, y: 245, w: 46, h: 22 }, walkTo: { x: 155, y: 372 } },
   { kind: 'container', id: 'drawer_3', label: 'Drawer', category: 'drawer', zone: { x: 188, y: 195, w: 46, h: 22 }, walkTo: { x: 211, y: 372 } },
   { kind: 'container', id: 'cabinet_1', label: 'Cabinet', category: 'cabinet', zone: { x: 58, y: 22, w: 62, h: 62 }, walkTo: { x: 90, y: 372 } },
   { kind: 'container', id: 'cabinet_2', label: 'Cabinet', category: 'cabinet', zone: { x: 140, y: 22, w: 92, h: 100 }, walkTo: { x: 186, y: 372 } },
