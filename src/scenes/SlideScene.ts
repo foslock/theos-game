@@ -80,6 +80,8 @@ export class SlideScene extends Phaser.Scene {
   private placeholderBackdrop = true;
   /** Set while the riders run out to the end of the slide: the ride is over but the slide still moves. */
   private finishing = false;
+  /** Set once the scene has shut down, so anything waiting on a line knows not to go on with the ride. */
+  private gone = false;
 
   constructor() {
     super('Slide');
@@ -95,6 +97,7 @@ export class SlideScene extends Phaser.Scene {
     this.running = false;
     this.finishing = false;
     this.shaking = false;
+    this.gone = false;
     playMusic('minigame');
     setCursor(this, 'wait');
     this.dialogue = new Dialogue(this);
@@ -127,6 +130,7 @@ export class SlideScene extends Phaser.Scene {
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.updateCursor(p));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.gone = true;
       this.dialogue.clear();
       this.fade.destroy();
       this.ambience?.destroy();
@@ -143,7 +147,7 @@ export class SlideScene extends Phaser.Scene {
     // before anything moves; the steering tip then rides along with them.
     const again = this.attempt === 0 && getFlag(store.get(), FLAGS.slideDone) ? recallLine(store.get(), 'slide') : null;
     if (again) await this.sayLucy(again);
-    if (!this.scene.isActive()) return;
+    if (this.gone) return;
     const tip = this.attempt === 0 ? `${pointerVerb()} left or right to steer! Watch out for leaves and mud.` : 'Ready? Here we go!';
     void this.sayLucy(tip, INTRO_HOLD_MS);
     this.running = true;
