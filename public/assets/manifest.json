@@ -180,6 +180,15 @@
       ],
       "_note": "the foam rocket, upright, drawn on the tube and flown; the backpack icon is scaled up if this is missing"
     },
+    "sky_kite": {
+      "file": "ambient/sky_kite.png",
+      "status": "pixellab",
+      "size": [
+        32,
+        40
+      ],
+      "_note": "stomp rocket flight: drifts across at 50 m, the first thing the rocket passes"
+    },
     "sky_plane": {
       "file": "ambient/sky_plane.png",
       "status": "pixellab",

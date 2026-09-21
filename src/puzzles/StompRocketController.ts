@@ -8,7 +8,7 @@ import { playMusic } from '../systems/Music';
 import { pointerVerb } from '../ui/text';
 import { showPanel } from '../ui/MinigamePanel';
 import type { GameScene } from '../scenes/GameScene';
-import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, SIGHTS, skySpots, type Sight } from './rocket';
+import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, SIGHTS, sightFlipped, skySpots, type Sight } from './rocket';
 import { beatLine, recallLine, recordResult } from './records';
 
 /** Where the launcher stands on the lawn (its feet), and its parts in scene pixels. */
@@ -238,9 +238,9 @@ export class StompRocketController {
         const margin = Math.min(img.width / 2 + 40, GAME_WIDTH / 2 - 8);
         img.x = rng.int(margin, GAME_WIDTH - margin);
       } else {
-        // Crosses: comes in off one edge, facing the way it is going.
+        // Crosses: comes in off one edge, mirrored if the art is not drawn facing that way.
         img.x = fromLeft ? -img.width : GAME_WIDTH + img.width;
-        img.setFlipX(!fromLeft);
+        img.setFlipX(sightFlipped(sight, fromLeft ? 1 : -1));
       }
       let light: Phaser.GameObjects.Rectangle | undefined;
       if (sight.light) {

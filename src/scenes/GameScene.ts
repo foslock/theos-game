@@ -50,7 +50,7 @@ import { BasketballController } from '../puzzles/BasketballController';
 import { StompRocketController } from '../puzzles/StompRocketController';
 import { BALLS_NEEDED } from '../puzzles/basketball';
 import { endingTriggers } from '../puzzles/ending';
-import { afterGameLine } from '../puzzles/progress';
+import { afterGameLine, gameDoneById } from '../puzzles/progress';
 import { placeRoom } from '../puzzles/spots';
 import { TRACK } from '../data/rooms/bedroom';
 
@@ -572,7 +572,8 @@ export class GameScene extends Phaser.Scene {
         this.addTarget(h.id, h, () => 'talk', () => void this.interact(h.walkTo, () => this.talk(h.id)));
         break;
       case 'minigame':
-        this.addTarget(h.id, h, () => 'play', () => void this.interact(h.walkTo, () => this.startMinigame(h)));
+        // Gold star for a game still to be won, white for one that has been.
+        this.addTarget(h.id, h, () => (gameDoneById(store.get(), h.game) ? 'play_done' : 'play'), () => void this.interact(h.walkTo, () => this.startMinigame(h)));
         break;
     }
   }

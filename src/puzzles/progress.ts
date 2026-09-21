@@ -64,6 +64,12 @@ export function gameDone(state: GameState, game: MiniGame): boolean {
   return getFlag(state, game.flag);
 }
 
+/** Whether the game a hotspot starts has already been won. */
+export function gameDoneById(state: GameState, id: MiniGame['id']): boolean {
+  const game = MINIGAMES.find((g) => g.id === id);
+  return !!game && gameDone(state, game);
+}
+
 export function allGamesDone(state: GameState): boolean {
   return MINIGAMES.every((g) => gameDone(state, g));
 }

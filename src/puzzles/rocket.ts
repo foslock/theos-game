@@ -79,13 +79,25 @@ export interface Sight {
   drift: number;
   /** How far it bobs up and down as it goes, in pixels. */
   bob?: number;
+  /**
+   * Which way the art is drawn, so it can be mirrored to face the way it is going. A sight
+   * without one is symmetrical (or hangs still) and is never mirrored.
+   */
+  faces?: 'left' | 'right';
   /** A little red light that blinks above it, drawn in code. */
   light?: boolean;
 }
 
+/** Whether a sight's art has to be mirrored to face the way it is travelling. */
+export function sightFlipped(sight: Sight, vx: number): boolean {
+  if (!sight.faces || vx === 0) return false;
+  return (vx > 0) !== (sight.faces === 'right');
+}
+
 export const SIGHTS: readonly Sight[] = [
-  { key: 'sky_kite', metres: 50, drift: 14, bob: 5 },
-  { key: 'sky_plane', metres: 100, drift: 70 },
+  // The kite's tail and the plane's nose are both drawn to the left; the saucer is symmetrical.
+  { key: 'sky_kite', metres: 50, drift: 14, bob: 5, faces: 'left' },
+  { key: 'sky_plane', metres: 100, drift: 70, faces: 'left' },
   { key: 'sky_satellite', metres: 150, drift: 0, light: true },
   { key: 'sky_ufo', metres: 200, drift: 45, bob: 6 },
   { key: 'sky_moon', metres: 250, drift: 0 },

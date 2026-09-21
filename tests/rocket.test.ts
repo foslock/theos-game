@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, METERS_PER_CLICK, resultLine, SIGHTS, skySpots } from '../src/puzzles/rocket';
+import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, METERS_PER_CLICK, resultLine, SIGHTS, sightFlipped, skySpots } from '../src/puzzles/rocket';
 import { Rng } from '../src/systems/Rng';
 
 describe('winding up', () => {
@@ -85,5 +85,36 @@ describe('things to spot on the way up', () => {
     // The lines keep up with the sights: past the moon is not still "almost outer space".
     expect(resultLine(320)).not.toBe(resultLine(220));
     expect(resultLine(420)).not.toBe(resultLine(320));
+  });
+});
+
+describe('which way a sight faces', () => {
+  const plane = SIGHTS.find((s) => s.key === 'sky_plane')!;
+
+  it('mirrors art drawn the wrong way round, so nothing flies backwards', () => {
+    // The plane is drawn nose-left: going left it is left alone, going right it is mirrored.
+    expect(plane.faces).toBe('left');
+    expect(sightFlipped(plane, -70)).toBe(false);
+    expect(sightFlipped(plane, 70)).toBe(true);
+  });
+
+  it('leaves art drawn nose-right alone when it goes right', () => {
+    const facing = { key: 'x', metres: 100, drift: 70, faces: 'right' } as const;
+    expect(sightFlipped(facing, 70)).toBe(false);
+    expect(sightFlipped(facing, -70)).toBe(true);
+  });
+
+  it('never mirrors a symmetrical sight or one that hangs still', () => {
+    const symmetric = { key: 'x', metres: 100, drift: 45 };
+    expect(sightFlipped(symmetric, 45)).toBe(false);
+    expect(sightFlipped(symmetric, -45)).toBe(false);
+    expect(sightFlipped(plane, 0)).toBe(false);
+  });
+
+  it('gives every sight that crosses the sky a facing, or none if it is symmetrical', () => {
+    for (const s of SIGHTS) {
+      if (s.faces) expect(['left', 'right']).toContain(s.faces);
+      if (s.drift === 0) expect(s.faces).toBeUndefined();
+    }
   });
 });

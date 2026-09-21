@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 import type { Direction } from '../data/rooms';
 
-export type CursorKind = 'default' | 'ball' | 'rocket' | 'teapot' | 'grab' | 'look' | 'talk' | 'wait' | 'play' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
+export type CursorKind = 'default' | 'ball' | 'rocket' | 'teapot' | 'grab' | 'look' | 'talk' | 'wait' | 'play' | 'play_done' | `arrow_${Direction}` | `arrow_${Direction}_locked`;
 
 const cache = new Map<CursorKind, string>();
 
@@ -137,8 +137,11 @@ function drawGrab(ctx: CanvasRenderingContext2D): void {
   ctx.stroke();
 }
 
-/** Yellow five-point star for the things that start a mini-game: the same sparkle the hint glints use. */
-function drawPlay(ctx: CanvasRenderingContext2D): void {
+/**
+ * Five-point star for the things that start a mini-game: gold, the same sparkle the hint glints
+ * use, and white once that game has been won, so a glance at the cursor says what is left to do.
+ */
+function drawPlay(ctx: CanvasRenderingContext2D, done: boolean): void {
   const cx = 12;
   const cy = 12;
   const outer = 11;
@@ -153,16 +156,23 @@ function drawPlay(ctx: CanvasRenderingContext2D): void {
     else ctx.lineTo(x, y);
   }
   ctx.closePath();
-  ctx.fillStyle = '#ffd43a';
+  ctx.fillStyle = done ? '#ffffff' : '#ffd43a';
   ctx.fill();
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#000';
   ctx.lineJoin = 'round';
   ctx.stroke();
-  // a glint on the upper-left arm
-  ctx.fillStyle = '#fff8c8';
-  ctx.fillRect(9, 7, 2, 2);
-  ctx.fillRect(8, 9, 2, 1);
+  if (done) {
+    // A white star has no room for a highlight, so it takes a shade on the lower-right arm instead.
+    ctx.fillStyle = '#c3cbd8';
+    ctx.fillRect(13, 14, 2, 2);
+    ctx.fillRect(14, 16, 2, 1);
+  } else {
+    // a glint on the upper-left arm
+    ctx.fillStyle = '#fff8c8';
+    ctx.fillRect(9, 7, 2, 2);
+    ctx.fillRect(8, 9, 2, 1);
+  }
 }
 
 /** The stomp rocket, nose up: shown while the player is pumping it. */
@@ -294,7 +304,7 @@ function cursorCss(kind: CursorKind): string {
     else if (kind === 'talk') drawTalk(ctx);
     else if (kind === 'wait') drawWait(ctx);
     else if (kind === 'grab') drawGrab(ctx);
-    else if (kind === 'play') drawPlay(ctx);
+    else if (kind === 'play' || kind === 'play_done') drawPlay(ctx, kind === 'play_done');
     else {
       const m = /^arrow_(up|down|left|right)(_locked)?$/.exec(kind)!;
       drawArrow(ctx, m[1] as Direction, !!m[2]);

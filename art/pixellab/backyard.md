@@ -53,3 +53,15 @@ a second render. Cost: 40 generations.
   saucer 9, moon 6): the plane crosses at 100 m, the satellite hangs at 150 m with a red light
   blinking in code, the saucer wobbles across at 200 m, the moon hangs at 250 m. Only the ones
   below the flight's peak are placed.
+- 2026-09-20: one sight at **every fifty metres**, so pumping harder always shows something new.
+  `SIGHTS` in `src/puzzles/rocket.ts` is the list: each has a drift (0 hangs still and is placed
+  anywhere across the sky), an optional bob, an optional blinking light, and a `faces` saying
+  which way the art is drawn so a crossing sight is mirrored to fly nose-first. The plane's nose
+  and the kite's tail are both drawn to the left; the saucer is symmetrical and never mirrors.
+  - `sky_kite.png` 32x40 (seed 141, candidate 12): drifts across at 50 m, the first thing the
+    rocket passes. A kite whose tail trails to the right, so it faces left.
+  - Still to draw: `sky_comet` (300 m), `sky_astronaut` (350 m), `sky_planet` (400 m). Set each
+    one's `faces` when it lands, or leave it off if the art is symmetrical.
+  - The 64-candidate batch a call returns is **overwritten** by a re-run with the same seed and
+    does not reproduce, so a batch worth picking from goes in its own `raw/<name>_batch/` folder
+    before anything else is generated.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { afterGameLine, allGamesDone, HOME_NOW, HOME_SOON, lucyNextLine, MINIGAMES, nextGame } from '../src/puzzles/progress';
+import { afterGameLine, allGamesDone, gameDoneById, HOME_NOW, HOME_SOON, lucyNextLine, MINIGAMES, nextGame } from '../src/puzzles/progress';
 import { addItem, newGameState, setFlag } from '../src/state/GameState';
 
 describe('what to play next', () => {
@@ -45,5 +45,24 @@ describe('what to play next', () => {
     expect(afterGameLine(s)).toMatch(/garage/);
     addItem(s, 'stomp_rocket');
     expect(afterGameLine(s)).not.toMatch(/garage/);
+  });
+});
+
+describe('whether the game behind a hotspot is already won', () => {
+  it('is false until that game\'s flag is set, and only for that game', () => {
+    const s = newGameState(1);
+    for (const g of MINIGAMES) expect(gameDoneById(s, g.id)).toBe(false);
+    setFlag(s, MINIGAMES[0].flag);
+    expect(gameDoneById(s, MINIGAMES[0].id)).toBe(true);
+    for (const g of MINIGAMES.slice(1)) expect(gameDoneById(s, g.id)).toBe(false);
+  });
+
+  it('covers every game a hotspot can name', () => {
+    const s = newGameState(1);
+    for (const g of MINIGAMES) setFlag(s, g.flag);
+    // The hotspot type's union and the nudging list have to stay in step.
+    for (const id of ['basketball', 'slide', 'rocket', 'race', 'memory', 'tea'] as const) {
+      expect(gameDoneById(s, id)).toBe(true);
+    }
   });
 });
