@@ -59,7 +59,7 @@ const MISMATCH_MS = 900;
 /** Pause after a level is cleared before the next one is dealt. */
 const LEVEL_DONE_MS = 1400;
 /** How much bigger the things in the boxes are drawn than their 24px icons. */
-const ITEM_SCALE = 1.8;
+const ITEM_SCALE = 2.7;
 
 interface BoxView {
   index: number;
