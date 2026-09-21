@@ -3,6 +3,7 @@ import type { Pt } from '../data/rooms';
 import { FLAGS, getFlag, itemCount, removeItem, setFlag } from '../state/GameState';
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
+import { beatLine, recallLine, recordResult } from './records';
 import { playSfx } from '../systems/Sfx';
 import { playMusic } from '../systems/Music';
 import { FONT, pointerVerb } from '../ui/text';
@@ -88,7 +89,12 @@ export class BasketballController {
       else await this.scene.sayTheo(`I've got ${n === 1 ? 'one basketball' : 'two basketballs'}, but I need three.`);
       return;
     }
-    if (replay) await this.scene.sayLucy('Basketball again? Yay!');
+    if (replay) {
+      await this.scene.sayLucy('Basketball again? Yay!');
+      // The shots to beat, named before the first wind-up.
+      const best = recallLine(state, 'basketball');
+      if (best) await this.scene.sayLucy(best);
+    }
     await this.start(replay);
   }
 
@@ -253,21 +259,26 @@ export class BasketballController {
 
   private async win(): Promise<void> {
     const replay = this.replay;
-    if (!replay) {
-      store.update((s) => {
+    const shots = this.game?.shots ?? 0;
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      if (!replay) {
         removeItem(s, 'basketball', itemCount(s, 'basketball'));
         setFlag(s, FLAGS.basketballDone);
-      });
-    }
+      }
+      result = recordResult(s, 'basketball', shots);
+    });
     playSfx('success');
     this.scene.lucy?.celebrate();
     this.stop();
+    const brag = beatLine('basketball', result, shots);
     if (replay) {
-      await this.scene.sayLucy('Every hoop again! You are so good at this!');
+      await this.scene.sayLucy(brag ?? 'Every hoop again! You are so good at this!');
       await this.scene.sayTheo(`${pointerVerb()} a hoop whenever you want another game.`);
       return;
     }
     await this.scene.sayLucy('Yay! You got every hoop!');
+    if (brag) await this.scene.sayLucy(brag);
     await this.scene.sayTheo('That was fun! We can play here again any time.');
     await this.scene.sayWhatsNext();
   }

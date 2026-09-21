@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { FADE_MS, GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import { FLAGS, setFlag } from '../state/GameState';
 import { store } from '../state/Store';
+import { beatLine, recallLine, recordResult } from '../puzzles/records';
 import { Dialogue } from '../systems/Dialogue';
 import { Ambience } from '../systems/Ambience';
 import { DitherFade } from '../systems/DitherFade';
@@ -78,6 +79,8 @@ interface TeaData {
 export class TeaScene extends Phaser.Scene {
   private state!: TeaState;
   private rng!: Rng;
+  /** Levels spilled this game: what the record counts. */
+  private spills = 0;
   private pots: PotView[] = [];
   private cups: CupView[] = [];
   private stream!: Phaser.GameObjects.Graphics;
@@ -98,6 +101,7 @@ export class TeaScene extends Phaser.Scene {
 
   create(data: TeaData = {}): void {
     this.rng = new Rng(store.get().seed).fork(`tea:${randomSeed()}`);
+    this.spills = 0;
     this.state = newTea(this.rng);
     this.pots = [];
     this.cups = [];
@@ -138,6 +142,10 @@ export class TeaScene extends Phaser.Scene {
     this.renderPanel();
     if (!again) {
       await this.dialogue.sayOffscreen('Tea time! Fill every cup right up to its number. The big pot pours three, the little pot pours two!', { fill: 0xffe3f0, voice: 'lucy' });
+    } else {
+      // Lucy names the spills to beat before the first pour.
+      const best = recallLine(store.get(), 'tea');
+      if (best) await this.dialogue.sayOffscreen(best, { fill: 0xffe3f0, voice: 'lucy' });
     }
     this.running = true;
     this.updateCursor(this.input.activePointer);
@@ -379,6 +387,7 @@ export class TeaScene extends Phaser.Scene {
   /** Tea over the brim (or a cup that can never be finished): a word from Theo and the level over again. */
   private async spill(cup: CupView, why: 'overflow' | 'short'): Promise<void> {
     playSfx('locked');
+    this.spills++;
     if (why === 'overflow') {
       // A puddle spreads on the table under the cup.
       const puddle = this.add.graphics().setDepth(19);
@@ -408,9 +417,16 @@ export class TeaScene extends Phaser.Scene {
     this.running = false;
     setCursor(this, 'wait');
     playSfx('success');
-    store.update((s) => setFlag(s, FLAGS.teaDone));
+    const spills = this.spills;
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      setFlag(s, FLAGS.teaDone);
+      result = recordResult(s, 'tea', spills);
+    });
     showPanel(this, { title: 'Tea party', big: 'Every cup full!' });
     await this.dialogue.sayOffscreen('A perfect tea party! Thank you, Theo!', { fill: 0xffe3f0, voice: 'lucy' });
+    const brag = beatLine('tea', result, spills);
+    if (brag) await this.dialogue.sayOffscreen(brag, { fill: 0xffe3f0, voice: 'lucy' });
     await this.leave(true);
   }
 

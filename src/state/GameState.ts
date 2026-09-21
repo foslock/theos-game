@@ -2,6 +2,7 @@ import { ITEMS, type ItemId } from '../data/items';
 import type { RoomId } from '../data/rooms/types';
 import { MAX_INVENTORY_SLOTS, SAVE_VERSION } from '../config';
 import type { BreakfastState } from '../puzzles/breakfast';
+import type { RecordId } from '../puzzles/records';
 
 export interface InventoryEntry {
   item: ItemId;
@@ -23,6 +24,8 @@ export interface GameState {
   puzzles: {
     breakfast?: BreakfastState;
   };
+  /** Each mini-game's personal best, once it has been won at least once. */
+  records: Partial<Record<RecordId, number>>;
   savedAt: string;
 }
 
@@ -58,6 +61,7 @@ export function newGameState(seed: number): GameState {
     pickedUp: [],
     unlocked: [],
     puzzles: {},
+    records: {},
     savedAt: new Date().toISOString(),
   };
 }

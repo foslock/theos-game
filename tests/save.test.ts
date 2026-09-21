@@ -14,6 +14,7 @@ describe('save round trip', () => {
     setFlag(s, 'hasBackpack');
     markPickedUp(s, 'kitchen', 'drawer_1');
     s.puzzles.breakfast = { placements: { drawer_1: { type: 'item', item: 'spoon' } }, opened: ['drawer_1'], delivered: false };
+    s.records = { rocket: 216, slide: 0, race: 18.4 };
     const back = parseSave(serialize(s));
     const { savedAt: _a, ...expected } = s;
     const { savedAt: _b, ...actual } = back;
@@ -41,9 +42,16 @@ describe('save round trip', () => {
     expect(fresh.pickedUp).toEqual([]);
   });
 
+  it('keeps only real numbers among the records', () => {
+    const s = parseSave('{"seed":5,"currentRoom":"garage","inventory":[],"flags":{},"records":{"rocket":216,"slide":"lots","race":null}}');
+    expect(s.records).toEqual({ rocket: 216 });
+  });
+
   it('fills defaults for a minimal older save', () => {
     const s = parseSave('{"seed":5,"currentRoom":"garage","inventory":[],"flags":{}}');
     expect(s.version).toBe(1);
+    // A save from before the games kept records simply has none.
+    expect(s.records).toEqual({});
     expect(s.previousRoom).toBeNull();
     expect(s.pickedUp).toEqual([]);
     expect(s.lucyJoined).toBe(false);

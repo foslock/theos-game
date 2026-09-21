@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, METERS_PER_CLICK, resultLine, skySpots } from '../src/puzzles/rocket';
+import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, METERS_PER_CLICK, resultLine, SIGHTS, skySpots } from '../src/puzzles/rocket';
 import { Rng } from '../src/systems/Rng';
 
 describe('winding up', () => {
@@ -64,5 +64,26 @@ describe('what Theo says', () => {
     expect(resultLine(0)).toMatch(/click/);
     expect(resultLine(108)).toMatch(/108/);
     expect(resultLine(270)).toMatch(/270/);
+  });
+});
+
+describe('things to spot on the way up', () => {
+  it('hangs one at every fifty metres, with no gaps and none of them doubled up', () => {
+    const metres = SIGHTS.map((s) => s.metres);
+    expect(metres).toEqual([50, 100, 150, 200, 250, 300, 350, 400]);
+    expect(new Set(SIGHTS.map((s) => s.key)).size).toBe(SIGHTS.length);
+  });
+
+  it('puts the first one within reach of a gentle pump', () => {
+    // Someone managing only a click and a bit a second over the five seconds still meets the kite.
+    expect(SIGHTS[0].metres).toBeLessThanOrEqual(heightFor(1.2 * CHARGE_SECONDS));
+    for (const s of SIGHTS) expect(s.drift).toBeGreaterThanOrEqual(0);
+  });
+
+  it('has something to say about every height a rocket can reach', () => {
+    for (const h of [0, 9, 89, 90, 199, 250, 299, 399, 450]) expect(resultLine(h).length).toBeGreaterThan(0);
+    // The lines keep up with the sights: past the moon is not still "almost outer space".
+    expect(resultLine(320)).not.toBe(resultLine(220));
+    expect(resultLine(420)).not.toBe(resultLine(320));
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { Rng } from '../src/systems/Rng';
 import {
   BOOSTER_S,
   clickBooster,
@@ -11,7 +12,9 @@ import {
   newRace,
   pose,
   RACE,
+  START_JITTER,
   START_S,
+  startAt,
   step,
   TRACK,
   type RaceEvent,
@@ -63,6 +66,46 @@ describe('the track', () => {
       const b = pose(s + LAP_LENGTH);
       expect(b.x).toBeCloseTo(a.x, 6);
       expect(b.y).toBeCloseTo(a.y, 6);
+    }
+  });
+});
+
+describe('where the car is parked', () => {
+  const starts = [-START_JITTER, -7, 0, 7, START_JITTER].map((d) => START_S + d);
+
+  it('is always on the near straight with the booster still ahead of it', () => {
+    for (const s of starts) {
+      const p = pose(s);
+      expect(p.y).toBe(TRACK.straight.bottom);
+      expect(p.inLoop).toBe(false);
+      expect(BOOSTER_S.from).toBeGreaterThan(s);
+    }
+  });
+
+  it('is drawn from the seed, within the jitter, and is the same for the same seed', () => {
+    for (let seed = 1; seed < 60; seed++) {
+      const s = startAt(new Rng(seed).fork('race'));
+      expect(Math.abs(s - START_S)).toBeLessThanOrEqual(START_JITTER);
+      expect(startAt(new Rng(seed).fork('race'))).toBe(s);
+    }
+  });
+
+  it('does not move: the same seed twice gives the same spot, and different seeds do vary', () => {
+    const spots = new Set<number>();
+    for (let seed = 1; seed < 60; seed++) spots.add(startAt(new Rng(seed).fork('race')));
+    expect(spots.size).toBeGreaterThan(5);
+  });
+
+  it('is winnable from anywhere in the jitter', () => {
+    for (const start of starts) {
+      const r = newRace(start);
+      const events = run(r, 60, (r) => {
+        if (r.v >= 0 && r.v < 150 && !inLoop(r.s)) clickCar(r);
+        const toBooster = BOOSTER_S.from - r.s;
+        if (toBooster > 0 && toBooster < 120 && r.boosterLeft === 0) clickBooster(r);
+      });
+      expect(events).toContain('win');
+      expect(r.won).toBe(true);
     }
   });
 });

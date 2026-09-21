@@ -1,3 +1,4 @@
+import type Phaser from 'phaser';
 import { kitchenContainers } from '../data/rooms/kitchen';
 import type { ContainerHotspot } from '../data/rooms';
 import { ITEMS } from '../data/items';
@@ -5,8 +6,25 @@ import { addItem, FLAGS, isPickedUp, markPickedUp, removeItem, setFlag } from '.
 import { store } from '../state/Store';
 import { Rng } from '../systems/Rng';
 import { playSfx } from '../systems/Sfx';
-import { BREAKFAST_ITEMS, gagLine, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type BreakfastState } from './breakfast';
+import { BREAKFAST_ITEMS, gagLine, GAG_SPECS, generateBreakfast, hasAllBreakfastItems, lucyRequestLine, missingBreakfastItems, type Gag, type GagExit, type BreakfastState } from './breakfast';
+import { GAME_WIDTH } from '../config';
 import type { GameScene } from '../scenes/GameScene';
+
+/** The kitchen floor in front of the units: where something that jumps out lands. */
+const GAG_FLOOR = 372;
+/** Over the room but under the speech bubbles. */
+const GAG_DEPTH = 880;
+/**
+ * The run for the door, by what popped out: how long it takes to cross the kitchen, how high it
+ * hops on the way (a scurry barely leaves the floor) and how much it spins doing it.
+ */
+const GAG_TRAVEL: Record<GagExit, { ms: number; hop: number; spin: number }> = {
+  hop: { ms: 1100, hop: 30, spin: 0 },
+  scurry: { ms: 700, hop: 3, spin: 0 },
+  bounce: { ms: 1000, hop: 22, spin: 360 },
+  roll: { ms: 1200, hop: 0, spin: 540 },
+  flutter: { ms: 900, hop: 4, spin: 0 },
+};
 
 /** Where the empty bowl and spoon sit on the kitchen table once Lucy has eaten (icon centres). */
 const TABLE_SETTING = { bowl: { x: 484, y: 221 }, spoon: { x: 506, y: 221 } };
@@ -78,11 +96,48 @@ export class BreakfastController {
         await this.deliver();
       }
     } else if (content?.type === 'decoy' && firstTime) {
-      playSfx('boing');
+      playSfx(GAG_SPECS[content.gag].sfx);
+      // It bolts for the door while Theo is still talking about it.
+      void this.runGag(content.gag, c.zone.x + c.zone.w / 2, c.zone.y + c.zone.h / 2);
       await this.scene.sayTheo(gagLine(content.gag));
     } else {
       await this.scene.sayTheo('Nothing else in there.');
     }
+  }
+
+  /**
+   * What was in the cupboard pops out, drops to the floor and leaves the kitchen the way its
+   * kind does. A gag with no art (or none drawn yet) simply keeps to Theo's line.
+   */
+  private async runGag(gag: Gag, x: number, y: number): Promise<void> {
+    const spec = GAG_SPECS[gag];
+    const scene = this.scene;
+    if (!spec.key || !scene.textures.exists(spec.key)) return;
+    const full = spec.scale ?? 1;
+    const img = scene.add.image(x, y, spec.key).setDepth(GAG_DEPTH).setScale(full * 0.3);
+    scene.keepInRoom(img);
+    // It heads for whichever side of the kitchen it is nearer.
+    const dir: 1 | -1 = x < GAME_WIDTH / 2 ? -1 : 1;
+    img.setFlipX(dir < 0);
+    await this.tween(img, { y: y - 20, scale: full }, 220, 'Back.easeOut');
+    if (!img.scene) return;
+    // Socks have no legs: they see-saw down instead of landing on their feet.
+    if (spec.exit === 'flutter') await this.tween(img, { y: GAG_FLOOR, angle: dir * 20 }, 700, 'Sine.easeIn');
+    else await this.tween(img, { y: GAG_FLOOR }, 240, 'Quad.easeIn');
+    if (!img.scene) return;
+    const travel = GAG_TRAVEL[spec.exit];
+    if (travel.hop) scene.tweens.add({ targets: img, y: GAG_FLOOR - travel.hop, duration: Math.max(120, travel.ms / 5), yoyo: true, repeat: -1, ease: 'Quad.easeOut' });
+    if (travel.spin) scene.tweens.add({ targets: img, angle: dir * travel.spin, duration: travel.ms, ease: 'Linear' });
+    await this.tween(img, { x: dir < 0 ? -img.displayWidth : GAME_WIDTH + img.displayWidth }, travel.ms, 'Linear');
+    if (!img.scene) return;
+    scene.tweens.killTweensOf(img);
+    img.destroy();
+  }
+
+  private tween(target: Phaser.GameObjects.Image, props: Record<string, number>, duration: number, ease: string): Promise<void> {
+    return new Promise((resolve) => {
+      this.scene.tweens.add({ targets: target, ...props, duration, ease, onComplete: () => resolve() });
+    });
   }
 
   async talkToLucy(): Promise<void> {

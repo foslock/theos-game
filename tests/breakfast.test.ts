@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateBreakfast, BREAKFAST_ITEMS, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
+import { generateBreakfast, BREAKFAST_ITEMS, GAGS, GAG_SPECS, gagLine, missingBreakfastItems, lucyRequestLine } from '../src/puzzles/breakfast';
 import { kitchenContainers } from '../src/data/rooms/kitchen';
 import { Rng } from '../src/systems/Rng';
 import { newGameState, addItem } from '../src/state/GameState';
@@ -42,5 +42,24 @@ describe('breakfast placement', () => {
     expect(missingBreakfastItems(s)).toEqual(['bowl', 'cereal']);
     expect(lucyRequestLine(['bowl', 'cereal'])).toContain('a bowl and the cereal');
     expect(lucyRequestLine([])).toContain('everything');
+  });
+});
+
+describe('the gags in the cupboards', () => {
+  it('gives every gag a line, a sound and a way out', () => {
+    for (const gag of GAGS) {
+      const spec = GAG_SPECS[gag];
+      expect(gagLine(gag)).toBe(spec.line);
+      expect(spec.line.length).toBeGreaterThan(0);
+      expect(spec.sfx.length).toBeGreaterThan(0);
+      expect(spec.exit).toBeTruthy();
+    }
+  });
+
+  it('gives every gag but the empty cupboard something that pops out, each its own sprite', () => {
+    const keys = GAGS.map((g) => GAG_SPECS[g].key).filter(Boolean);
+    expect(GAG_SPECS.empty.key).toBeUndefined();
+    expect(keys).toHaveLength(GAGS.length - 1);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

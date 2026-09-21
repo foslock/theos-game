@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { FADE_MS, GAME_WIDTH, SCENE_HEIGHT } from '../config';
 import { FLAGS, setFlag } from '../state/GameState';
 import { store } from '../state/Store';
+import { beatLine, recallLine, recordResult } from '../puzzles/records';
 import { Dialogue } from '../systems/Dialogue';
 import { DitherFade } from '../systems/DitherFade';
 import { playMusic } from '../systems/Music';
@@ -63,6 +64,8 @@ interface MemoryData {
 export class MemoryScene extends Phaser.Scene {
   private state!: MemoryState;
   private rng!: Rng;
+  /** Boxes opened across all three levels: what the record counts. */
+  private peeks = 0;
   private views: BoxView[] = [];
   private dialogue!: Dialogue;
   private fade!: DitherFade;
@@ -77,6 +80,7 @@ export class MemoryScene extends Phaser.Scene {
 
   create(data: MemoryData = {}): void {
     this.rng = new Rng(store.get().seed).fork(`memory:${randomSeed()}`);
+    this.peeks = 0;
     this.state = newMemory(this.rng);
     this.views = [];
     this.running = false;
@@ -111,6 +115,10 @@ export class MemoryScene extends Phaser.Scene {
     this.renderPanel();
     if (!again) {
       await this.dialogue.sayOffscreen(`${pointerVerb()} two boxes to open them. If what's inside matches, they stay open!`, { voice: 'theo' });
+    } else {
+      // Lucy calls out the peeks to beat before the first box is opened.
+      const best = recallLine(store.get(), 'memory');
+      if (best) await this.dialogue.sayOffscreen(best, { fill: 0xffe3f0, voice: 'lucy' });
     }
     this.running = true;
     this.updateCursor(this.input.activePointer);
@@ -181,6 +189,7 @@ export class MemoryScene extends Phaser.Scene {
     if (!v) return;
     const events = openBox(this.state, v.index);
     if (!events.length) return;
+    this.peeks++;
     playSfx('open');
     // The lid flips up: a quick stretch on the box as it opens.
     this.tweens.add({ targets: v.image, scaleY: BOX_SCALE * 1.08, duration: 70, yoyo: true });
@@ -234,9 +243,16 @@ export class MemoryScene extends Phaser.Scene {
     this.running = false;
     setCursor(this, 'wait');
     playSfx('success');
-    store.update((s) => setFlag(s, FLAGS.memoryDone));
+    const peeks = this.peeks;
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      setFlag(s, FLAGS.memoryDone);
+      result = recordResult(s, 'memory', peeks);
+    });
     showPanel(this, { title: 'Memory boxes', big: 'All matched!' });
     await this.dialogue.sayOffscreen("Every single pair! I remembered them all!", { voice: 'theo' });
+    const brag = beatLine('memory', result, peeks);
+    if (brag) await this.dialogue.sayOffscreen(brag, { fill: 0xffe3f0, voice: 'lucy' });
     await this.leave(true);
   }
 

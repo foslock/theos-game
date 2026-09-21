@@ -61,6 +61,13 @@ export function parseSave(json: string): GameState {
   // Saves written before doors could be unlocked simply have none; their keys were never spent.
   const unlocked = Array.isArray(m.unlocked) ? m.unlocked.filter((s): s is string => typeof s === 'string') : [];
   const puzzles = isRecord(m.puzzles) ? (m.puzzles as GameState['puzzles']) : {};
+  // Saves written before the games kept records simply have none yet.
+  const records: GameState['records'] = {};
+  if (isRecord(m.records)) {
+    for (const [k, v] of Object.entries(m.records)) {
+      if (typeof v === 'number' && Number.isFinite(v)) records[k as keyof GameState['records']] = v;
+    }
+  }
 
   return {
     ...base,
@@ -74,6 +81,7 @@ export function parseSave(json: string): GameState {
     pickedUp,
     unlocked,
     puzzles,
+    records,
     savedAt: typeof m.savedAt === 'string' ? m.savedAt : base.savedAt,
   };
 }

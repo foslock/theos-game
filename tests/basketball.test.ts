@@ -105,6 +105,19 @@ describe('the game', () => {
     expect(recordShot(g, 'made')).toBe('won');
   });
 
+  it('counts every shot at every hoop, which is what the record is kept on', () => {
+    const g = newBasketballGame(new Rng(3));
+    expect(g.shots).toBe(0);
+    recordShot(g, 'made');
+    recordShot(g, 'short');
+    recordShot(g, 'made');
+    // Moving to the next hoop starts the tries over; the shot count carries on.
+    expect(g.tries).toBe(0);
+    expect(g.shots).toBe(3);
+    expect(recordShot(g, 'made')).toBe('won');
+    expect(g.shots).toBe(4);
+  });
+
   it('puts Theo somewhere a little different each playthrough, but always on the court', () => {
     const spots = new Set<string>();
     for (let seed = 0; seed < 40; seed++) {

@@ -18,11 +18,14 @@ import {
   LOOP_CENTRE,
   newRace,
   pose,
+  startAt,
   step,
   stopLine,
   TRACK,
   type RaceState,
 } from '../puzzles/race';
+import { Rng } from '../systems/Rng';
+import { beatLine, recallLine, recordResult, seconds } from '../puzzles/records';
 
 /** The booster's lamp blinks this many times a second while it runs. */
 const BLINK_HZ = 8;
@@ -61,14 +64,20 @@ export class RaceScene extends Phaser.Scene {
   private blinkT = 0;
   /** Time to the next puff out of the booster while it runs. */
   private puffT = 0;
+  /** Seconds since the car was first pushed on this run; the clock stops when it stops. */
+  private runTime = 0;
+  private timing = false;
 
   constructor() {
     super('Race');
   }
 
   create(data: RaceData = {}): void {
-    this.race = newRace();
+    // The car is parked a little either side of the start line, the same spot all playthrough.
+    this.race = newRace(startAt(new Rng(store.get().seed).fork('race')));
     this.running = false;
+    this.runTime = 0;
+    this.timing = false;
     this.leaving = false;
     this.lit = false;
     this.blinkT = 0;
@@ -113,6 +122,10 @@ export class RaceScene extends Phaser.Scene {
     this.renderPanel();
     if (!again) {
       await this.dialogue.sayOffscreen(`Three laps! ${this.verb()} Push to get the car going, and ${this.verb().toLowerCase()} Boost just before the car reaches the booster to zoom round the loop!`, { voice: 'theo' });
+    } else {
+      // Lucy calls out the time to beat from the doorway.
+      const best = recallLine(store.get(), 'race');
+      if (best) await this.dialogue.sayOffscreen(best, { fill: 0xffe3f0, voice: 'lucy' });
     }
     this.running = true;
     setCursor(this, 'default');
@@ -132,6 +145,8 @@ export class RaceScene extends Phaser.Scene {
   /** The Push button: a shove along the track. */
   private push(): void {
     if (!this.running) return;
+    // The clock runs from the first push of a run.
+    this.timing = true;
     clickCar(this.race);
     playSfx('push');
     // A little squash, so the push is felt, and a puff of dust behind the car.
@@ -178,6 +193,7 @@ export class RaceScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     if (!this.running) return;
     const dt = Math.min(deltaMs / 1000, 0.1);
+    if (this.timing) this.runTime += dt;
     if (boosterOn(this.race)) {
       this.blinkT += dt;
       this.setLight(Math.floor(this.blinkT * BLINK_HZ) % 2 === 0);
@@ -204,6 +220,9 @@ export class RaceScene extends Phaser.Scene {
           playSfx('squeak');
           break;
         case 'stop':
+          // The laps start over, and so does the clock.
+          this.runTime = 0;
+          this.timing = false;
           this.renderPanel();
           void this.dialogue.sayOffscreen(stopLine(this.race.rolledBack, this.race.laps), { voice: 'theo', duration: 1800 });
           break;
@@ -287,9 +306,17 @@ export class RaceScene extends Phaser.Scene {
     this.setLight(false);
     setCursor(this, 'wait');
     playSfx('success');
-    store.update((s) => setFlag(s, FLAGS.raceDone));
-    showPanel(this, { title: 'Race track', big: 'Three laps!' });
-    await this.dialogue.sayOffscreen('Three whole laps! What a race car!', { voice: 'theo' });
+    this.timing = false;
+    const time = Math.round(this.runTime * 10) / 10;
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      setFlag(s, FLAGS.raceDone);
+      result = recordResult(s, 'race', time);
+    });
+    showPanel(this, { title: 'Race track', big: seconds(time) });
+    await this.dialogue.sayOffscreen(`Three whole laps in ${seconds(time)}! What a race car!`, { voice: 'theo' });
+    const brag = beatLine('race', result, time);
+    if (brag) await this.dialogue.sayOffscreen(brag, { fill: 0xffe3f0, voice: 'lucy' });
     await this.leave(true);
   }
 

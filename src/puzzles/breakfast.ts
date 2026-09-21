@@ -2,6 +2,7 @@ import type { ItemId } from '../data/items';
 import type { GameState } from '../state/GameState';
 import { hasItem } from '../state/GameState';
 import type { Rng } from '../systems/Rng';
+import type { SfxName } from '../systems/Sfx';
 
 export const BREAKFAST_ITEMS: readonly ItemId[] = ['spoon', 'bowl', 'cereal', 'milk'];
 
@@ -14,6 +15,34 @@ export interface ContainerSpec {
 
 export type Gag = 'frog' | 'pots' | 'mouse' | 'socks' | 'empty' | 'spider' | 'ball';
 export const GAGS: readonly Gag[] = ['frog', 'pots', 'mouse', 'socks', 'empty', 'spider', 'ball'];
+
+/** How a gag leaves the kitchen once it has popped out of its cupboard. */
+export type GagExit = 'hop' | 'scurry' | 'bounce' | 'roll' | 'flutter';
+
+export interface GagSpec {
+  /** The sprite that pops out. An empty cupboard has none, and neither has one whose art is missing. */
+  key?: string;
+  exit: GagExit;
+  /** What it sounds like coming out. */
+  sfx: SfxName;
+  /** How big it is against the room, since the art is drawn at its own size. */
+  scale?: number;
+  line: string;
+}
+
+/**
+ * The gags, with what Theo says and what the thing does about being found: the live ones make
+ * for the nearest door, and the rest clatter or flop onto the floor and go from there.
+ */
+export const GAG_SPECS: Record<Gag, GagSpec> = {
+  frog: { key: 'gag_frog', exit: 'hop', sfx: 'boing', line: 'Whoa! A frog! How did you get in there?' },
+  pots: { key: 'gag_pots', exit: 'roll', sfx: 'locked', line: 'CLANG! Just a bunch of noisy pots.' },
+  mouse: { key: 'gag_mouse', exit: 'scurry', sfx: 'squeak', line: 'Eek! A little mouse. Hi, mouse!' },
+  socks: { key: 'gag_socks', exit: 'flutter', sfx: 'open', line: 'Socks? Who keeps socks in the kitchen?' },
+  empty: { exit: 'flutter', sfx: 'open', line: 'Nothing in here but crumbs.' },
+  spider: { key: 'gag_spider', exit: 'scurry', sfx: 'squeak', scale: 0.8, line: 'A spider! Okay, okay, you can stay.' },
+  ball: { key: 'gag_ball', exit: 'bounce', sfx: 'boing', line: 'A bouncy ball... not breakfast.' },
+};
 
 export type BreakfastContent = { type: 'item'; item: ItemId } | { type: 'decoy'; gag: Gag };
 
@@ -75,20 +104,5 @@ export function lucyRequestLine(missing: readonly ItemId[]): string {
 }
 
 export function gagLine(gag: Gag): string {
-  switch (gag) {
-    case 'frog':
-      return 'Whoa! A frog! How did you get in there?';
-    case 'pots':
-      return 'CLANG! Just a bunch of noisy pots.';
-    case 'mouse':
-      return 'Eek! A little mouse. Hi, mouse!';
-    case 'socks':
-      return "Socks? Who keeps socks in the kitchen?";
-    case 'empty':
-      return 'Nothing in here but crumbs.';
-    case 'spider':
-      return 'A spider! Okay, okay, you can stay.';
-    case 'ball':
-      return 'A bouncy ball... not breakfast.';
-  }
+  return GAG_SPECS[gag].line;
 }

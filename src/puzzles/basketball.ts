@@ -199,12 +199,14 @@ export interface BasketballGame {
   hoop: number;
   /** Shots taken at the current hoop. */
   tries: number;
+  /** Shots taken at every hoop this game: what the record counts. */
+  shots: number;
   /** Where Theo stands for each hoop this playthrough. */
   stands: Pt[];
 }
 
 export function newBasketballGame(rng: Rng): BasketballGame {
-  return { hoop: 0, tries: 0, stands: HOOPS.map((h) => standFor(h, rng.int(-STAND_JITTER, STAND_JITTER))) };
+  return { hoop: 0, tries: 0, shots: 0, stands: HOOPS.map((h) => standFor(h, rng.int(-STAND_JITTER, STAND_JITTER))) };
 }
 
 export type Progress = 'again' | 'next' | 'won' | 'lost';
@@ -215,6 +217,7 @@ export type Progress = 'again' | 'next' | 'won' | 'lost';
  */
 export function recordShot(game: BasketballGame, outcome: Outcome): Progress {
   game.tries++;
+  game.shots++;
   if (outcome === 'made') {
     if (game.hoop === HOOPS.length - 1) return 'won';
     game.hoop++;

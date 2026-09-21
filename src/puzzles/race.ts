@@ -1,3 +1,4 @@
+import type { Rng } from '../systems/Rng';
 import geometry from './race-track.json';
 
 /*
@@ -73,8 +74,19 @@ export const LAP_LENGTH = PATH.length + LOOP_LENGTH;
 /** Where the loop begins and ends along the lap. */
 export const LOOP_START = PATH.loopAt;
 export const LOOP_END = PATH.loopAt + LOOP_LENGTH;
-/** Where the car starts and laps are counted: the start line on the near straight. */
+/** The start line painted on the near straight, where laps are counted from. */
 export const START_S = TRACK.start.x - TRACK.straight.left;
+/**
+ * How far either side of the start line the car is parked, drawn from the save's seed. The run
+ * still counts three track lengths of travel, so the flag stays where it is painted; what moves
+ * is how much near straight the car has before the booster on its first pass.
+ */
+export const START_JITTER = 40;
+
+/** Where the car is parked this playthrough. */
+export function startAt(rng: Rng): number {
+  return START_S + rng.int(-START_JITTER, START_JITTER);
+}
 /** The booster's stretch of the near straight. */
 export const BOOSTER_S = { from: TRACK.booster.x0 - TRACK.straight.left, to: TRACK.booster.x1 - TRACK.straight.left };
 
@@ -156,8 +168,8 @@ export interface RaceState {
   boosted: boolean;
 }
 
-export function newRace(): RaceState {
-  return { s: START_S, v: 0, progress: 0, laps: 0, boosterLeft: 0, won: false, rolledBack: false, boosted: false };
+export function newRace(start: number = START_S): RaceState {
+  return { s: wrap(start), v: 0, progress: 0, laps: 0, boosterLeft: 0, won: false, rolledBack: false, boosted: false };
 }
 
 export function boosterOn(r: RaceState): boolean {

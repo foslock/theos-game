@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { FADE_MS, GAME_WIDTH, SCENE_HEIGHT } from '../config';
-import { FLAGS, setFlag } from '../state/GameState';
+import { FLAGS, getFlag, setFlag } from '../state/GameState';
+import { beatLine, recallLine, recordResult } from '../puzzles/records';
 import { store } from '../state/Store';
 import { Dialogue } from '../systems/Dialogue';
 import { Ambience } from '../systems/Ambience';
@@ -138,10 +139,20 @@ export class SlideScene extends Phaser.Scene {
   }
 
   private async begin(): Promise<void> {
+    // A ride down a slide they have already beaten starts with the bumps to beat, said in full
+    // before anything moves; the steering tip then rides along with them.
+    const again = this.attempt === 0 && getFlag(store.get(), FLAGS.slideDone) ? recallLine(store.get(), 'slide') : null;
+    if (again) await this.sayLucy(again);
+    if (!this.scene.isActive()) return;
     const tip = this.attempt === 0 ? `${pointerVerb()} left or right to steer! Watch out for leaves and mud.` : 'Ready? Here we go!';
-    void this.dialogue.say(tip, this.lucy.sprite.x, this.lucy.sprite.y - this.lucy.sprite.displayHeight, { fill: 0xffe3f0, duration: INTRO_HOLD_MS, voice: 'lucy' });
+    void this.sayLucy(tip, INTRO_HOLD_MS);
     this.running = true;
     this.updateCursor(this.input.activePointer);
+  }
+
+  /** A bubble over Lucy, who rides just behind Theo. */
+  private sayLucy(text: string, duration?: number): Promise<void> {
+    return this.dialogue.say(text, this.lucy.sprite.x, this.lucy.sprite.y - this.lucy.sprite.displayHeight, { fill: 0xffe3f0, duration, voice: 'lucy' });
   }
 
   /**
@@ -253,7 +264,7 @@ export class SlideScene extends Phaser.Scene {
   private async lose(): Promise<void> {
     this.running = false;
     setCursor(this, 'wait');
-    await this.dialogue.say("Too many bumps! Let's climb back up and try again.", this.lucy.sprite.x, this.lucy.sprite.y - this.lucy.sprite.displayHeight, { fill: 0xffe3f0, voice: 'lucy' });
+    await this.sayLucy("Too many bumps! Let's climb back up and try again.");
     await this.fade.out(FADE_MS);
     this.scene.restart({ attempt: this.attempt + 1 } satisfies SlideData);
   }
@@ -267,8 +278,15 @@ export class SlideScene extends Phaser.Scene {
     await this.runOut();
     this.finishing = false;
     playSfx('success');
-    store.update((s) => setFlag(s, FLAGS.slideDone));
+    const bumps = this.hitCount;
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      setFlag(s, FLAGS.slideDone);
+      result = recordResult(s, 'slide', bumps);
+    });
     await this.dialogue.say('Wheee! We made it all the way down!', this.theo.sprite.x, this.theo.sprite.y - this.theo.sprite.displayHeight, { voice: 'theo' });
+    const brag = beatLine('slide', result, bumps);
+    if (brag) await this.sayLucy(brag);
     await this.fade.out(FADE_MS);
     this.scene.start('Game', { afterSlide: true });
   }

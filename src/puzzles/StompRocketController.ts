@@ -8,7 +8,8 @@ import { playMusic } from '../systems/Music';
 import { pointerVerb } from '../ui/text';
 import { showPanel } from '../ui/MinigamePanel';
 import type { GameScene } from '../scenes/GameScene';
-import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, skySpots } from './rocket';
+import { altitudeAt, cameraScroll, CHARGE_SECONDS, flightOver, flightSeconds, heightFor, PX_PER_METER, resultLine, SIGHTS, skySpots, type Sight } from './rocket';
+import { beatLine, recallLine, recordResult } from './records';
 
 /** Where the launcher stands on the lawn (its feet), and its parts in scene pixels. */
 export const LAUNCHER = {
@@ -32,14 +33,6 @@ const SKY_LOW = 0x77bfe5;
 const SKY_HIGH = 0x1c2c6e;
 /** Metres above which stars come out. */
 const STARS_ABOVE = 180;
-/** Things to spot on the way up, and the altitude each one hangs at. */
-const SIGHTS: { key: string; metres: number; kind: 'plane' | 'satellite' | 'ufo' | 'moon' }[] = [
-  { key: 'sky_plane', metres: 100, kind: 'plane' },
-  { key: 'sky_satellite', metres: 150, kind: 'satellite' },
-  { key: 'sky_ufo', metres: 200, kind: 'ufo' },
-  { key: 'sky_moon', metres: 250, kind: 'moon' },
-];
-
 type Phase = 'idle' | 'charge' | 'stomp' | 'flight' | 'landed';
 
 /**
@@ -59,8 +52,8 @@ export class StompRocketController {
   private sky: Phaser.GameObjects.GameObject[] = [];
   private objects: Phaser.GameObjects.GameObject[] = [];
   private birds: { sprite: Phaser.GameObjects.Sprite; speed: number }[] = [];
-  /** The sights, each with how it moves. */
-  private sights: { img: Phaser.GameObjects.Image; kind: (typeof SIGHTS)[number]['kind']; vx: number; light?: Phaser.GameObjects.Rectangle; baseY: number }[] = [];
+  /** The sights that were built this flight, each with how it moves. */
+  private sights: { img: Phaser.GameObjects.Image; sight: Sight; vx: number; light?: Phaser.GameObjects.Rectangle; baseY: number }[] = [];
   private skyT = 0;
   private firstRun = false;
 
@@ -110,6 +103,9 @@ export class StompRocketController {
       });
     }
     this.placeRocketOnTube();
+    // On a repeat launch Lucy names the height to beat before the wind-up starts.
+    const best = this.firstRun ? null : recallLine(store.get(), 'rocket');
+    if (best) await this.scene.sayLucy(best);
     await this.scene.sayLucy(`${pointerVerb()} as fast as you can to pump it up!`);
     this.phase = 'charge';
     this.renderPanel();
@@ -235,17 +231,23 @@ export class StompRocketController {
     for (const sight of SIGHTS) {
       if (!scene.textures.exists(sight.key) || sight.metres * PX_PER_METER > heightPx) continue;
       const y = LAUNCHER.tube.y - sight.metres * PX_PER_METER;
+      const img = scene.add.image(0, y, sight.key).setDepth(-0.3);
       const fromLeft = rng.next() < 0.5;
-      const x = sight.kind === 'moon' ? rng.int(80, GAME_WIDTH - 80) : sight.kind === 'satellite' ? rng.int(120, GAME_WIDTH - 120) : fromLeft ? -40 : GAME_WIDTH + 40;
-      const img = scene.add.image(x, y, sight.key).setDepth(-0.3);
-      if (sight.kind === 'plane' || sight.kind === 'ufo') img.setFlipX(!fromLeft);
+      if (sight.drift === 0) {
+        // Hangs there: anywhere across the sky, far enough in to be whole on screen.
+        const margin = Math.min(img.width / 2 + 40, GAME_WIDTH / 2 - 8);
+        img.x = rng.int(margin, GAME_WIDTH - margin);
+      } else {
+        // Crosses: comes in off one edge, facing the way it is going.
+        img.x = fromLeft ? -img.width : GAME_WIDTH + img.width;
+        img.setFlipX(!fromLeft);
+      }
       let light: Phaser.GameObjects.Rectangle | undefined;
-      if (sight.kind === 'satellite') {
-        light = scene.add.rectangle(x, y - img.height / 2 - 2, 2, 2, 0xff3030).setDepth(-0.2);
+      if (sight.light) {
+        light = scene.add.rectangle(img.x, y - img.height / 2 - 2, 2, 2, 0xff3030).setDepth(-0.2);
         this.sky.push(light);
       }
-      const vx = sight.kind === 'plane' ? (fromLeft ? 1 : -1) * 70 : sight.kind === 'ufo' ? (fromLeft ? 1 : -1) * 45 : 0;
-      this.sights.push({ img, kind: sight.kind, vx, light, baseY: y });
+      this.sights.push({ img, sight, vx: (fromLeft ? 1 : -1) * sight.drift, light, baseY: y });
       this.sky.push(img);
     }
     if (this.height > STARS_ABOVE) {
@@ -280,18 +282,19 @@ export class StompRocketController {
     showPanel(this.scene, { title: 'Up it goes!', big: `${metres} m` });
   }
 
-  /** The plane crosses steadily, the saucer wobbles along, the satellite's light blinks, the moon just hangs. */
+  /** The crossing sights drift and some of them bob; the satellite's light blinks; the rest hang still. */
   private moveSights(dt: number): void {
     this.skyT += dt;
     for (const s of this.sights) {
       s.img.x += s.vx * dt;
-      if (s.kind === 'ufo') s.img.y = s.baseY + Math.sin(this.skyT * 3) * 6;
-      if (s.kind === 'plane' || s.kind === 'ufo') {
-        // Wrap round so a slow climb still gets to see it.
-        if (s.vx > 0 && s.img.x > GAME_WIDTH + 60) s.img.x = -60;
-        if (s.vx < 0 && s.img.x < -60) s.img.x = GAME_WIDTH + 60;
+      if (s.sight.bob) s.img.y = s.baseY + Math.sin(this.skyT * 3) * s.sight.bob;
+      if (s.vx !== 0) {
+        // Wrap round so even a slow climb gets to see it go by.
+        const edge = s.img.width + 20;
+        if (s.vx > 0 && s.img.x > GAME_WIDTH + edge) s.img.x = -edge;
+        if (s.vx < 0 && s.img.x < -edge) s.img.x = GAME_WIDTH + edge;
       }
-      if (s.light) s.light.setVisible(Math.floor(this.skyT * 2) % 2 === 0);
+      if (s.light) s.light.setPosition(s.img.x, s.img.y - s.img.height / 2 - 2).setVisible(Math.floor(this.skyT * 2) % 2 === 0);
     }
   }
 
@@ -315,6 +318,12 @@ export class StompRocketController {
     this.showAltitude(this.height);
     this.scene.lucy?.celebrate();
     await this.scene.sayTheo(resultLine(this.height));
+    let result: ReturnType<typeof recordResult> = 'kept';
+    store.update((s) => {
+      result = recordResult(s, 'rocket', this.height);
+    });
+    const brag = beatLine('rocket', result, this.height);
+    if (brag) await this.scene.sayLucy(brag);
     if (this.firstRun) {
       await this.scene.sayLucy(`Again! ${pointerVerb()} the launcher whenever you want to do it again!`);
       await this.scene.sayWhatsNext();
