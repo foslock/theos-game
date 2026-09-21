@@ -31,6 +31,9 @@ export const playhouse: Room = {
     { kind: 'passerby', key: 'bird', area: { x: 46, y: 146, w: 89, h: 77 }, every: [9, 18] },
     { kind: 'occluder', key: 'playhouse_window_frame', at: { x: 34, y: 134 } },
     { kind: 'steam', at: { x: 148, y: 242 } },
+    // The kids' own sign over the playground door, nailed up crooked. The door frame starts at
+    // y 200, so the sign's lowest corner clears it.
+    { kind: 'prop', key: 'sign_playground', at: { x: 401, y: 174 }, angle: -7 },
   ],
   hotspots: [
     {

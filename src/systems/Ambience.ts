@@ -42,6 +42,11 @@ export type AmbientSpec =
   | { kind: 'clouds'; keys: string[]; band: [number, number]; speed?: number }
   /** Painted-over parts of the art (house, trees, backboards) that clouds and birds pass behind. */
   | { kind: 'occluder'; key: string; at: Pt }
+  /**
+   * A flat thing pinned to the room and left there: a sign hung over a door. `at` is its middle,
+   * and `angle` hangs it askew, in degrees clockwise.
+   */
+  | { kind: 'prop'; key: string; at: Pt; angle?: number; depth?: number }
   /** A bird flying past a window: across `area`, drawn under the window's `frame`. */
   | { kind: 'passerby'; key: string; area: Rect; every?: [number, number] }
   /** Wisps rising from a spout or a cup; `bold` makes them big and plentiful, for a close-up, and `depth` puts them over things drawn above the room. */
@@ -123,6 +128,8 @@ export class Ambience {
         return this.has(...spec.keys) ? new Clouds(s, spec) : null;
       case 'occluder':
         return this.has(spec.key) ? new Occluder(s, spec) : null;
+      case 'prop':
+        return this.has(spec.key) ? new Prop(s, spec) : null;
       case 'passerby':
         return this.has(spec.key) ? new Passerby(s, spec) : null;
       case 'steam':
@@ -610,6 +617,21 @@ class Occluder implements Effect {
 
   constructor(scene: Phaser.Scene, spec: Extract<AmbientSpec, { kind: 'occluder' }>) {
     this.img = scene.add.image(spec.at.x, spec.at.y, spec.key).setOrigin(0).setDepth(FRONT);
+  }
+
+  update(): void {}
+
+  destroy(): void {
+    this.img.destroy();
+  }
+}
+
+/** Hung where it is put and never moves; the angle is what makes a kids' sign look nailed up in a hurry. */
+class Prop implements Effect {
+  private img: Phaser.GameObjects.Image;
+
+  constructor(scene: Phaser.Scene, spec: Extract<AmbientSpec, { kind: 'prop' }>) {
+    this.img = scene.add.image(spec.at.x, spec.at.y, spec.key).setDepth(spec.depth ?? LAYER).setAngle(spec.angle ?? 0);
   }
 
   update(): void {}

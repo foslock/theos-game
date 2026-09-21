@@ -32,3 +32,17 @@ a second render. Cost: 40 generations.
   x 74-80, 111-117 and y 179-184), drawn over a bird from `ambient/bird.png` that passes the
   panes now and then. Dust motes drift in the window light. Steam rises from the teapot lid
   (148,242). (A swaying-foliage layer was tried and dropped, as in the kitchen.)
+
+## The playground sign (2026-09-20)
+
+`playhouse/sign_playground.png` 96x32 (generate-image-v2, seed 181, candidate 0), hung over the
+playground door at (401, 174) turned -7 degrees, via the `prop` ambient kind. The door frame
+starts at y 200, so the sign's lowest corner clears it.
+
+The word is **PLAYGROND**, misspelled on purpose: the kids painted it. Every letter is a
+different colour on a rough plank.
+
+PixelLab **can** render short words legibly at this size: all four candidates of a 96x32 call
+spelled the nine letters correctly, with the word spelled out letter by letter in the prompt
+("the single word PLAYGROND, spelled P L A Y G R O N D") and the style prefix's "no text" line
+dropped. A call this big only returns 4 candidates, though.

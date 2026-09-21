@@ -198,6 +198,15 @@
       ],
       "_note": "the side window's frame and mullions, drawn over the bird that passes the panes"
     },
+    "sign_playground": {
+      "file": "playhouse/sign_playground.png",
+      "status": "pixellab",
+      "size": [
+        96,
+        32
+      ],
+      "_note": "the kids' hand-painted plank sign hung askew over the playhouse door to the playground"
+    },
     "stomp_launcher": {
       "file": "backyard/stomp_launcher.png",
       "status": "pixellab",
